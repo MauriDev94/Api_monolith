@@ -4,9 +4,12 @@ from app.features.users.application.dto.delete_user_params import DeleteUserPara
 
 
 class DeleteUser(UseCase[DeleteUserParams, None]):
+    """Delete a user by identifier."""
+
     def __init__(self, user_datasource: UserDatasource):
         self.user_datasource = user_datasource
 
     def execute(self, params: DeleteUserParams) -> None:
+        """Delegate deletion to datasource."""
         self.user_datasource.delete_user(params.user_id)
         return None

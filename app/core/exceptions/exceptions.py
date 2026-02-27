@@ -1,10 +1,10 @@
 class DatabaseException(Exception):
-    pass
+    """Raised when persistence operations fail unexpectedly."""
 
 
 class InternalServerErrorException(Exception):
-    pass
+    """Raised for unexpected application failures."""
 
 
 class InvalidCredentialsException(Exception):
-    pass
+    """Raised when authentication credentials are invalid."""

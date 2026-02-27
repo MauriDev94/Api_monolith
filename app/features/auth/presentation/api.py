@@ -14,7 +14,6 @@ from app.features.auth.di.dependencies import (
     get_refresh_access_token_use_case,
     get_register_user_use_case,
 )
-from app.features.auth.presentation.dependencies import get_authenticated_user
 from app.features.auth.presentation.mappers.auth_mapper import (
     map_register_request_to_params,
     map_token_pair_result_to_login_response,
@@ -31,6 +30,7 @@ from app.features.auth.presentation.schemas.auth_responses import (
     RefreshTokenResponse,
     RegisterResponse,
 )
+from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.domain.entities.user import User
 
 v1_router = get_versioned_router("v1")
@@ -41,6 +41,7 @@ def register_user(
     request: RegisterRequest,
     register_user_use_case: Annotated[RegisterUser, Depends(get_register_user_use_case)],
 ) -> RegisterResponse:
+    """Create a user account using validated request payload."""
     try:
         user = register_user_use_case.execute(map_register_request_to_params(request))
     except ValueError as exc:
@@ -54,6 +55,7 @@ def login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     login_user_use_case: Annotated[LoginUser, Depends(get_login_user_use_case)],
 ) -> LoginResponse:
+    """Authenticate credentials and return access/refresh tokens."""
     try:
         result = login_user_use_case.execute(
             LoginUserParams(email=form_data.username, password=form_data.password)
@@ -76,6 +78,7 @@ def refresh_access_token(
         Depends(get_refresh_access_token_use_case),
     ],
 ) -> RefreshTokenResponse:
+    """Issue a new access token from a valid refresh token."""
     try:
         result = refresh_access_token_use_case.execute(
             RefreshTokenParams(refresh_token=request.refresh_token)
@@ -94,4 +97,5 @@ def refresh_access_token(
 def get_current_user(
     current_user: Annotated[User, Depends(get_authenticated_user)],
 ) -> CurrentUserResponse:
+    """Return authenticated user profile from bearer token."""
     return CurrentUserResponse(user=map_user_entity_to_auth_user_response(current_user))

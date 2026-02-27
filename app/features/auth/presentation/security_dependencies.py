@@ -14,6 +14,7 @@ def get_authenticated_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     use_case: Annotated[GetCurrentUser, Depends(get_current_user_use_case)],
 ) -> User:
+    """Resolve current user from bearer token and raise 401 on failure."""
     try:
         return use_case.execute(token)
     except ValueError as exc:

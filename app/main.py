@@ -5,10 +5,13 @@ from app.features.users.presentation.api import v1_router as users_v1_router
 
 app = FastAPI()
 
+# Auth endpoints include register/login/refresh/me.
 app.include_router(auth_v1_router, tags=["v1 Auth"], prefix="/auth")
+# User endpoints are protected and require bearer authentication.
 app.include_router(users_v1_router, tags=["v1 Users"])
 
 
 @app.get("/")
 def read_root():
+    """Basic liveness endpoint for local smoke checks."""
     return {"status": "success", "message": "API is running"}

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException
 
 from app.core.router.router import get_versioned_router
-from app.features.auth.presentation.dependencies import get_authenticated_user
+from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.application.dto.delete_user_params import DeleteUserParams
 from app.features.users.application.usecases.delete_user_use_case import DeleteUser
 from app.features.users.application.usecases.get_all_users_use_case import GetAllUsers

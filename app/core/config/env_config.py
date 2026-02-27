@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class EnvConfig(BaseSettings):
+    """Application settings loaded from environment variables."""
+
     db_user: str
     db_password: str
     db_name: str

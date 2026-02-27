@@ -1,12 +1,17 @@
 from typing import Generator
+
 from sqlalchemy.engine import URL, create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.core.config.env_config import EnvConfig
 from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
 
 class Database:
+    """Database factory that builds SQLAlchemy engine and sessions."""
+
     def __init__(self, config: EnvConfig):
+        """Initialize connection resources from environment configuration."""
         url = URL.create(
             drivername="postgresql+psycopg2",
             username=config.db_user,
@@ -20,6 +25,7 @@ class Database:
         self.SqlAlchemyBase = SqlAlchemyBase
 
     def get_session(self) -> Generator[Session, None, None]:
+        """Yield a session and guarantee proper close at the end."""
         db: Session = self.session()
         try:
             yield db

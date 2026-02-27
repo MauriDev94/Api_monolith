@@ -13,28 +13,33 @@ from app.features.users.infrastructure.repositories.user_repository import UserR
 
 
 def get_user_repository(db_session: Annotated[Session, Depends(get_db_session)]) -> UserDatasource:
+    """Provide SQLAlchemy-backed datasource for user use cases."""
     return UserRepository(session=db_session)
 
 
 def get_get_all_users_use_case(
     user_datasource: Annotated[UserDatasource, Depends(get_user_repository)],
 ) -> GetAllUsers:
+    """Provide GetAllUsers use case."""
     return GetAllUsers(user_datasource=user_datasource)
 
 
 def get_get_user_by_id_use_case(
     user_datasource: Annotated[UserDatasource, Depends(get_user_repository)],
 ) -> GetUserById:
+    """Provide GetUserById use case."""
     return GetUserById(user_datasource=user_datasource)
 
 
 def get_update_user_use_case(
     user_datasource: Annotated[UserDatasource, Depends(get_user_repository)],
 ) -> UpdateUser:
+    """Provide UpdateUser use case."""
     return UpdateUser(user_datasource=user_datasource)
 
 
 def get_delete_user_use_case(
     user_datasource: Annotated[UserDatasource, Depends(get_user_repository)],
 ) -> DeleteUser:
+    """Provide DeleteUser use case."""
     return DeleteUser(user_datasource=user_datasource)

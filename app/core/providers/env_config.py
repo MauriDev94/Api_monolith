@@ -1,12 +1,9 @@
 from functools import lru_cache
+
 from app.core.config.env_config import EnvConfig
 
 
 @lru_cache()
 def get_env_config() -> EnvConfig:
-    """get environmet cofiguration
-
-    Returns:
-        EnvConfig
-    """
+    """Return cached environment configuration for dependency injection."""
     return EnvConfig()  # type: ignore

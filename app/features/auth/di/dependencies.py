@@ -21,16 +21,19 @@ from app.features.auth.infrastructure.repositories.auth_repository import AuthRe
 def get_auth_repository(
     db_session: Annotated[Session, Depends(get_db_session)],
 ) -> AuthDatasource:
+    """Provide auth datasource implementation backed by SQLAlchemy."""
     return AuthRepository(session=db_session)
 
 
 def get_password_manager() -> PasswordManager:
+    """Provide password hashing implementation."""
     return PasswordManagerImpl()
 
 
 def get_token_manager(
     env_config: Annotated[EnvConfig, Depends(get_env_config)],
 ) -> TokenManager:
+    """Provide JWT token manager using configured secret key."""
     return JwtTokenManager(secret_key=env_config.jwt_secret_key)
 
 
@@ -38,6 +41,7 @@ def get_register_user_use_case(
     auth_datasource: Annotated[AuthDatasource, Depends(get_auth_repository)],
     password_manager: Annotated[PasswordManager, Depends(get_password_manager)],
 ) -> RegisterUser:
+    """Provide RegisterUser use case with required dependencies."""
     return RegisterUser(auth_datasource=auth_datasource, password_manager=password_manager)
 
 
@@ -46,6 +50,7 @@ def get_login_user_use_case(
     password_manager: Annotated[PasswordManager, Depends(get_password_manager)],
     token_manager: Annotated[TokenManager, Depends(get_token_manager)],
 ) -> LoginUser:
+    """Provide LoginUser use case with required dependencies."""
     return LoginUser(
         auth_datasource=auth_datasource,
         password_manager=password_manager,
@@ -56,6 +61,7 @@ def get_login_user_use_case(
 def get_refresh_access_token_use_case(
     token_manager: Annotated[TokenManager, Depends(get_token_manager)],
 ) -> RefreshAccessToken:
+    """Provide RefreshAccessToken use case."""
     return RefreshAccessToken(token_manager=token_manager)
 
 
@@ -63,4 +69,5 @@ def get_current_user_use_case(
     auth_datasource: Annotated[AuthDatasource, Depends(get_auth_repository)],
     token_manager: Annotated[TokenManager, Depends(get_token_manager)],
 ) -> GetCurrentUser:
+    """Provide GetCurrentUser use case."""
     return GetCurrentUser(auth_datasource=auth_datasource, token_manager=token_manager)
