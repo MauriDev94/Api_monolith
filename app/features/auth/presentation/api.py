@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.router.router import get_versioned_router
@@ -42,11 +42,7 @@ def register_user(
     register_user_use_case: Annotated[RegisterUser, Depends(get_register_user_use_case)],
 ) -> RegisterResponse:
     """Create a user account using validated request payload."""
-    try:
-        user = register_user_use_case.execute(map_register_request_to_params(request))
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-
+    user = register_user_use_case.execute(map_register_request_to_params(request))
     return RegisterResponse(user=map_user_entity_to_auth_user_response(user))
 
 

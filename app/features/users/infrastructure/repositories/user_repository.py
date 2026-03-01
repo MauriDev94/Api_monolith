@@ -1,5 +1,7 @@
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.core.exceptions.exceptions import DatabaseException, ResourceConflictException, ResourceNotFoundException
 from app.features.users.application.contracts.user_datasource import UserDatasource
 from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.domain.entities.user import User
@@ -18,33 +20,63 @@ class UserRepository(UserDatasource):
 
     def get_all_users(self) -> list[User]:
         """Return all persisted users."""
-        users_model = self.session.query(UserModel).all()
+        try:
+            users_model = self.session.query(UserModel).all()
+        except SQLAlchemyError as exc:
+            raise DatabaseException("failed to retrieve users") from exc
+
         return [map_user_model_to_entity(user_model) for user_model in users_model]
 
     def get_user_by_id(self, user_id: str) -> User | None:
         """Return a user by id when found."""
-        user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
+        try:
+            user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
+        except SQLAlchemyError as exc:
+            raise DatabaseException("failed to retrieve user by id") from exc
+
         if user_model is None:
             return None
         return map_user_model_to_entity(user_model)
 
     def update_user(self, params: UpdateUserParams) -> User:
         """Update and return an existing user."""
-        user_model = self.session.query(UserModel).filter(UserModel.id == params.id).first()
+        try:
+            user_model = self.session.query(UserModel).filter(UserModel.id == params.id).first()
+        except SQLAlchemyError as exc:
+            raise DatabaseException("failed to retrieve user for update") from exc
+
         if user_model is None:
-            raise ValueError("user not found")
+            raise ResourceNotFoundException("user not found")
 
         map_update_user_params_to_model(user_model=user_model, params=params)
-        self.session.commit()
-        self.session.refresh(user_model)
+
+        try:
+            self.session.commit()
+            self.session.refresh(user_model)
+        except IntegrityError as exc:
+            self.session.rollback()
+            raise ResourceConflictException("email already registered") from exc
+        except SQLAlchemyError as exc:
+            self.session.rollback()
+            raise DatabaseException("failed to update user") from exc
+
         return map_user_model_to_entity(user_model)
 
     def delete_user(self, user_id: str) -> None:
         """Delete user when exists and keep operation idempotent."""
-        user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
+        try:
+            user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
+        except SQLAlchemyError as exc:
+            raise DatabaseException("failed to retrieve user for deletion") from exc
+
         if user_model is None:
             return None
 
-        self.session.delete(user_model)
-        self.session.commit()
+        try:
+            self.session.delete(user_model)
+            self.session.commit()
+        except SQLAlchemyError as exc:
+            self.session.rollback()
+            raise DatabaseException("failed to delete user") from exc
+
         return None

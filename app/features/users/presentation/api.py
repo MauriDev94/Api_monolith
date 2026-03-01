@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from app.core.router.router import get_versioned_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
@@ -37,6 +37,7 @@ def get_all_users(
     _: Annotated[User, Depends(get_authenticated_user)],
     get_all_users_use_case: Annotated[GetAllUsers, Depends(get_get_all_users_use_case)],
 ) -> GetAllUsersResponse:
+    """List all users for authenticated clients."""
     users = get_all_users_use_case.execute()
     return GetAllUsersResponse(users=[map_user_entity_to_response(user) for user in users])
 
@@ -47,10 +48,9 @@ def get_user_by_id(
     _: Annotated[User, Depends(get_authenticated_user)],
     get_user_by_id_use_case: Annotated[GetUserById, Depends(get_get_user_by_id_use_case)],
 ) -> GetUserByIdResponse:
+    """Return a single user by identifier."""
     params = map_user_id_to_params(user_id)
     user = get_user_by_id_use_case.execute(params)
-    if user is None:
-        raise HTTPException(status_code=404, detail="user not found")
     return GetUserByIdResponse(user=map_user_entity_to_response(user))
 
 
@@ -61,6 +61,7 @@ def update_user(
     _: Annotated[User, Depends(get_authenticated_user)],
     update_user_use_case: Annotated[UpdateUser, Depends(get_update_user_use_case)],
 ) -> UpdateUserResponse:
+    """Update user profile data."""
     params = map_update_user_request_to_params(user_id, request)
     user = update_user_use_case.execute(params)
     return UpdateUserResponse(user=map_user_entity_to_response(user))
@@ -72,5 +73,6 @@ def delete_user(
     _: Annotated[User, Depends(get_authenticated_user)],
     delete_user_use_case: Annotated[DeleteUser, Depends(get_delete_user_use_case)],
 ) -> DeleteUserResponse:
+    """Delete an existing user."""
     delete_user_use_case.execute(DeleteUserParams(user_id=user_id))
     return DeleteUserResponse(message="User deleted successfully")

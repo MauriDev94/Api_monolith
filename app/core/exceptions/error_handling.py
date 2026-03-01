@@ -10,6 +10,7 @@ from app.core.exceptions.exceptions import (
     InternalServerErrorException,
     InvalidCredentialsException,
     ResourceConflictException,
+    ResourceNotFoundException,
 )
 
 
@@ -104,6 +105,14 @@ async def resource_conflict_exception_handler(request: Request, exc: ResourceCon
     )
 
 
+async def resource_not_found_exception_handler(request: Request, exc: ResourceNotFoundException):
+    """Return a not-found response for missing resources."""
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"message": str(exc) or "Resource not found"},
+    )
+
+
 def register_exception_handlers(app: FastAPI):
     """Register all global exception handlers in priority order."""
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
@@ -112,4 +121,5 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(InternalServerErrorException, internal_server_error_exception_handler)
     app.add_exception_handler(InvalidCredentialsException, invalid_credentials_exception_handler)
     app.add_exception_handler(ResourceConflictException, resource_conflict_exception_handler)
+    app.add_exception_handler(ResourceNotFoundException, resource_not_found_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)

@@ -12,3 +12,7 @@ class InvalidCredentialsException(Exception):
 
 class ResourceConflictException(Exception):
     """Raised when trying to create a resource that already exists."""
+
+
+class ResourceNotFoundException(Exception):
+    """Raised when a requested resource does not exist."""
