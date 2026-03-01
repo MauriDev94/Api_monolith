@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 
+from app.core.exceptions.error_handling import register_exception_handlers
 from app.features.auth.presentation.api import v1_router as auth_v1_router
 from app.features.users.presentation.api import v1_router as users_v1_router
 
 app = FastAPI()
+register_exception_handlers(app)
 
 # Auth endpoints include register/login/refresh/me.
 app.include_router(auth_v1_router, tags=["v1 Auth"], prefix="/auth")

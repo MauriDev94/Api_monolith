@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
 from app.features.auth.application.usecases.get_current_user_use_case import GetCurrentUser
@@ -14,12 +14,5 @@ def get_authenticated_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     use_case: Annotated[GetCurrentUser, Depends(get_current_user_use_case)],
 ) -> User:
-    """Resolve current user from bearer token and raise 401 on failure."""
-    try:
-        return use_case.execute(token)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
+    """Resolve current user from bearer token."""
+    return use_case.execute(token)

@@ -1,4 +1,5 @@
 from app.common.use_case import UseCase
+from app.core.exceptions.exceptions import InvalidCredentialsException
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
@@ -22,14 +23,14 @@ class LoginUser(UseCase[LoginUserParams, TokenPairResult]):
     def execute(self, params: LoginUserParams) -> TokenPairResult:
         user = self.auth_datasource.get_user_by_email(params.email)
         if user is None:
-            raise ValueError("invalid credentials")
+            raise InvalidCredentialsException()
 
         is_valid_password = self.password_manager.verify_password(
             params.password,
             user.password_hash,
         )
         if not is_valid_password:
-            raise ValueError("invalid credentials")
+            raise InvalidCredentialsException()
 
         subject = user.id or ""
         access_token = self.token_manager.create_access_token(subject=subject)

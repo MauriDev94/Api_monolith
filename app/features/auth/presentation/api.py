@@ -56,17 +56,9 @@ def login_user(
     login_user_use_case: Annotated[LoginUser, Depends(get_login_user_use_case)],
 ) -> LoginResponse:
     """Authenticate credentials and return access/refresh tokens."""
-    try:
-        result = login_user_use_case.execute(
-            LoginUserParams(email=form_data.username, password=form_data.password)
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-
+    result = login_user_use_case.execute(
+        LoginUserParams(email=form_data.username, password=form_data.password)
+    )
     return map_token_pair_result_to_login_response(result)
 
 
@@ -79,17 +71,9 @@ def refresh_access_token(
     ],
 ) -> RefreshTokenResponse:
     """Issue a new access token from a valid refresh token."""
-    try:
-        result = refresh_access_token_use_case.execute(
-            RefreshTokenParams(refresh_token=request.refresh_token)
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-
+    result = refresh_access_token_use_case.execute(
+        RefreshTokenParams(refresh_token=request.refresh_token)
+    )
     return RefreshTokenResponse(tokens=map_token_pair_result_to_response(result))
 
 
