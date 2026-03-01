@@ -9,6 +9,7 @@ from app.core.exceptions.exceptions import (
     DatabaseException,
     InternalServerErrorException,
     InvalidCredentialsException,
+    ResourceConflictException,
 )
 
 
@@ -95,6 +96,14 @@ async def invalid_credentials_exception_handler(request: Request, exc: InvalidCr
     )
 
 
+async def resource_conflict_exception_handler(request: Request, exc: ResourceConflictException):
+    """Return a conflict response when resource uniqueness is violated."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"message": str(exc) or "Resource already exists"},
+    )
+
+
 def register_exception_handlers(app: FastAPI):
     """Register all global exception handlers in priority order."""
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
@@ -102,4 +111,5 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(DatabaseException, database_exception_handler)
     app.add_exception_handler(InternalServerErrorException, internal_server_error_exception_handler)
     app.add_exception_handler(InvalidCredentialsException, invalid_credentials_exception_handler)
+    app.add_exception_handler(ResourceConflictException, resource_conflict_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
