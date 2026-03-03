@@ -7,6 +7,8 @@ from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
 
 class UserModel(SqlAlchemyBase):
+    """SQLAlchemy model for persisted users."""
+
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

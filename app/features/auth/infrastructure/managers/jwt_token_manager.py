@@ -9,6 +9,8 @@ from app.features.auth.application.contracts.token_manager import TokenManager
 
 
 class JwtTokenManager(TokenManager):
+    """JWT manager responsible for issuing and validating auth tokens."""
+
     _ALGORITHM = "HS256"
     _ACCESS_MINUTES = 15
     _REFRESH_DAYS = 7
@@ -19,6 +21,7 @@ class JwtTokenManager(TokenManager):
         self._secret = secret_key
 
     def create_access_token(self, subject: str, claims: dict[str, Any] | None = None) -> str:
+        """Create signed access token for authenticated subject."""
         return self._encode_token(
             subject=subject,
             token_type="access",
@@ -27,6 +30,7 @@ class JwtTokenManager(TokenManager):
         )
 
     def create_refresh_token(self, subject: str, claims: dict[str, Any] | None = None) -> str:
+        """Create signed refresh token used to renew access tokens."""
         return self._encode_token(
             subject=subject,
             token_type="refresh",
@@ -35,12 +39,14 @@ class JwtTokenManager(TokenManager):
         )
 
     def decode_access_token(self, token: str) -> dict[str, Any]:
+        """Decode and validate access token claims."""
         payload = self._decode_token(token)
         if payload.get("token_type") != "access":
             raise InvalidCredentialsException()
         return payload
 
     def decode_refresh_token(self, token: str) -> dict[str, Any]:
+        """Decode and validate refresh token claims."""
         payload = self._decode_token(token)
         if payload.get("token_type") != "refresh":
             raise InvalidCredentialsException()

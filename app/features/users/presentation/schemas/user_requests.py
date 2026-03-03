@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRequest(BaseModel):
+    """Base request schema for user create/update payloads."""
+
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: str = Field(min_length=1, max_length=100)
@@ -13,4 +15,4 @@ class UserRequest(BaseModel):
 
 
 class UpdateUserRequest(UserRequest):
-    pass
+    """Request schema for update user endpoint."""

@@ -5,6 +5,7 @@ from app.features.users.infrastructure.models.user_model import UserModel
 
 
 def map_user_model_to_entity(user_model: UserModel) -> User:
+    """Map ORM user model to domain entity."""
     return User(
         id=user_model.id,
         name=user_model.name,
@@ -18,6 +19,7 @@ def map_user_model_to_entity(user_model: UserModel) -> User:
 
 
 def map_update_user_params_to_model(user_model: UserModel, params: UpdateUserParams) -> UserModel:
+    """Apply update DTO values into an existing ORM model instance."""
     user_model.name = params.name
     user_model.lastname = params.lastname
     user_model.email = params.email

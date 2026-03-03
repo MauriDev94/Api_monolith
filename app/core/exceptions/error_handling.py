@@ -14,9 +14,15 @@ from app.core.exceptions.exceptions import (
 )
 
 
+def _request_logger(request: Request):
+    """Return logger bound with current request id for consistent correlation."""
+    request_id = getattr(request.state, "request_id", "-")
+    return logger.bind(request_id=request_id)
+
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Normalize validation errors into a predictable API response."""
-    logger.warning(f"Validation error: {exc.errors()}")
+    _request_logger(request).warning(f"Validation error: {exc.errors()}")
     errors = []
     for error in exc.errors():
         errors.append(
@@ -35,11 +41,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Map HTTP exceptions while hiding details for 5xx responses."""
+    request_logger = _request_logger(request)
     if exc.status_code >= 500:
-        logger.error(
-            f"HTTP 500 Error: {exc.detail}\n",
-            f"Path: {request.url.path}\n",
-            f"Method: {request.method}",
+        request_logger.error(
+            f"HTTP 500 Error: {exc.detail} | Path: {request.url.path} | Method: {request.method}"
         )
         return JSONResponse(
             status_code=exc.status_code,
@@ -54,11 +59,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 async def generic_exception_handler(request: Request, exc: Exception):
     """Fallback handler for unexpected exceptions with stack trace logging."""
-    logger.error(
-        f"Unhandled exception: {type(exc).__name__}: {str(exc)}\n",
-        f"Path: {request.url.path}\n",
-        f"Method: {request.method}\n",
-        f"Stacktrace:\n{traceback.format_exc()}",
+    _request_logger(request).error(
+        f"Unhandled exception: {type(exc).__name__}: {str(exc)} | "
+        f"Path: {request.url.path} | Method: {request.method}\n"
+        f"Stacktrace:\n{traceback.format_exc()}"
     )
 
     return JSONResponse(
@@ -72,6 +76,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 async def database_exception_handler(request: Request, exc: DatabaseException):
     """Handle persistence failures using a dedicated response envelope."""
+    _request_logger(request).error(f"DatabaseException: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"message": "Database error occurred", "detail": str(exc)},
@@ -83,6 +88,7 @@ async def internal_server_error_exception_handler(
     exc: InternalServerErrorException,
 ):
     """Handle known internal failures raised by the application layer."""
+    _request_logger(request).error(f"InternalServerErrorException: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"message": "Internal server error", "detail": str(exc)},
@@ -91,6 +97,7 @@ async def internal_server_error_exception_handler(
 
 async def invalid_credentials_exception_handler(request: Request, exc: InvalidCredentialsException):
     """Return a stable unauthorized response for invalid credentials."""
+    _request_logger(request).warning("InvalidCredentialsException triggered")
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={"message": "Invalid email or password"},
@@ -99,6 +106,7 @@ async def invalid_credentials_exception_handler(request: Request, exc: InvalidCr
 
 async def resource_conflict_exception_handler(request: Request, exc: ResourceConflictException):
     """Return a conflict response when resource uniqueness is violated."""
+    _request_logger(request).warning(f"ResourceConflictException: {exc}")
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"message": str(exc) or "Resource already exists"},
@@ -107,6 +115,7 @@ async def resource_conflict_exception_handler(request: Request, exc: ResourceCon
 
 async def resource_not_found_exception_handler(request: Request, exc: ResourceNotFoundException):
     """Return a not-found response for missing resources."""
+    _request_logger(request).warning(f"ResourceNotFoundException: {exc}")
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content={"message": str(exc) or "Resource not found"},

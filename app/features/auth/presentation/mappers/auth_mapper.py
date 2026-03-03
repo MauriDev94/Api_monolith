@@ -10,6 +10,7 @@ from app.features.users.domain.entities.user import User
 
 
 def map_register_request_to_params(request: RegisterRequest) -> RegisterUserParams:
+    """Map register request payload to use-case parameters."""
     return RegisterUserParams(
         name=request.name,
         lastname=request.lastname,
@@ -20,6 +21,7 @@ def map_register_request_to_params(request: RegisterRequest) -> RegisterUserPara
 
 
 def map_token_pair_result_to_response(result: TokenPairResult) -> TokenPairResponse:
+    """Map token result DTO to generic token response schema."""
     return TokenPairResponse(
         access_token=result.access_token,
         refresh_token=result.refresh_token,
@@ -28,6 +30,7 @@ def map_token_pair_result_to_response(result: TokenPairResult) -> TokenPairRespo
 
 
 def map_token_pair_result_to_login_response(result: TokenPairResult) -> LoginResponse:
+    """Map token result DTO to login response schema."""
     return LoginResponse(
         access_token=result.access_token,
         token_type=result.token_type,
@@ -36,6 +39,7 @@ def map_token_pair_result_to_login_response(result: TokenPairResult) -> LoginRes
 
 
 def map_user_entity_to_auth_user_response(user: User) -> AuthUserResponse:
+    """Map user entity to public auth user response."""
     return AuthUserResponse(
         id=user.id or "",
         name=user.name,
