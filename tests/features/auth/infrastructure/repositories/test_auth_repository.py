@@ -8,6 +8,7 @@ from app.features.auth.application.dto.register_user_params import RegisterUserP
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 
 
+# Validates end-to-end persistence flow in auth repository: register + fetch by both lookup keys.
 def test_should_register_user_and_fetch_by_email_and_id(db_session: Session) -> None:
     repository = AuthRepository(session=db_session)
     params = RegisterUserParams(
@@ -30,6 +31,7 @@ def test_should_register_user_and_fetch_by_email_and_id(db_session: Session) -> 
     assert found_by_id.id == created_user.id
 
 
+# Ensures missing users are handled safely with None instead of exceptions.
 def test_should_return_none_when_user_does_not_exist(db_session: Session) -> None:
     repository = AuthRepository(session=db_session)
 
@@ -40,6 +42,7 @@ def test_should_return_none_when_user_does_not_exist(db_session: Session) -> Non
     assert found_by_id is None
 
 
+# Confirms unique email constraint is translated into domain-level conflict exception.
 def test_should_raise_conflict_when_registering_duplicate_email(db_session: Session) -> None:
     repository = AuthRepository(session=db_session)
     params = RegisterUserParams(

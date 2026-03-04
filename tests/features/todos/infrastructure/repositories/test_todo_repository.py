@@ -10,6 +10,7 @@ from app.features.todos.infrastructure.repositories.todo_repository import TodoR
 
 
 def _seed_user(session: Session, email: str = "mauri@mail.com") -> str:
+    # Creates a valid persisted owner user used by todo foreign key.
     auth_repository = AuthRepository(session=session)
     user = auth_repository.register_user(
         params=RegisterUserParams(
@@ -24,6 +25,7 @@ def _seed_user(session: Session, email: str = "mauri@mail.com") -> str:
     return user.id or ""
 
 
+# Validates create flow writes a todo row and maps it back to entity.
 def test_should_create_todo_for_existing_user(db_session: Session) -> None:
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
@@ -42,6 +44,7 @@ def test_should_create_todo_for_existing_user(db_session: Session) -> None:
     assert todo.is_completed is False
 
 
+# Ensures list query filters and returns all todos for the owner.
 def test_should_return_todos_by_user_id(db_session: Session) -> None:
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
@@ -56,6 +59,7 @@ def test_should_return_todos_by_user_id(db_session: Session) -> None:
     assert titles == {"Task 1", "Task 2"}
 
 
+# Checks direct retrieval by id from persistence layer.
 def test_should_get_todo_by_id(db_session: Session) -> None:
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
@@ -68,6 +72,7 @@ def test_should_get_todo_by_id(db_session: Session) -> None:
     assert todo.user_id == user_id
 
 
+# Verifies updated fields are committed and returned correctly.
 def test_should_update_todo(db_session: Session) -> None:
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
@@ -89,6 +94,7 @@ def test_should_update_todo(db_session: Session) -> None:
     assert updated.is_completed is True
 
 
+# Confirms deletion removes row and repository returns None contract.
 def test_should_delete_todo(db_session: Session) -> None:
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
@@ -100,6 +106,7 @@ def test_should_delete_todo(db_session: Session) -> None:
     assert repository.get_todo_by_id(created.id or "") is None
 
 
+# Documents idempotent behavior for missing todo on get/delete.
 def test_should_return_none_when_getting_or_deleting_missing_todo(db_session: Session) -> None:
     repository = TodoRepository(session=db_session)
 

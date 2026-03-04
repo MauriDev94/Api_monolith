@@ -13,6 +13,7 @@ from app.features.users.infrastructure.models.user_model import UserModel  # noq
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
     """Provide an isolated in-memory database session per test."""
+    # Creates a fresh schema for every test, avoiding state leakage.
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
         connect_args={"check_same_thread": False},

@@ -17,6 +17,7 @@ def _seed_user(
     lastname: str,
     email: str,
 ) -> str:
+    # Reuses auth repository so persisted users mimic real registration data.
     auth_repository = AuthRepository(session=session)
     user = auth_repository.register_user(
         params=RegisterUserParams(
@@ -31,6 +32,7 @@ def _seed_user(
     return user.id or ""
 
 
+# Verifies list operation returns all persisted users.
 def test_should_return_all_users(db_session: Session) -> None:
     repository = UserRepository(session=db_session)
     _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
@@ -43,6 +45,7 @@ def test_should_return_all_users(db_session: Session) -> None:
     assert emails == {"mauri@mail.com", "ana@mail.com"}
 
 
+# Confirms direct lookup by primary key maps ORM model to domain entity.
 def test_should_get_user_by_id(db_session: Session) -> None:
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
@@ -54,6 +57,7 @@ def test_should_get_user_by_id(db_session: Session) -> None:
     assert user.email.value == "mauri@mail.com"
 
 
+# Checks update persistence and returned entity values.
 def test_should_update_user(db_session: Session) -> None:
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
@@ -73,6 +77,7 @@ def test_should_update_user(db_session: Session) -> None:
     assert updated_user.email.value == "mauricio@mail.com"
 
 
+# Protects contract: updating non-existing user must raise not-found.
 def test_should_raise_not_found_when_updating_missing_user(db_session: Session) -> None:
     repository = UserRepository(session=db_session)
 
@@ -88,6 +93,7 @@ def test_should_raise_not_found_when_updating_missing_user(db_session: Session) 
         )
 
 
+# Ensures DB unique constraint is translated to ResourceConflictException.
 def test_should_raise_conflict_when_updating_to_existing_email(db_session: Session) -> None:
     repository = UserRepository(session=db_session)
     first_user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
@@ -105,6 +111,7 @@ def test_should_raise_conflict_when_updating_to_existing_email(db_session: Sessi
         )
 
 
+# Verifies delete operation is effective and idempotent contract remains intact.
 def test_should_delete_existing_user(db_session: Session) -> None:
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
