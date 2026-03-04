@@ -7,7 +7,7 @@ from app.features.users.domain.value_objects.email import Email
 
 # Tipo de test: Unit
 def test_should_normalize_email_value() -> None:
-    """Valida que normaliza correo valor."""
+    """Valida que normaliza email valor."""
     email = Email("  USER@Mail.COM  ")
 
     assert email.value == "user@mail.com"
@@ -25,6 +25,6 @@ def test_should_normalize_email_value() -> None:
 )
 # Tipo de test: Unit
 def test_should_raise_when_email_format_is_invalid(raw_email: str) -> None:
-    """Valida que lanza cuando correo formato es invalido."""
+    """Valida que lanza cuando email formato es invalido."""
     with pytest.raises(ValueError, match="invalid email format"):
         Email(raw_email)

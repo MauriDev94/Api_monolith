@@ -8,7 +8,7 @@ from app.features.users.domain.value_objects.email import Email
 
 # Tipo de test: Unit
 def test_should_normalize_user_text_fields_and_email() -> None:
-    """Valida que normaliza usuario texto campos y correo."""
+    """Valida que normaliza usuario texto campos y email."""
     user = User(
         id="user-1",
         name="  Mauri ",

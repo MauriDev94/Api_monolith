@@ -18,7 +18,7 @@ def test_should_create_and_decode_access_token() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_decoding_invalid_token() -> None:
-    """Valida que lanza invalido credenciales cuando decodificar invalido token."""
+    """Valida que lanza invalido credenciales cuando decoding invalido token."""
     manager = JwtTokenManager(secret_key="secret-key")
 
     with pytest.raises(InvalidCredentialsException):

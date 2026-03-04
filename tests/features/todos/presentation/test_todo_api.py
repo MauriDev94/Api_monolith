@@ -119,7 +119,7 @@ def test_should_list_todos_for_authenticated_user() -> None:
 
 # Tipo de test: Integration
 def test_should_return_404_when_get_todo_by_id_use_case_raises_not_found() -> None:
-    """Valida que retorna 404 cuando obtener tarea por id usar caso raises no encontrado."""
+    """Valida que retorna 404 cuando obtener una tarea por id caso de uso lanza un error de no encontrado."""
     client = create_test_client()
     get_by_id_use_case = StubUseCase(exc=ResourceNotFoundException("todo not found"))
     override_all_todo_use_cases(client, StubUseCase(result=None))

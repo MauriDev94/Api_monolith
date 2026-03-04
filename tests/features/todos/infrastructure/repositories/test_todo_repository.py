@@ -66,7 +66,7 @@ def test_should_return_todos_by_user_id(db_session: Session) -> None:
 # Checks direct retrieval by id from persistence layer.
 # Tipo de test: Integration
 def test_should_get_todo_by_id(db_session: Session) -> None:
-    """Valida que obtener tarea por id."""
+    """Valida que obtener una tarea por id."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
     created = repository.create_todo(CreateTodoParams(user_id=user_id, title="Study", description=None))
@@ -119,7 +119,7 @@ def test_should_delete_todo(db_session: Session) -> None:
 # Documents idempotent behavior for missing todo on get/delete.
 # Tipo de test: Integration
 def test_should_return_none_when_getting_or_deleting_missing_todo(db_session: Session) -> None:
-    """Valida que retorna ninguno cuando getting o deleting faltante tarea."""
+    """Valida que retorna None cuando se obtiene o elimina una tarea faltante."""
     repository = TodoRepository(session=db_session)
 
     missing_todo = repository.get_todo_by_id("missing-id")

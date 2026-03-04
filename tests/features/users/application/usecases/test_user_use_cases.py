@@ -29,7 +29,7 @@ def make_user() -> User:
 
 # Tipo de test: Unit
 def test_should_delegate_get_all_users_to_datasource() -> None:
-    """Valida que delegate obtener todos usuarios a fuente de datos."""
+    """Valida que delega la operacion de obtener todos los usuarios a la fuente de datos."""
     datasource = Mock(spec=UserDatasource)
     expected_users = [make_user()]
     datasource.get_all_users.return_value = expected_users
@@ -43,7 +43,7 @@ def test_should_delegate_get_all_users_to_datasource() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_get_user_by_id_returns_none() -> None:
-    """Valida que lanza no encontrado cuando obtener usuario por id retorna ninguno."""
+    """Valida que lanza un error de no encontrado cuando obtener un usuario por id retorna None."""
     datasource = Mock(spec=UserDatasource)
     datasource.get_user_by_id.return_value = None
     use_case = GetUserById(user_datasource=datasource)
@@ -54,7 +54,7 @@ def test_should_raise_not_found_when_get_user_by_id_returns_none() -> None:
 
 # Tipo de test: Unit
 def test_should_return_user_when_get_user_by_id_finds_entity() -> None:
-    """Valida que retorna usuario cuando obtiene usuario por id finds entidad."""
+    """Valida que retorna un usuario cuando obtiene un usuario por id cuando la entidad existe."""
     datasource = Mock(spec=UserDatasource)
     expected_user = make_user()
     datasource.get_user_by_id.return_value = expected_user
@@ -68,7 +68,7 @@ def test_should_return_user_when_get_user_by_id_finds_entity() -> None:
 
 # Tipo de test: Unit
 def test_should_delegate_update_user_to_datasource() -> None:
-    """Valida que delegate actualize usuario a fuente de datos."""
+    """Valida que delega la operacion de actualizar usuario a la fuente de datos."""
     datasource = Mock(spec=UserDatasource)
     expected_user = make_user()
     datasource.update_user.return_value = expected_user
@@ -89,7 +89,7 @@ def test_should_delegate_update_user_to_datasource() -> None:
 
 # Tipo de test: Unit
 def test_should_delegate_delete_user_to_datasource() -> None:
-    """Valida que delegate elimine usuario a fuente de datos."""
+    """Valida que delega la operacion de eliminar usuario a la fuente de datos."""
     datasource = Mock(spec=UserDatasource)
     use_case = DeleteUser(user_datasource=datasource)
 

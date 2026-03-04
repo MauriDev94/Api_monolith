@@ -72,7 +72,7 @@ def test_should_return_400_when_validation_fails() -> None:
 
 # Tipo de test: Integration
 def test_should_return_401_for_invalid_credentials_exception() -> None:
-    """Valida que retorna 401 para invalido credenciales exception."""
+    """Valida que retorna 401 para invalido credenciales excepcion."""
     client = create_test_client()
 
     response = client.get("/invalid-credentials")
@@ -83,7 +83,7 @@ def test_should_return_401_for_invalid_credentials_exception() -> None:
 
 # Tipo de test: Integration
 def test_should_return_409_for_resource_conflict_exception() -> None:
-    """Valida que retorna 409 para recurso conflicto exception."""
+    """Valida que retorna 409 para recurso conflicto excepcion."""
     client = create_test_client()
 
     response = client.get("/resource-conflict")
@@ -94,7 +94,7 @@ def test_should_return_409_for_resource_conflict_exception() -> None:
 
 # Tipo de test: Integration
 def test_should_return_404_for_resource_not_found_exception() -> None:
-    """Valida que retorna 404 para recurso no encontrado exception."""
+    """Valida que retorna 404 para recurso no encontrado excepcion."""
     client = create_test_client()
 
     response = client.get("/resource-not-found")
@@ -105,7 +105,7 @@ def test_should_return_404_for_resource_not_found_exception() -> None:
 
 # Tipo de test: Integration
 def test_should_return_500_for_database_exception() -> None:
-    """Valida que retorna 500 para base de datos exception."""
+    """Valida que retorna 500 para base de datos excepcion."""
     client = create_test_client()
 
     response = client.get("/database-error")
@@ -116,7 +116,7 @@ def test_should_return_500_for_database_exception() -> None:
 
 # Tipo de test: Integration
 def test_should_return_500_for_internal_server_error_exception() -> None:
-    """Valida que retorna 500 para interno server error exception."""
+    """Valida que retorna 500 para interno server error excepcion."""
     client = create_test_client()
 
     response = client.get("/internal-error")
@@ -127,7 +127,7 @@ def test_should_return_500_for_internal_server_error_exception() -> None:
 
 # Tipo de test: Integration
 def test_should_keep_http_404_detail() -> None:
-    """Valida que keep http 404 detail."""
+    """Valida que mantiene http 404 detail."""
     client = create_test_client()
 
     response = client.get("/http-404")
@@ -138,7 +138,7 @@ def test_should_keep_http_404_detail() -> None:
 
 # Tipo de test: Integration
 def test_should_mask_http_500_detail() -> None:
-    """Valida que mask http 500 detail."""
+    """Valida que oculta http 500 detail."""
     client = create_test_client()
 
     response = client.get("/http-500")

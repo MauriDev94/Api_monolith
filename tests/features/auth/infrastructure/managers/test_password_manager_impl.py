@@ -3,7 +3,7 @@ from app.features.auth.infrastructure.managers.password_manager_impl import Pass
 
 # Tipo de test: Unit
 def test_should_hash_and_verify_password() -> None:
-    """Valida que hash y verificar contrasena."""
+    """Valida que hash y verifica contrasena."""
     manager = PasswordManagerImpl()
 
     hashed_password = manager.hash_password("plain-password")

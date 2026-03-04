@@ -29,7 +29,7 @@ def make_todo(*, user_id: str = "user-1") -> Todo:
 
 # Tipo de test: Unit
 def test_should_delegate_create_todo_to_datasource() -> None:
-    """Valida que delegate crear tarea a fuente de datos."""
+    """Valida que delega la operacion de crear tarea a la fuente de datos."""
     datasource = Mock(spec=TodoDatasource)
     expected_todo = make_todo()
     datasource.create_todo.return_value = expected_todo
@@ -44,7 +44,7 @@ def test_should_delegate_create_todo_to_datasource() -> None:
 
 # Tipo de test: Unit
 def test_should_delegate_get_todos_by_user_id_to_datasource() -> None:
-    """Valida que delegate obtener tareas por usuario id a fuente de datos."""
+    """Valida que delega la operacion de obtener tareas por usuario id a la fuente de datos."""
     datasource = Mock(spec=TodoDatasource)
     expected_todos = [make_todo()]
     datasource.get_todos_by_user_id.return_value = expected_todos
@@ -58,7 +58,7 @@ def test_should_delegate_get_todos_by_user_id_to_datasource() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_get_todo_by_id_returns_none() -> None:
-    """Valida que lanza no encontrado cuando obtener tarea por id retorna ninguno."""
+    """Valida que lanza un error de no encontrado cuando obtener una tarea por id retorna None."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = None
     use_case = GetTodoById(todo_datasource=datasource)
@@ -69,7 +69,7 @@ def test_should_raise_not_found_when_get_todo_by_id_returns_none() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_get_todo_by_id_user_is_not_owner() -> None:
-    """Valida que lanza no encontrado cuando obtener tarea por id usuario es no propietario."""
+    """Valida que lanza un error de no encontrado cuando se obtiene una tarea por id y el usuario no es el propietario."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = make_todo(user_id="other-user")
     use_case = GetTodoById(todo_datasource=datasource)
@@ -80,7 +80,7 @@ def test_should_raise_not_found_when_get_todo_by_id_user_is_not_owner() -> None:
 
 # Tipo de test: Unit
 def test_should_return_todo_when_get_todo_by_id_user_is_owner() -> None:
-    """Valida que retorna tarea cuando obtener tarea por id usuario es propietario."""
+    """Valida que retorna tarea cuando obtener una tarea por id usuario es propietario."""
     datasource = Mock(spec=TodoDatasource)
     expected_todo = make_todo(user_id="user-1")
     datasource.get_todo_by_id.return_value = expected_todo
@@ -94,7 +94,7 @@ def test_should_return_todo_when_get_todo_by_id_user_is_owner() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_update_target_does_not_exist() -> None:
-    """Valida que lanza no encontrado cuando actualizar target does no exist."""
+    """Valida que lanza un error de no encontrado cuando actualizar objetivo no existe."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = None
     use_case = UpdateTodo(todo_datasource=datasource)
@@ -112,7 +112,7 @@ def test_should_raise_not_found_when_update_target_does_not_exist() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_update_target_belongs_to_other_user() -> None:
-    """Valida que lanza no encontrado cuando actualizar target belongs a other usuario."""
+    """Valida que lanza un error de no encontrado cuando se actualiza un objetivo que pertenece a otro usuario."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = make_todo(user_id="other-user")
     use_case = UpdateTodo(todo_datasource=datasource)
@@ -130,7 +130,7 @@ def test_should_raise_not_found_when_update_target_belongs_to_other_user() -> No
 
 # Tipo de test: Unit
 def test_should_delegate_update_when_todo_belongs_to_user() -> None:
-    """Valida que delegate actualizar cuando tarea belongs a usuario."""
+    """Valida que delega la operacion de actualizar cuando tarea pertenece a usuario."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = make_todo(user_id="user-1")
     updated_todo = Todo(
@@ -158,7 +158,7 @@ def test_should_delegate_update_when_todo_belongs_to_user() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_delete_target_does_not_exist() -> None:
-    """Valida que lanza no encontrado cuando eliminar target does no exist."""
+    """Valida que lanza un error de no encontrado cuando eliminar objetivo no existe."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = None
     use_case = DeleteTodo(todo_datasource=datasource)
@@ -169,7 +169,7 @@ def test_should_raise_not_found_when_delete_target_does_not_exist() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_delete_target_belongs_to_other_user() -> None:
-    """Valida que lanza no encontrado cuando eliminar target belongs a other usuario."""
+    """Valida que lanza un error de no encontrado cuando se elimina un objetivo que pertenece a otro usuario."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = make_todo(user_id="other-user")
     use_case = DeleteTodo(todo_datasource=datasource)
@@ -180,7 +180,7 @@ def test_should_raise_not_found_when_delete_target_belongs_to_other_user() -> No
 
 # Tipo de test: Unit
 def test_should_delegate_delete_when_todo_belongs_to_user() -> None:
-    """Valida que delegate eliminar cuando tarea belongs a usuario."""
+    """Valida que delega la operacion de eliminar cuando tarea pertenece a usuario."""
     datasource = Mock(spec=TodoDatasource)
     datasource.get_todo_by_id.return_value = make_todo(user_id="user-1")
     use_case = DeleteTodo(todo_datasource=datasource)

@@ -31,7 +31,7 @@ def make_user() -> User:
 
 # Tipo de test: Unit
 def test_should_raise_conflict_when_registering_existing_email() -> None:
-    """Valida que lanza conflicto cuando registrar existente correo."""
+    """Valida que lanza conflicto cuando registrar existente email."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     datasource.get_user_by_email.return_value = make_user()

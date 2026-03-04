@@ -47,7 +47,7 @@ def _auth_headers(access_token: str) -> dict[str, str]:
 # E2E happy path: register -> login -> protected endpoints -> refresh -> continue with new token.
 # Tipo de test: E2E
 def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> None:
-    """Valida que completa auth usuarios tareas exitoso flujo."""
+    """Valida que completa el flujo exitoso de autenticacion, usuarios y tareas."""
     app.dependency_overrides[get_db_session] = _override_db_session(db_session)
     client = TestClient(app, raise_server_exceptions=False)
 
@@ -116,7 +116,7 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
 # E2E error path: unauthorized access, duplicate register and cross-user ownership protection.
 # Tipo de test: E2E
 def test_should_enforce_auth_and_ownership_error_scenarios(db_session: Session) -> None:
-    """Valida que enforce auth y propiedad error escenarios."""
+    """Valida que aplica reglas de autenticacion y propiedad en escenarios de error."""
     app.dependency_overrides[get_db_session] = _override_db_session(db_session)
     client = TestClient(app, raise_server_exceptions=False)
 
