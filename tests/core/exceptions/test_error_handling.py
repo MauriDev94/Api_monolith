@@ -59,7 +59,9 @@ def create_test_client() -> TestClient:
     return TestClient(app, raise_server_exceptions=False)
 
 
+# Tipo de test: Integration
 def test_should_return_400_when_validation_fails() -> None:
+    """Valida que retorna 400 cuando validacion falla."""
     client = create_test_client()
 
     response = client.post("/validation", json={"name": "x"})
@@ -68,7 +70,9 @@ def test_should_return_400_when_validation_fails() -> None:
     assert response.json()["message"] == "Validation error"
 
 
+# Tipo de test: Integration
 def test_should_return_401_for_invalid_credentials_exception() -> None:
+    """Valida que retorna 401 para invalido credenciales exception."""
     client = create_test_client()
 
     response = client.get("/invalid-credentials")
@@ -77,7 +81,9 @@ def test_should_return_401_for_invalid_credentials_exception() -> None:
     assert response.json() == {"message": "Invalid email or password"}
 
 
+# Tipo de test: Integration
 def test_should_return_409_for_resource_conflict_exception() -> None:
+    """Valida que retorna 409 para recurso conflicto exception."""
     client = create_test_client()
 
     response = client.get("/resource-conflict")
@@ -86,7 +92,9 @@ def test_should_return_409_for_resource_conflict_exception() -> None:
     assert response.json()["message"] == "email already registered"
 
 
+# Tipo de test: Integration
 def test_should_return_404_for_resource_not_found_exception() -> None:
+    """Valida que retorna 404 para recurso no encontrado exception."""
     client = create_test_client()
 
     response = client.get("/resource-not-found")
@@ -95,7 +103,9 @@ def test_should_return_404_for_resource_not_found_exception() -> None:
     assert response.json()["message"] == "user not found"
 
 
+# Tipo de test: Integration
 def test_should_return_500_for_database_exception() -> None:
+    """Valida que retorna 500 para base de datos exception."""
     client = create_test_client()
 
     response = client.get("/database-error")
@@ -104,7 +114,9 @@ def test_should_return_500_for_database_exception() -> None:
     assert response.json()["message"] == "Database error occurred"
 
 
+# Tipo de test: Integration
 def test_should_return_500_for_internal_server_error_exception() -> None:
+    """Valida que retorna 500 para interno server error exception."""
     client = create_test_client()
 
     response = client.get("/internal-error")
@@ -113,7 +125,9 @@ def test_should_return_500_for_internal_server_error_exception() -> None:
     assert response.json()["message"] == "Internal server error"
 
 
+# Tipo de test: Integration
 def test_should_keep_http_404_detail() -> None:
+    """Valida que keep http 404 detail."""
     client = create_test_client()
 
     response = client.get("/http-404")
@@ -122,7 +136,9 @@ def test_should_keep_http_404_detail() -> None:
     assert response.json() == {"message": "custom missing"}
 
 
+# Tipo de test: Integration
 def test_should_mask_http_500_detail() -> None:
+    """Valida que mask http 500 detail."""
     client = create_test_client()
 
     response = client.get("/http-500")
@@ -132,7 +148,9 @@ def test_should_mask_http_500_detail() -> None:
     assert "unexpected error occurred" in response.json()["detail"].lower()
 
 
+# Tipo de test: Integration
 def test_should_return_500_for_unhandled_exceptions() -> None:
+    """Valida que retorna 500 para no controlado exceptions."""
     client = create_test_client()
 
     response = client.get("/generic-error")

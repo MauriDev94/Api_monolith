@@ -9,7 +9,9 @@ from app.features.auth.infrastructure.repositories.auth_repository import AuthRe
 
 
 # Validates end-to-end persistence flow in auth repository: register + fetch by both lookup keys.
+# Tipo de test: Integration
 def test_should_register_user_and_fetch_by_email_and_id(db_session: Session) -> None:
+    """Valida que registrar usuario y buscar por correo y id."""
     repository = AuthRepository(session=db_session)
     params = RegisterUserParams(
         name="Mauri",
@@ -32,7 +34,9 @@ def test_should_register_user_and_fetch_by_email_and_id(db_session: Session) -> 
 
 
 # Ensures missing users are handled safely with None instead of exceptions.
+# Tipo de test: Integration
 def test_should_return_none_when_user_does_not_exist(db_session: Session) -> None:
+    """Valida que retorna ninguno cuando usuario does no exist."""
     repository = AuthRepository(session=db_session)
 
     found_by_email = repository.get_user_by_email("missing@mail.com")
@@ -43,7 +47,9 @@ def test_should_return_none_when_user_does_not_exist(db_session: Session) -> Non
 
 
 # Confirms unique email constraint is translated into domain-level conflict exception.
+# Tipo de test: Integration
 def test_should_raise_conflict_when_registering_duplicate_email(db_session: Session) -> None:
+    """Valida que lanza conflicto cuando registrar duplicado correo."""
     repository = AuthRepository(session=db_session)
     params = RegisterUserParams(
         name="Mauri",

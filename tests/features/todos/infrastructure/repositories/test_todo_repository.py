@@ -26,7 +26,9 @@ def _seed_user(session: Session, email: str = "mauri@mail.com") -> str:
 
 
 # Validates create flow writes a todo row and maps it back to entity.
+# Tipo de test: Integration
 def test_should_create_todo_for_existing_user(db_session: Session) -> None:
+    """Valida que crear tarea para existente usuario."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
 
@@ -45,7 +47,9 @@ def test_should_create_todo_for_existing_user(db_session: Session) -> None:
 
 
 # Ensures list query filters and returns all todos for the owner.
+# Tipo de test: Integration
 def test_should_return_todos_by_user_id(db_session: Session) -> None:
+    """Valida que retorna tareas por usuario id."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
 
@@ -60,7 +64,9 @@ def test_should_return_todos_by_user_id(db_session: Session) -> None:
 
 
 # Checks direct retrieval by id from persistence layer.
+# Tipo de test: Integration
 def test_should_get_todo_by_id(db_session: Session) -> None:
+    """Valida que obtener tarea por id."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
     created = repository.create_todo(CreateTodoParams(user_id=user_id, title="Study", description=None))
@@ -73,7 +79,9 @@ def test_should_get_todo_by_id(db_session: Session) -> None:
 
 
 # Verifies updated fields are committed and returned correctly.
+# Tipo de test: Integration
 def test_should_update_todo(db_session: Session) -> None:
+    """Valida que actualizar tarea."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
     created = repository.create_todo(CreateTodoParams(user_id=user_id, title="Study", description=None))
@@ -95,7 +103,9 @@ def test_should_update_todo(db_session: Session) -> None:
 
 
 # Confirms deletion removes row and repository returns None contract.
+# Tipo de test: Integration
 def test_should_delete_todo(db_session: Session) -> None:
+    """Valida que eliminar tarea."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
     created = repository.create_todo(CreateTodoParams(user_id=user_id, title="Study", description=None))
@@ -107,7 +117,9 @@ def test_should_delete_todo(db_session: Session) -> None:
 
 
 # Documents idempotent behavior for missing todo on get/delete.
+# Tipo de test: Integration
 def test_should_return_none_when_getting_or_deleting_missing_todo(db_session: Session) -> None:
+    """Valida que retorna ninguno cuando getting o deleting faltante tarea."""
     repository = TodoRepository(session=db_session)
 
     missing_todo = repository.get_todo_by_id("missing-id")

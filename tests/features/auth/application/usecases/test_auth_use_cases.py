@@ -29,7 +29,9 @@ def make_user() -> User:
     )
 
 
+# Tipo de test: Unit
 def test_should_raise_conflict_when_registering_existing_email() -> None:
+    """Valida que lanza conflicto cuando registrar existente correo."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     datasource.get_user_by_email.return_value = make_user()
@@ -46,7 +48,9 @@ def test_should_raise_conflict_when_registering_existing_email() -> None:
         use_case.execute(params)
 
 
+# Tipo de test: Unit
 def test_should_hash_password_and_register_new_user() -> None:
+    """Valida que hash contrasena y registrar new usuario."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     datasource.get_user_by_email.return_value = None
@@ -68,7 +72,9 @@ def test_should_hash_password_and_register_new_user() -> None:
     assert result.id == "user-1"
 
 
+# Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_login_user_not_found() -> None:
+    """Valida que lanza invalido credenciales cuando login usuario no encontrado."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
@@ -79,7 +85,9 @@ def test_should_raise_invalid_credentials_when_login_user_not_found() -> None:
         use_case.execute(LoginUserParams(email="x@mail.com", password="bad"))
 
 
+# Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_login_password_is_invalid() -> None:
+    """Valida que lanza invalido credenciales cuando login contrasena es invalido."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
@@ -91,7 +99,9 @@ def test_should_raise_invalid_credentials_when_login_password_is_invalid() -> No
         use_case.execute(LoginUserParams(email="mauri@mail.com", password="bad"))
 
 
+# Tipo de test: Unit
 def test_should_return_token_pair_when_login_is_valid() -> None:
+    """Valida que retorna token pair cuando login es valido."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
@@ -109,7 +119,9 @@ def test_should_return_token_pair_when_login_is_valid() -> None:
     assert result.refresh_token == "refresh-token"
 
 
+# Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_refresh_subject_is_missing() -> None:
+    """Valida que lanza invalido credenciales cuando refresh subject es faltante."""
     token_manager = Mock(spec=TokenManager)
     token_manager.decode_refresh_token.return_value = {"sub": ""}
     use_case = RefreshAccessToken(token_manager)
@@ -118,7 +130,9 @@ def test_should_raise_invalid_credentials_when_refresh_subject_is_missing() -> N
         use_case.execute(RefreshTokenParams(refresh_token="invalid"))
 
 
+# Tipo de test: Unit
 def test_should_return_new_access_token_when_refresh_is_valid() -> None:
+    """Valida que retorna new acceso token cuando refresh es valido."""
     token_manager = Mock(spec=TokenManager)
     token_manager.decode_refresh_token.return_value = {"sub": "user-1"}
     token_manager.create_access_token.return_value = "new-access"
@@ -131,7 +145,9 @@ def test_should_return_new_access_token_when_refresh_is_valid() -> None:
     assert result.refresh_token == "refresh"
 
 
+# Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_access_token_subject_is_missing() -> None:
+    """Valida que lanza invalido credenciales cuando acceso token subject es faltante."""
     datasource = Mock(spec=AuthDatasource)
     token_manager = Mock(spec=TokenManager)
     token_manager.decode_access_token.return_value = {"sub": ""}
@@ -141,7 +157,9 @@ def test_should_raise_invalid_credentials_when_access_token_subject_is_missing()
         use_case.execute("token")
 
 
+# Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_current_user_not_found() -> None:
+    """Valida que lanza invalido credenciales cuando actual usuario no encontrado."""
     datasource = Mock(spec=AuthDatasource)
     token_manager = Mock(spec=TokenManager)
     token_manager.decode_access_token.return_value = {"sub": "user-1"}
@@ -152,7 +170,9 @@ def test_should_raise_invalid_credentials_when_current_user_not_found() -> None:
         use_case.execute("token")
 
 
+# Tipo de test: Unit
 def test_should_return_current_user_when_access_token_is_valid() -> None:
+    """Valida que retorna actual usuario cuando acceso token es valido."""
     datasource = Mock(spec=AuthDatasource)
     token_manager = Mock(spec=TokenManager)
     expected_user = make_user()

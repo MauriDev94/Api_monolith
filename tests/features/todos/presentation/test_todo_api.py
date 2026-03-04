@@ -69,7 +69,9 @@ def override_all_todo_use_cases(client: TestClient, use_case: StubUseCase) -> No
     app.dependency_overrides[get_delete_todo_use_case] = lambda: use_case
 
 
+# Tipo de test: Integration
 def test_should_return_401_when_missing_bearer_token() -> None:
+    """Valida que retorna 401 cuando faltante bearer token."""
     client = create_test_client()
     override_all_todo_use_cases(client, StubUseCase(result=[]))
 
@@ -79,7 +81,9 @@ def test_should_return_401_when_missing_bearer_token() -> None:
     assert response.json()["message"] == "Not authenticated"
 
 
+# Tipo de test: Integration
 def test_should_create_todo_when_authenticated() -> None:
+    """Valida que crear tarea cuando autenticado."""
     client = create_test_client()
     create_use_case = StubUseCase(result=make_todo())
     override_all_todo_use_cases(client, StubUseCase(result=None))
@@ -97,7 +101,9 @@ def test_should_create_todo_when_authenticated() -> None:
     assert create_use_case.received.title == "Study"
 
 
+# Tipo de test: Integration
 def test_should_list_todos_for_authenticated_user() -> None:
+    """Valida que listar tareas para autenticado usuario."""
     client = create_test_client()
     list_use_case = StubUseCase(result=[make_todo()])
     override_all_todo_use_cases(client, StubUseCase(result=None))
@@ -111,7 +117,9 @@ def test_should_list_todos_for_authenticated_user() -> None:
     assert list_use_case.received.user_id == "user-1"
 
 
+# Tipo de test: Integration
 def test_should_return_404_when_get_todo_by_id_use_case_raises_not_found() -> None:
+    """Valida que retorna 404 cuando obtener tarea por id usar caso raises no encontrado."""
     client = create_test_client()
     get_by_id_use_case = StubUseCase(exc=ResourceNotFoundException("todo not found"))
     override_all_todo_use_cases(client, StubUseCase(result=None))

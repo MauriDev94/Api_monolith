@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine
@@ -12,7 +13,7 @@ from app.features.users.infrastructure.models.user_model import UserModel  # noq
 
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
-    """Provide an isolated in-memory database session per test."""
+    """Entrega una sesion de base de datos en memoria aislada por cada test."""
     # Creates a fresh schema for every test, avoiding state leakage.
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
@@ -29,3 +30,26 @@ def db_session() -> Generator[Session, None, None]:
         session.close()
         SqlAlchemyBase.metadata.drop_all(bind=engine)
         engine.dispose()
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Clasifica automaticamente los tests por alcance para evitar duplicar marcadores en cada archivo."""
+    for item in items:
+        path = Path(str(item.fspath)).as_posix()
+
+        if "/tests/e2e/" in path:
+            item.add_marker(pytest.mark.e2e)
+            continue
+
+        if (
+            "/tests/core/exceptions/" in path
+            or "/tests/features/" in path
+            and (
+                "/infrastructure/repositories/" in path
+                or "/presentation/" in path
+            )
+        ):
+            item.add_marker(pytest.mark.integration)
+            continue
+
+        item.add_marker(pytest.mark.unit)
