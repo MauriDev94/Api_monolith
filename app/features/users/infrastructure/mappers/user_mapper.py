@@ -1,4 +1,3 @@
-from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
 from app.features.users.infrastructure.models.user_model import UserModel
@@ -18,10 +17,10 @@ def map_user_model_to_entity(user_model: UserModel) -> User:
     )
 
 
-def map_update_user_params_to_model(user_model: UserModel, params: UpdateUserParams) -> UserModel:
-    """Apply update DTO values into an existing ORM model instance."""
-    user_model.name = params.name
-    user_model.lastname = params.lastname
-    user_model.email = params.email
-    user_model.birthdate = params.birthdate
+def map_user_entity_to_model(user_model: UserModel, user: User) -> UserModel:
+    """Apply mutable domain user state into an existing ORM model instance."""
+    user_model.name = user.name
+    user_model.lastname = user.lastname
+    user_model.email = user.email.value
+    user_model.birthdate = user.birthdate
     return user_model

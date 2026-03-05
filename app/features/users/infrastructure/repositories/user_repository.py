@@ -3,10 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions.exceptions import DatabaseException, ResourceConflictException, ResourceNotFoundException
 from app.features.users.application.contracts.user_datasource import UserDatasource
-from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.domain.entities.user import User
 from app.features.users.infrastructure.mappers.user_mapper import (
-    map_update_user_params_to_model,
+    map_user_entity_to_model,
     map_user_model_to_entity,
 )
 from app.features.users.infrastructure.models.user_model import UserModel
@@ -38,17 +37,20 @@ class UserRepository(UserDatasource):
             return None
         return map_user_model_to_entity(user_model)
 
-    def update_user(self, params: UpdateUserParams) -> User:
-        """Update and return an existing user."""
+    def update_user(self, user: User) -> User:
+        """Update and return an existing user from mutable entity state."""
+        if user.id is None:
+            raise ResourceNotFoundException("user not found")
+
         try:
-            user_model = self.session.query(UserModel).filter(UserModel.id == params.id).first()
+            user_model = self.session.query(UserModel).filter(UserModel.id == user.id).first()
         except SQLAlchemyError as exc:
             raise DatabaseException("failed to retrieve user for update") from exc
 
         if user_model is None:
             raise ResourceNotFoundException("user not found")
 
-        map_update_user_params_to_model(user_model=user_model, params=params)
+        map_user_entity_to_model(user_model=user_model, user=user)
 
         try:
             self.session.commit()

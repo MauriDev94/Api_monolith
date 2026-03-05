@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.domain.entities.user import User
 
 
@@ -18,7 +17,7 @@ class UserDatasource(ABC):
         pass
 
     @abstractmethod
-    def update_user(self, params: UpdateUserParams) -> User:
+    def update_user(self, user: User) -> User:
         """Persist user changes and return the updated domain entity."""
         pass
 
