@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.exceptions.exceptions import ResourceConflictException, ResourceNotFoundException
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
-from app.features.users.application.dto.update_user_params import UpdateUserParams
+from app.features.users.domain.entities.user import User
+from app.features.users.domain.value_objects.email import Email
 from app.features.users.infrastructure.repositories.user_repository import UserRepository
 
 
@@ -17,7 +18,6 @@ def _seed_user(
     lastname: str,
     email: str,
 ) -> str:
-    # Reuses auth repository so persisted users mimic real registration data.
     auth_repository = AuthRepository(session=session)
     user = auth_repository.register_user(
         params=RegisterUserParams(
@@ -32,10 +32,9 @@ def _seed_user(
     return user.id or ""
 
 
-# Verifies list operation returns all persisted users.
 # Tipo de test: Integration
 def test_should_return_all_users(db_session: Session) -> None:
-    """Valida que retorna todos usuarios."""
+    """Valida que el repositorio retorna todos los usuarios persistidos."""
     repository = UserRepository(session=db_session)
     _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
     _seed_user(db_session, name="Ana", lastname="Lopez", email="ana@mail.com")
@@ -47,10 +46,9 @@ def test_should_return_all_users(db_session: Session) -> None:
     assert emails == {"mauri@mail.com", "ana@mail.com"}
 
 
-# Confirms direct lookup by primary key maps ORM model to domain entity.
 # Tipo de test: Integration
 def test_should_get_user_by_id(db_session: Session) -> None:
-    """Valida que obtener un usuario por id."""
+    """Valida que el repositorio obtiene un usuario por id."""
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
 
@@ -61,70 +59,61 @@ def test_should_get_user_by_id(db_session: Session) -> None:
     assert user.email.value == "mauri@mail.com"
 
 
-# Checks update persistence and returned entity values.
 # Tipo de test: Integration
 def test_should_update_user(db_session: Session) -> None:
-    """Valida que actualizar usuario."""
+    """Valida que el repositorio persiste estado mutado de un usuario."""
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
+    user = repository.get_user_by_id(user_id)
+    assert user is not None
 
-    updated_user = repository.update_user(
-        UpdateUserParams(
-            id=user_id,
-            name="Mauricio",
-            lastname="Salinas",
-            email="mauricio@mail.com",
-            birthdate=date(1999, 1, 1),
-        )
-    )
+    user.change_name("Mauricio")
+    user.change_email("mauricio@mail.com")
+    user.change_birthdate(date(1999, 1, 1))
+
+    updated_user = repository.update_user(user)
 
     assert updated_user.id == user_id
     assert updated_user.name == "Mauricio"
     assert updated_user.email.value == "mauricio@mail.com"
 
 
-# Protects contract: updating non-existing user must raise not-found.
 # Tipo de test: Integration
 def test_should_raise_not_found_when_updating_missing_user(db_session: Session) -> None:
-    """Valida que lanza un error de no encontrado cuando actualizar faltante usuario."""
+    """Valida que el repositorio lanza not-found al actualizar un usuario inexistente."""
     repository = UserRepository(session=db_session)
 
+    missing_user = User(
+        id="missing-id",
+        name="Mauricio",
+        lastname="Salinas",
+        email=Email("mauricio@mail.com"),
+        password_hash="hashed-password",
+        birthdate=date(1999, 1, 1),
+    )
+
     with pytest.raises(ResourceNotFoundException, match="user not found"):
-        repository.update_user(
-            UpdateUserParams(
-                id="missing-id",
-                name="Mauricio",
-                lastname="Salinas",
-                email="mauricio@mail.com",
-                birthdate=date(1999, 1, 1),
-            )
-        )
+        repository.update_user(missing_user)
 
 
-# Ensures DB unique constraint is translated to ResourceConflictException.
 # Tipo de test: Integration
 def test_should_raise_conflict_when_updating_to_existing_email(db_session: Session) -> None:
-    """Valida que lanza conflicto cuando actualizar existente email."""
+    """Valida que el repositorio traduce conflicto al actualizar email duplicado."""
     repository = UserRepository(session=db_session)
     first_user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
     _seed_user(db_session, name="Ana", lastname="Lopez", email="ana@mail.com")
 
+    first_user = repository.get_user_by_id(first_user_id)
+    assert first_user is not None
+    first_user.change_email("ana@mail.com")
+
     with pytest.raises(ResourceConflictException, match="email already registered"):
-        repository.update_user(
-            UpdateUserParams(
-                id=first_user_id,
-                name="Mauri",
-                lastname="Salinas",
-                email="ana@mail.com",
-                birthdate=date(2000, 1, 1),
-            )
-        )
+        repository.update_user(first_user)
 
 
-# Verifies delete operation is effective and idempotent contract remains intact.
 # Tipo de test: Integration
 def test_should_delete_existing_user(db_session: Session) -> None:
-    """Valida que eliminar existente usuario."""
+    """Valida que delete elimina usuario y mantiene contrato idempotente."""
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
 

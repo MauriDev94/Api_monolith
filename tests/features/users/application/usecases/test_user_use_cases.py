@@ -29,7 +29,7 @@ def make_user() -> User:
 
 # Tipo de test: Unit
 def test_should_delegate_get_all_users_to_datasource() -> None:
-    """Valida que delega la operacion de obtener todos los usuarios a la fuente de datos."""
+    """Valida que el caso de uso delega el listado de usuarios al datasource."""
     datasource = Mock(spec=UserDatasource)
     expected_users = [make_user()]
     datasource.get_all_users.return_value = expected_users
@@ -43,7 +43,7 @@ def test_should_delegate_get_all_users_to_datasource() -> None:
 
 # Tipo de test: Unit
 def test_should_raise_not_found_when_get_user_by_id_returns_none() -> None:
-    """Valida que lanza un error de no encontrado cuando obtener un usuario por id retorna None."""
+    """Valida que obtener usuario por id lanza not-found cuando no existe."""
     datasource = Mock(spec=UserDatasource)
     datasource.get_user_by_id.return_value = None
     use_case = GetUserById(user_datasource=datasource)
@@ -54,7 +54,7 @@ def test_should_raise_not_found_when_get_user_by_id_returns_none() -> None:
 
 # Tipo de test: Unit
 def test_should_return_user_when_get_user_by_id_finds_entity() -> None:
-    """Valida que retorna un usuario cuando obtiene un usuario por id cuando la entidad existe."""
+    """Valida que obtener usuario por id retorna entidad cuando existe."""
     datasource = Mock(spec=UserDatasource)
     expected_user = make_user()
     datasource.get_user_by_id.return_value = expected_user
@@ -67,29 +67,55 @@ def test_should_return_user_when_get_user_by_id_finds_entity() -> None:
 
 
 # Tipo de test: Unit
-def test_should_delegate_update_user_to_datasource() -> None:
-    """Valida que delega la operacion de actualizar usuario a la fuente de datos."""
+def test_should_mutate_and_persist_user_when_update_is_valid() -> None:
+    """Valida que update aplica metodos de dominio y persiste entidad mutada."""
     datasource = Mock(spec=UserDatasource)
-    expected_user = make_user()
-    datasource.update_user.return_value = expected_user
+    existing_user = make_user()
+    datasource.get_user_by_id.return_value = existing_user
+    datasource.update_user.return_value = existing_user
     use_case = UpdateUser(user_datasource=datasource)
     params = UpdateUserParams(
         id="user-1",
         name="Mauricio",
-        lastname="Salinas",
+        lastname="Salas",
         email="mauricio@mail.com",
-        birthdate=date(2000, 1, 1),
+        birthdate=date(1999, 1, 1),
     )
 
     result = use_case.execute(params)
 
-    datasource.update_user.assert_called_once_with(params)
-    assert result == expected_user
+    datasource.get_user_by_id.assert_called_once_with("user-1")
+    datasource.update_user.assert_called_once()
+    persisted_user = datasource.update_user.call_args.args[0]
+    assert persisted_user.name == "Mauricio"
+    assert persisted_user.lastname == "Salas"
+    assert persisted_user.email.value == "mauricio@mail.com"
+    assert persisted_user.birthdate == date(1999, 1, 1)
+    assert result == existing_user
+
+
+# Tipo de test: Unit
+def test_should_raise_not_found_when_updating_missing_user() -> None:
+    """Valida que update lanza not-found cuando el usuario no existe."""
+    datasource = Mock(spec=UserDatasource)
+    datasource.get_user_by_id.return_value = None
+    use_case = UpdateUser(user_datasource=datasource)
+
+    with pytest.raises(ResourceNotFoundException, match="user not found"):
+        use_case.execute(
+            UpdateUserParams(
+                id="missing",
+                name="Mauricio",
+                lastname="Salas",
+                email="mauricio@mail.com",
+                birthdate=date(1999, 1, 1),
+            )
+        )
 
 
 # Tipo de test: Unit
 def test_should_delegate_delete_user_to_datasource() -> None:
-    """Valida que delega la operacion de eliminar usuario a la fuente de datos."""
+    """Valida que delete delega la eliminacion al datasource."""
     datasource = Mock(spec=UserDatasource)
     use_case = DeleteUser(user_datasource=datasource)
 
