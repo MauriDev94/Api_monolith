@@ -1,4 +1,3 @@
-from app.features.todos.application.dto.update_todo_params import UpdateTodoParams
 from app.features.todos.domain.entities.todo import Todo
 from app.features.todos.infrastructure.models.todo_model import TodoModel
 
@@ -16,9 +15,9 @@ def map_todo_model_to_entity(todo_model: TodoModel) -> Todo:
     )
 
 
-def map_update_todo_params_to_model(todo_model: TodoModel, params: UpdateTodoParams) -> TodoModel:
-    """Apply update DTO values into an existing ORM todo model."""
-    todo_model.title = params.title
-    todo_model.description = params.description
-    todo_model.is_completed = params.is_completed
+def map_todo_entity_to_model(todo_model: TodoModel, todo: Todo) -> TodoModel:
+    """Apply mutable domain todo state into an existing ORM todo model."""
+    todo_model.title = todo.title
+    todo_model.description = todo.description
+    todo_model.is_completed = todo.is_completed
     return todo_model

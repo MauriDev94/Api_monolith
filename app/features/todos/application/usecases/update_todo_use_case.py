@@ -12,8 +12,15 @@ class UpdateTodo(UseCase[UpdateTodoParams, Todo]):
         self.todo_datasource = todo_datasource
 
     def execute(self, params: UpdateTodoParams) -> Todo:
-        existing_todo = self.todo_datasource.get_todo_by_id(params.todo_id)
-        if existing_todo is None or existing_todo.user_id != params.user_id:
+        todo = self.todo_datasource.get_todo_by_id(params.todo_id)
+        if todo is None or todo.user_id != params.user_id:
             raise ResourceNotFoundException("todo not found")
 
-        return self.todo_datasource.update_todo(params)
+        todo.rename(params.title)
+        todo.change_description(params.description)
+        if params.is_completed:
+            todo.mark_completed()
+        else:
+            todo.mark_pending()
+
+        return self.todo_datasource.update_todo(todo)

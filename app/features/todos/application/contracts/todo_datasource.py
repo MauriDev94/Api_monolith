@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from app.features.todos.application.dto.create_todo_params import CreateTodoParams
-from app.features.todos.application.dto.update_todo_params import UpdateTodoParams
 from app.features.todos.domain.entities.todo import Todo
 
 
@@ -21,7 +20,7 @@ class TodoDatasource(ABC):
         pass
 
     @abstractmethod
-    def update_todo(self, params: UpdateTodoParams) -> Todo:
+    def update_todo(self, todo: Todo) -> Todo:
         pass
 
     @abstractmethod

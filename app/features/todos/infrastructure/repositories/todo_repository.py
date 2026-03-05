@@ -6,11 +6,10 @@ from sqlalchemy.orm import Session
 from app.core.exceptions.exceptions import DatabaseException, ResourceNotFoundException
 from app.features.todos.application.contracts.todo_datasource import TodoDatasource
 from app.features.todos.application.dto.create_todo_params import CreateTodoParams
-from app.features.todos.application.dto.update_todo_params import UpdateTodoParams
 from app.features.todos.domain.entities.todo import Todo
 from app.features.todos.infrastructure.mappers.todo_mapper import (
+    map_todo_entity_to_model,
     map_todo_model_to_entity,
-    map_update_todo_params_to_model,
 )
 from app.features.todos.infrastructure.models.todo_model import TodoModel
 
@@ -58,16 +57,19 @@ class TodoRepository(TodoDatasource):
             return None
         return map_todo_model_to_entity(todo_model)
 
-    def update_todo(self, params: UpdateTodoParams) -> Todo:
+    def update_todo(self, todo: Todo) -> Todo:
+        if todo.id is None:
+            raise ResourceNotFoundException("todo not found")
+
         try:
-            todo_model = self.session.query(TodoModel).filter(TodoModel.id == params.todo_id).first()
+            todo_model = self.session.query(TodoModel).filter(TodoModel.id == todo.id).first()
         except SQLAlchemyError as exc:
             raise DatabaseException("failed to retrieve todo for update") from exc
 
         if todo_model is None:
             raise ResourceNotFoundException("todo not found")
 
-        map_update_todo_params_to_model(todo_model=todo_model, params=params)
+        map_todo_entity_to_model(todo_model=todo_model, todo=todo)
 
         try:
             self.session.commit()
