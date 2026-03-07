@@ -21,4 +21,4 @@ class UpdateUserProfile(UseCase[UpdateUserProfileParams, User]):
         user.change_lastname(params.lastname)
         user.change_birthdate(params.birthdate)
 
-        return self.user_datasource.update_user(user)
+        return self.user_datasource.update_user_profile(user)

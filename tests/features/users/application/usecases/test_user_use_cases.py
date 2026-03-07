@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.core.exceptions.exceptions import ResourceNotFoundException
+from app.core.exceptions.exceptions import ResourceConflictException, ResourceNotFoundException
 from app.features.users.application.contracts.user_datasource import UserDatasource
 from app.features.users.application.dto.change_user_email_params import ChangeUserEmailParams
 from app.features.users.application.dto.delete_user_params import DeleteUserParams
@@ -76,7 +76,7 @@ def test_should_mutate_and_persist_profile_fields_when_update_profile_is_valid()
     datasource = Mock(spec=UserDatasource)
     existing_user = make_user()
     datasource.get_user_by_id.return_value = existing_user
-    datasource.update_user.return_value = existing_user
+    datasource.update_user_profile.return_value = existing_user
     use_case = UpdateUserProfile(user_datasource=datasource)
 
     result = use_case.execute(
@@ -89,8 +89,8 @@ def test_should_mutate_and_persist_profile_fields_when_update_profile_is_valid()
     )
 
     datasource.get_user_by_id.assert_called_once_with("user-1")
-    datasource.update_user.assert_called_once()
-    persisted_user = datasource.update_user.call_args.args[0]
+    datasource.update_user_profile.assert_called_once()
+    persisted_user = datasource.update_user_profile.call_args.args[0]
     assert persisted_user.name == "Mauricio"
     assert persisted_user.lastname == "Salas"
     assert persisted_user.birthdate == date(1999, 1, 1)
@@ -117,20 +117,36 @@ def test_should_raise_not_found_when_updating_profile_of_missing_user() -> None:
 
 # Tipo de test: Unit
 def test_should_change_email_and_persist_when_change_email_is_valid() -> None:
-    """Valida que change email muta el email del usuario y persiste el resultado."""
+    """Valida que change email verifica disponibilidad, muta email y persiste."""
     datasource = Mock(spec=UserDatasource)
     existing_user = make_user()
     datasource.get_user_by_id.return_value = existing_user
-    datasource.update_user.return_value = existing_user
+    datasource.is_email_registered.return_value = False
+    datasource.update_user_email.return_value = existing_user
     use_case = ChangeUserEmail(user_datasource=datasource)
 
     result = use_case.execute(ChangeUserEmailParams(id="user-1", email="new@mail.com"))
 
     datasource.get_user_by_id.assert_called_once_with("user-1")
-    datasource.update_user.assert_called_once()
-    persisted_user = datasource.update_user.call_args.args[0]
+    datasource.is_email_registered.assert_called_once_with("new@mail.com", exclude_user_id="user-1")
+    datasource.update_user_email.assert_called_once()
+    persisted_user = datasource.update_user_email.call_args.args[0]
     assert persisted_user.email.value == "new@mail.com"
     assert result == existing_user
+
+
+# Tipo de test: Unit
+def test_should_raise_conflict_when_changing_to_taken_email() -> None:
+    """Valida que change email lanza conflicto cuando el email ya existe."""
+    datasource = Mock(spec=UserDatasource)
+    datasource.get_user_by_id.return_value = make_user()
+    datasource.is_email_registered.return_value = True
+    use_case = ChangeUserEmail(user_datasource=datasource)
+
+    with pytest.raises(ResourceConflictException, match="email already registered"):
+        use_case.execute(ChangeUserEmailParams(id="user-1", email="ana@mail.com"))
+
+    datasource.update_user_email.assert_not_called()
 
 
 # Tipo de test: Unit

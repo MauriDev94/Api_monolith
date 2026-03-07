@@ -60,27 +60,54 @@ def test_should_get_user_by_id(db_session: Session) -> None:
 
 
 # Tipo de test: Integration
-def test_should_update_user(db_session: Session) -> None:
-    """Valida que el repositorio persiste estado mutado de un usuario."""
+def test_should_report_email_registered_with_exclusion(db_session: Session) -> None:
+    """Valida que la verificación de email respeta exclusión por user_id."""
+    repository = UserRepository(session=db_session)
+    user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
+
+    assert repository.is_email_registered("mauri@mail.com") is True
+    assert repository.is_email_registered("mauri@mail.com", exclude_user_id=user_id) is False
+
+
+# Tipo de test: Integration
+def test_should_update_user_profile(db_session: Session) -> None:
+    """Valida que update_user_profile persiste cambios de perfil."""
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
     user = repository.get_user_by_id(user_id)
     assert user is not None
 
     user.change_name("Mauricio")
-    user.change_email("mauricio@mail.com")
+    user.change_lastname("Salas")
     user.change_birthdate(date(1999, 1, 1))
 
-    updated_user = repository.update_user(user)
+    updated_user = repository.update_user_profile(user)
 
     assert updated_user.id == user_id
     assert updated_user.name == "Mauricio"
+    assert updated_user.lastname == "Salas"
+    assert updated_user.birthdate == date(1999, 1, 1)
+
+
+# Tipo de test: Integration
+def test_should_update_user_email(db_session: Session) -> None:
+    """Valida que update_user_email persiste cambio de email."""
+    repository = UserRepository(session=db_session)
+    user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
+    user = repository.get_user_by_id(user_id)
+    assert user is not None
+
+    user.change_email("mauricio@mail.com")
+
+    updated_user = repository.update_user_email(user)
+
+    assert updated_user.id == user_id
     assert updated_user.email.value == "mauricio@mail.com"
 
 
 # Tipo de test: Integration
-def test_should_raise_not_found_when_updating_missing_user(db_session: Session) -> None:
-    """Valida que el repositorio lanza not-found al actualizar un usuario inexistente."""
+def test_should_raise_not_found_when_updating_missing_user_profile(db_session: Session) -> None:
+    """Valida que update_user_profile lanza not-found para usuario inexistente."""
     repository = UserRepository(session=db_session)
 
     missing_user = User(
@@ -93,12 +120,12 @@ def test_should_raise_not_found_when_updating_missing_user(db_session: Session) 
     )
 
     with pytest.raises(ResourceNotFoundException, match="user not found"):
-        repository.update_user(missing_user)
+        repository.update_user_profile(missing_user)
 
 
 # Tipo de test: Integration
 def test_should_raise_conflict_when_updating_to_existing_email(db_session: Session) -> None:
-    """Valida que el repositorio traduce conflicto al actualizar email duplicado."""
+    """Valida que update_user_email traduce conflicto al persistir email duplicado."""
     repository = UserRepository(session=db_session)
     first_user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
     _seed_user(db_session, name="Ana", lastname="Lopez", email="ana@mail.com")
@@ -108,7 +135,7 @@ def test_should_raise_conflict_when_updating_to_existing_email(db_session: Sessi
     first_user.change_email("ana@mail.com")
 
     with pytest.raises(ResourceConflictException, match="email already registered"):
-        repository.update_user(first_user)
+        repository.update_user_email(first_user)
 
 
 # Tipo de test: Integration

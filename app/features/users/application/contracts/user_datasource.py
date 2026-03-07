@@ -17,8 +17,23 @@ class UserDatasource(ABC):
         pass
 
     @abstractmethod
+    def is_email_registered(self, email: str, exclude_user_id: str | None = None) -> bool:
+        """Return True when email already belongs to another persisted user."""
+        pass
+
+    @abstractmethod
+    def update_user_profile(self, user: User) -> User:
+        """Persist profile field changes and return updated entity."""
+        pass
+
+    @abstractmethod
+    def update_user_email(self, user: User) -> User:
+        """Persist email change and return updated entity."""
+        pass
+
+    @abstractmethod
     def update_user(self, user: User) -> User:
-        """Persist user changes and return the updated domain entity."""
+        """Persist complete user changes and return the updated domain entity."""
         pass
 
     @abstractmethod
