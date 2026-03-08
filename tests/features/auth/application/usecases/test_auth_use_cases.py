@@ -30,45 +30,52 @@ def make_user() -> User:
 
 
 # Tipo de test: Unit
-def test_should_raise_conflict_when_registering_existing_email() -> None:
-    """Valida que lanza conflicto cuando registrar existente email."""
+def test_should_normalize_email_before_register_conflict_check() -> None:
+    """Valida que register normaliza email antes de consultar duplicados."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     datasource.get_user_by_email.return_value = make_user()
     use_case = RegisterUser(auth_datasource=datasource, password_manager=password_manager)
-    params = RegisterUserParams(
-        name="Mauri",
-        lastname="Salinas",
-        email="mauri@mail.com",
-        password="plain1234",
-        birthdate=date(2000, 1, 1),
-    )
 
     with pytest.raises(ResourceConflictException, match="email already registered"):
-        use_case.execute(params)
+        use_case.execute(
+            RegisterUserParams(
+                name="Mauri",
+                lastname="Salinas",
+                email="  MAURI@MAIL.COM  ",
+                password="plain1234",
+                birthdate=date(2000, 1, 1),
+            )
+        )
+
+    datasource.get_user_by_email.assert_called_once_with("mauri@mail.com")
 
 
 # Tipo de test: Unit
 def test_should_hash_password_and_register_new_user() -> None:
-    """Valida que hash contrasena y registrar new usuario."""
+    """Valida que hash contrasena y registra usuario usando email normalizado."""
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     datasource.get_user_by_email.return_value = None
     password_manager.hash_password.return_value = "hashed-password"
     datasource.register_user.return_value = make_user()
     use_case = RegisterUser(auth_datasource=datasource, password_manager=password_manager)
-    params = RegisterUserParams(
-        name="Mauri",
-        lastname="Salinas",
-        email="mauri@mail.com",
-        password="plain1234",
-        birthdate=date(2000, 1, 1),
+
+    result = use_case.execute(
+        RegisterUserParams(
+            name="Mauri",
+            lastname="Salinas",
+            email="  MAURI@MAIL.COM  ",
+            password="plain1234",
+            birthdate=date(2000, 1, 1),
+        )
     )
 
-    result = use_case.execute(params)
-
     password_manager.hash_password.assert_called_once_with("plain1234")
-    datasource.register_user.assert_called_once_with(params=params, password_hash="hashed-password")
+    datasource.get_user_by_email.assert_called_once_with("mauri@mail.com")
+    datasource.register_user.assert_called_once()
+    persisted_params = datasource.register_user.call_args.kwargs["params"]
+    assert persisted_params.email == "mauri@mail.com"
     assert result.id == "user-1"
 
 
@@ -83,6 +90,21 @@ def test_should_raise_invalid_credentials_when_login_user_not_found() -> None:
 
     with pytest.raises(InvalidCredentialsException):
         use_case.execute(LoginUserParams(email="x@mail.com", password="bad"))
+
+
+# Tipo de test: Unit
+def test_should_normalize_email_before_login_lookup() -> None:
+    """Valida que login normaliza email antes de buscar usuario."""
+    datasource = Mock(spec=AuthDatasource)
+    password_manager = Mock(spec=PasswordManager)
+    token_manager = Mock(spec=TokenManager)
+    datasource.get_user_by_email.return_value = None
+    use_case = LoginUser(datasource, password_manager, token_manager)
+
+    with pytest.raises(InvalidCredentialsException):
+        use_case.execute(LoginUserParams(email="  MAURI@MAIL.COM  ", password="bad"))
+
+    datasource.get_user_by_email.assert_called_once_with("mauri@mail.com")
 
 
 # Tipo de test: Unit
