@@ -23,4 +23,5 @@ def map_user_entity_to_model(user_model: UserModel, user: User) -> UserModel:
     user_model.lastname = user.lastname
     user_model.email = user.email.value
     user_model.birthdate = user.birthdate
+    user_model.updated_at = user.updated_at
     return user_model

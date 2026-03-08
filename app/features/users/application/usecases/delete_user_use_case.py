@@ -11,5 +11,5 @@ class DeleteUser(UseCase[DeleteUserParams, None]):
 
     def execute(self, params: DeleteUserParams) -> None:
         """Delegate deletion to datasource."""
-        self.user_datasource.delete_user(params.user_id)
+        self.user_datasource.delete(params.user_id)
         return None

@@ -22,21 +22,11 @@ class UserDatasource(ABC):
         pass
 
     @abstractmethod
-    def update_user_profile(self, user: User) -> User:
-        """Persist profile field changes and return updated entity."""
-        pass
-
-    @abstractmethod
-    def update_user_email(self, user: User) -> User:
-        """Persist email change and return updated entity."""
-        pass
-
-    @abstractmethod
-    def update_user(self, user: User) -> User:
+    def update(self, user: User) -> User:
         """Persist complete user changes and return the updated domain entity."""
         pass
 
     @abstractmethod
-    def delete_user(self, user_id: str) -> None:
+    def delete(self, user_id: str) -> None:
         """Delete a user by id."""
         pass
