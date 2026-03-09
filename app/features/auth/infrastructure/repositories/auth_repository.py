@@ -7,6 +7,7 @@ from app.core.exceptions.exceptions import DatabaseException, ResourceConflictEx
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.users.domain.entities.user import User
+from app.features.users.domain.value_objects.email import Email
 from app.features.users.infrastructure.mappers.user_mapper import map_user_model_to_entity
 from app.features.users.infrastructure.models.user_model import UserModel
 
@@ -29,9 +30,11 @@ class AuthRepository(AuthDatasource):
         return map_user_model_to_entity(user_model)
 
     def get_user_by_email(self, email: str) -> User | None:
-        """Return user by email or None when it does not exist."""
+        """Return user by normalized email or None when it does not exist."""
+        normalized_email = Email(email).value
+
         try:
-            user_model = self.session.query(UserModel).filter(UserModel.email == email).first()
+            user_model = self.session.query(UserModel).filter(UserModel.email == normalized_email).first()
         except SQLAlchemyError as exc:
             raise DatabaseException("failed to retrieve user by email") from exc
 
@@ -41,11 +44,13 @@ class AuthRepository(AuthDatasource):
 
     def register_user(self, params: RegisterUserParams, password_hash: str) -> User:
         """Persist new user and map technical errors to app-level exceptions."""
+        normalized_email = Email(params.email).value
+
         user_model = UserModel(
             id=str(uuid4()),
             name=params.name,
             lastname=params.lastname,
-            email=params.email,
+            email=normalized_email,
             password_hash=password_hash,
             birthdate=params.birthdate,
         )

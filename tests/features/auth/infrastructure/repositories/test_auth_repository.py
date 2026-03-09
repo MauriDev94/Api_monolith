@@ -33,6 +33,26 @@ def test_should_register_user_and_fetch_by_email_and_id(db_session: Session) -> 
     assert found_by_id.id == created_user.id
 
 
+# Tipo de test: Integration
+def test_should_normalize_email_on_register_and_lookup(db_session: Session) -> None:
+    """Valida que repositorio normaliza email al registrar y buscar."""
+    repository = AuthRepository(session=db_session)
+    params = RegisterUserParams(
+        name="Mauri",
+        lastname="Salinas",
+        email="  MAURI@MAIL.COM  ",
+        password="plain1234",
+        birthdate=date(2000, 1, 1),
+    )
+
+    created_user = repository.register_user(params=params, password_hash="hashed-password")
+    found_by_email = repository.get_user_by_email("  mauri@mail.com  ")
+
+    assert created_user.email.value == "mauri@mail.com"
+    assert found_by_email is not None
+    assert found_by_email.id == created_user.id
+
+
 # Ensures missing users are handled safely with None instead of exceptions.
 # Tipo de test: Integration
 def test_should_return_none_when_user_does_not_exist(db_session: Session) -> None:
@@ -51,7 +71,14 @@ def test_should_return_none_when_user_does_not_exist(db_session: Session) -> Non
 def test_should_raise_conflict_when_registering_duplicate_email(db_session: Session) -> None:
     """Valida que lanza conflicto cuando registrar duplicado email."""
     repository = AuthRepository(session=db_session)
-    params = RegisterUserParams(
+    first_params = RegisterUserParams(
+        name="Mauri",
+        lastname="Salinas",
+        email="  MAURI@MAIL.COM  ",
+        password="plain1234",
+        birthdate=date(2000, 1, 1),
+    )
+    duplicate_params = RegisterUserParams(
         name="Mauri",
         lastname="Salinas",
         email="mauri@mail.com",
@@ -59,7 +86,7 @@ def test_should_raise_conflict_when_registering_duplicate_email(db_session: Sess
         birthdate=date(2000, 1, 1),
     )
 
-    repository.register_user(params=params, password_hash="hashed-password")
+    repository.register_user(params=first_params, password_hash="hashed-password")
 
     with pytest.raises(ResourceConflictException, match="email already registered"):
-        repository.register_user(params=params, password_hash="another-hash")
+        repository.register_user(params=duplicate_params, password_hash="another-hash")

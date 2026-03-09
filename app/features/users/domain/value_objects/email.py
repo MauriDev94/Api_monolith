@@ -10,12 +10,9 @@ class Email:
 
     _MAX_EMAIL_LENGTH = 254
     _MAX_LOCAL_PART_LENGTH = 64
-    # Local-part (antes de @): solo letras, números y estos caracteres: . _ -
-    # Ejemplos válidos: user.name, foo_bar, admin-1
+
     _LOCAL_PART_PATTERN = re.compile(r"^[a-z0-9._-]+$")
-    # Cada etiqueta del dominio (separada por '.'): solo letras.
-    # Ejemplos válidos: gmail, hotmail, outlook
-    _DOMAIN_LABEL_PATTERN = re.compile(r"^[a-z]+$")
+    _DOMAIN_LABEL_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
 
     def __post_init__(self) -> None:
         normalized = self.value.strip().lower()
@@ -47,6 +44,9 @@ class Email:
 
         labels = domain_part.split(".")
         if len(labels) < 2:
+            raise ValueError("invalid email format")
+
+        if any(len(label) > 63 for label in labels):
             raise ValueError("invalid email format")
 
         if any(not self._DOMAIN_LABEL_PATTERN.fullmatch(label) for label in labels):
