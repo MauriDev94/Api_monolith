@@ -22,7 +22,11 @@ class LoginUser(UseCase[LoginUserParams, TokenPairResult]):
         self.token_manager = token_manager
 
     def execute(self, params: LoginUserParams) -> TokenPairResult:
-        normalized_email = Email(params.email).value
+        try:
+            normalized_email = Email(params.email).value
+        except ValueError as exc:
+            # Keep authentication response stable and avoid leaking format details.
+            raise InvalidCredentialsException() from exc
 
         user = self.auth_datasource.get_user_by_email(normalized_email)
         if user is None:

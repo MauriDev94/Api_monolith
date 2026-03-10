@@ -80,6 +80,22 @@ def test_should_hash_password_and_register_new_user() -> None:
 
 
 # Tipo de test: Unit
+
+# Tipo de test: Unit
+def test_should_raise_invalid_credentials_when_login_email_format_is_invalid() -> None:
+    """Valida que login trata email malformado como credenciales invalidas."""
+    datasource = Mock(spec=AuthDatasource)
+    password_manager = Mock(spec=PasswordManager)
+    token_manager = Mock(spec=TokenManager)
+    use_case = LoginUser(datasource, password_manager, token_manager)
+
+    with pytest.raises(InvalidCredentialsException):
+        use_case.execute(LoginUserParams(email="user+tag@mail.com", password="bad"))
+
+    datasource.get_user_by_email.assert_not_called()
+
+
+# Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_login_user_not_found() -> None:
     """Valida que lanza invalido credenciales cuando login usuario no encontrado."""
     datasource = Mock(spec=AuthDatasource)
@@ -206,3 +222,5 @@ def test_should_return_current_user_when_access_token_is_valid() -> None:
 
     datasource.get_user_by_id.assert_called_once_with("user-1")
     assert result == expected_user
+
+

@@ -39,6 +39,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+
+async def value_error_exception_handler(request: Request, exc: ValueError):
+    """Normalize domain validation errors into a consistent 400 response."""
+    _request_logger(request).warning(f"ValueError: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"message": str(exc) or "Validation error"},
+    )
+
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Map HTTP exceptions while hiding details for 5xx responses."""
     request_logger = _request_logger(request)
@@ -125,6 +134,7 @@ async def resource_not_found_exception_handler(request: Request, exc: ResourceNo
 def register_exception_handlers(app: FastAPI):
     """Register all global exception handlers in priority order."""
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(ValueError, value_error_exception_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(DatabaseException, database_exception_handler)
     app.add_exception_handler(InternalServerErrorException, internal_server_error_exception_handler)
@@ -132,3 +142,4 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(ResourceConflictException, resource_conflict_exception_handler)
     app.add_exception_handler(ResourceNotFoundException, resource_not_found_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
+
