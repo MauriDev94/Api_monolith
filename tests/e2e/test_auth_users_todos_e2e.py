@@ -65,6 +65,18 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
         access_token = login_payload["access_token"]
         refresh_token = login_payload["refresh_token"]
 
+        update_user_response = client.put(
+            f"/v1/users/{user_id}",
+            headers=_auth_headers(access_token),
+            json={
+                "name": "Mauricio",
+                "lastname": "Salinas",
+                "email": "mauri@mail.com",
+                "birthdate": "2000-01-01",
+            },
+        )
+        assert update_user_response.status_code == 200
+
         me_response = client.get("/auth/v1/me", headers=_auth_headers(access_token))
         assert me_response.status_code == 200
         assert me_response.json()["user"]["id"] == user_id
@@ -124,13 +136,14 @@ def test_should_enforce_auth_and_ownership_error_scenarios(db_session: Session) 
         unauthorized_response = client.get("/v1/todos")
         assert unauthorized_response.status_code == 401
 
-        _register_user(
+        register_payload = _register_user(
             client,
             name="Mauri",
             lastname="Salinas",
             email="mauri@mail.com",
             password="pass1234",
         )
+        user_id = register_payload["user"]["id"]
 
         duplicate_register_response = client.post(
             "/auth/v1/register",
@@ -176,5 +189,17 @@ def test_should_enforce_auth_and_ownership_error_scenarios(db_session: Session) 
             headers={"Authorization": "Bearer invalid-token"},
         )
         assert invalid_token_response.status_code == 401
+
+        invalid_email_response = client.put(
+            f"/v1/users/{user_id}",
+            headers=_auth_headers(token_user_one),
+            json={
+                "name": "Mauri",
+                "lastname": "Salinas",
+                "email": "user+tag@mail.com",
+                "birthdate": "2000-01-01",
+            },
+        )
+        assert invalid_email_response.status_code == 400
     finally:
         app.dependency_overrides.clear()

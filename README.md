@@ -129,6 +129,16 @@ uvicorn app.main:app --reload
    - `Authorization: Bearer <access_token>`
 4. Renovar access token en `/auth/v1/refresh` con `refresh_token`.
 
+
+## Politica de email
+
+El dominio valida emails con estas reglas:
+- Local-part (antes de @): solo letras, numeros y estos caracteres: . _ -
+- Dominio: etiquetas separadas por '.' con letras, numeros y guion interno
+- Sin puntos al inicio/fin ni dobles puntos
+- Longitud maxima total 254, local-part max 64
+
+Nota: Emails con '+' no son validos (ej: user+tag@mail.com).
 ## Testing
 
 La suite está clasificada con marcadores `pytest`:
@@ -169,3 +179,4 @@ pytest -q -m e2e
 - `tests/features/**/infrastructure/repositories`: integración con DB en memoria
 - `tests/features/**/presentation`: integración de capa API con overrides
 - `tests/e2e`: flujos end-to-end
+

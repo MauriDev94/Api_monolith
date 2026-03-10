@@ -102,3 +102,26 @@ def test_should_return_404_when_update_user_is_not_self() -> None:
     assert response.status_code == 404
     assert response.json()["message"] == "user not found"
     assert use_case.received is None
+
+
+# Tipo de test: Integration
+def test_should_return_400_when_update_user_email_is_invalid() -> None:
+    """Valida que update user retorna 400 si el email no cumple policy de dominio."""
+    client = create_test_client()
+    use_case = StubUseCase(result=make_user("user-1"))
+    override_all_user_use_cases(client, use_case)
+    client.app.dependency_overrides[get_authenticated_user] = lambda: make_user("user-1")
+
+    response = client.put(
+        "/v1/users/user-1",
+        json={
+            "name": "Ana",
+            "lastname": "Lopez",
+            "email": "user+tag@mail.com",
+            "birthdate": "2000-01-01",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["message"] == "Validation error"
+    assert use_case.received is None
