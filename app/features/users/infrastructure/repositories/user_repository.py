@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.exceptions.exceptions import DatabaseException, ResourceConflictException, ResourceNotFoundException
 from app.features.users.application.contracts.user_datasource import UserDatasource
 from app.features.users.domain.entities.user import User
+from app.features.users.domain.value_objects.email import Email
 from app.features.users.infrastructure.mappers.user_mapper import (
     map_user_entity_to_model,
     map_user_model_to_entity,
@@ -37,10 +38,10 @@ class UserRepository(UserDatasource):
             return None
         return map_user_model_to_entity(user_model)
 
-    def is_email_registered(self, email: str, exclude_user_id: str | None = None) -> bool:
+    def is_email_registered(self, email: Email, exclude_user_id: str | None = None) -> bool:
         """Check if email is already assigned to another user."""
         try:
-            query = self.session.query(UserModel).filter(UserModel.email == email)
+            query = self.session.query(UserModel).filter(UserModel.email == email.value)
             if exclude_user_id is not None:
                 query = query.filter(UserModel.id != exclude_user_id)
             return query.first() is not None

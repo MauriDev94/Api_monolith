@@ -6,7 +6,7 @@ from datetime import date
 class UpdateUserParams:
     """Input DTO for updating an existing user."""
 
-    id: str
+    user_id: str
     name: str
     lastname: str
     email: str

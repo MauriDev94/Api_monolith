@@ -65,8 +65,8 @@ def test_should_report_email_registered_with_exclusion(db_session: Session) -> N
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
 
-    assert repository.is_email_registered("mauri@mail.com") is True
-    assert repository.is_email_registered("mauri@mail.com", exclude_user_id=user_id) is False
+    assert repository.is_email_registered(Email("mauri@mail.com")) is True
+    assert repository.is_email_registered(Email("mauri@mail.com"), exclude_user_id=user_id) is False
 
 
 # Tipo de test: Integration

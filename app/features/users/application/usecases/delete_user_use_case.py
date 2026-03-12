@@ -3,7 +3,7 @@ from app.features.users.application.contracts.user_datasource import UserDatasou
 from app.features.users.application.dto.delete_user_params import DeleteUserParams
 
 
-class DeleteUser(UseCase[DeleteUserParams, None]):
+class DeleteUserUseCase(UseCase[DeleteUserParams, None]):
     """Delete a user by identifier."""
 
     def __init__(self, user_datasource: UserDatasource):

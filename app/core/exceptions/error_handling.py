@@ -6,11 +6,13 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 
 from app.core.exceptions.exceptions import (
-    DatabaseException,
-    InternalServerErrorException,
-    InvalidCredentialsException,
-    ResourceConflictException,
-    ResourceNotFoundException,
+    ConflictError,
+    DatabaseError,
+    ForbiddenError,
+    InternalServerError,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError,
 )
 
 
@@ -83,7 +85,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
-async def database_exception_handler(request: Request, exc: DatabaseException):
+async def database_exception_handler(request: Request, exc: DatabaseError):
     """Handle persistence failures using a dedicated response envelope."""
     _request_logger(request).error(f"DatabaseException: {exc}")
     return JSONResponse(
@@ -94,7 +96,7 @@ async def database_exception_handler(request: Request, exc: DatabaseException):
 
 async def internal_server_error_exception_handler(
     request: Request,
-    exc: InternalServerErrorException,
+    exc: InternalServerError,
 ):
     """Handle known internal failures raised by the application layer."""
     _request_logger(request).error(f"InternalServerErrorException: {exc}")
@@ -104,16 +106,24 @@ async def internal_server_error_exception_handler(
     )
 
 
-async def invalid_credentials_exception_handler(request: Request, exc: InvalidCredentialsException):
+async def unauthorized_exception_handler(request: Request, exc: UnauthorizedError):
     """Return a stable unauthorized response for invalid credentials."""
-    _request_logger(request).warning("InvalidCredentialsException triggered")
+    _request_logger(request).warning(f"UnauthorizedError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        content={"message": "Invalid email or password"},
+        content={"message": str(exc) or "Unauthorized"},
+    )
+
+async def forbidden_exception_handler(request: Request, exc: ForbiddenError):
+    """Return a forbidden response for access control violations."""
+    _request_logger(request).warning(f"ForbiddenError: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_403_FORBIDDEN,
+        content={"message": str(exc) or "Forbidden"},
     )
 
 
-async def resource_conflict_exception_handler(request: Request, exc: ResourceConflictException):
+async def resource_conflict_exception_handler(request: Request, exc: ConflictError):
     """Return a conflict response when resource uniqueness is violated."""
     _request_logger(request).warning(f"ResourceConflictException: {exc}")
     return JSONResponse(
@@ -122,7 +132,7 @@ async def resource_conflict_exception_handler(request: Request, exc: ResourceCon
     )
 
 
-async def resource_not_found_exception_handler(request: Request, exc: ResourceNotFoundException):
+async def resource_not_found_exception_handler(request: Request, exc: NotFoundError):
     """Return a not-found response for missing resources."""
     _request_logger(request).warning(f"ResourceNotFoundException: {exc}")
     return JSONResponse(
@@ -130,16 +140,26 @@ async def resource_not_found_exception_handler(request: Request, exc: ResourceNo
         content={"message": str(exc) or "Resource not found"},
     )
 
+async def validation_error_exception_handler(request: Request, exc: ValidationError):
+    """Return a validation response for domain/application validation errors."""
+    _request_logger(request).warning(f"ValidationError: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"message": str(exc) or "Validation error"},
+    )
+
 
 def register_exception_handlers(app: FastAPI):
     """Register all global exception handlers in priority order."""
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(ValidationError, validation_error_exception_handler)
     app.add_exception_handler(ValueError, value_error_exception_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
-    app.add_exception_handler(DatabaseException, database_exception_handler)
-    app.add_exception_handler(InternalServerErrorException, internal_server_error_exception_handler)
-    app.add_exception_handler(InvalidCredentialsException, invalid_credentials_exception_handler)
-    app.add_exception_handler(ResourceConflictException, resource_conflict_exception_handler)
-    app.add_exception_handler(ResourceNotFoundException, resource_not_found_exception_handler)
+    app.add_exception_handler(DatabaseError, database_exception_handler)
+    app.add_exception_handler(InternalServerError, internal_server_error_exception_handler)
+    app.add_exception_handler(UnauthorizedError, unauthorized_exception_handler)
+    app.add_exception_handler(ForbiddenError, forbidden_exception_handler)
+    app.add_exception_handler(ConflictError, resource_conflict_exception_handler)
+    app.add_exception_handler(NotFoundError, resource_not_found_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 

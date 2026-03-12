@@ -1,18 +1,53 @@
-class DatabaseException(Exception):
-    """Raised when persistence operations fail unexpectedly."""
+class AppError(Exception):
+    """Base class for domain/application errors mapped to HTTP responses."""
 
 
-class InternalServerErrorException(Exception):
-    """Raised for unexpected application failures."""
+class NotFoundError(AppError):
+    """Mapped to HTTP 404."""
 
 
-class InvalidCredentialsException(Exception):
-    """Raised when authentication credentials are invalid."""
+class ConflictError(AppError):
+    """Mapped to HTTP 409."""
 
 
-class ResourceConflictException(Exception):
-    """Raised when trying to create a resource that already exists."""
+class UnauthorizedError(AppError):
+    """Mapped to HTTP 401."""
 
 
-class ResourceNotFoundException(Exception):
-    """Raised when a requested resource does not exist."""
+class ForbiddenError(AppError):
+    """Mapped to HTTP 403."""
+
+
+class ValidationError(AppError):
+    """Mapped to HTTP 422."""
+
+
+class InternalServerError(AppError):
+    """Mapped to HTTP 500."""
+
+
+class DatabaseError(AppError):
+    """Mapped to HTTP 500 for persistence failures."""
+
+
+class DatabaseException(DatabaseError):
+    """Backwards-compatible alias for database errors."""
+
+
+class InternalServerErrorException(InternalServerError):
+    """Backwards-compatible alias for internal server errors."""
+
+
+class InvalidCredentialsException(UnauthorizedError):
+    """Backwards-compatible alias for invalid credentials."""
+
+    def __init__(self, message: str | None = None) -> None:
+        super().__init__(message or "Invalid email or password")
+
+
+class ResourceConflictException(ConflictError):
+    """Backwards-compatible alias for resource conflicts."""
+
+
+class ResourceNotFoundException(NotFoundError):
+    """Backwards-compatible alias for missing resources."""

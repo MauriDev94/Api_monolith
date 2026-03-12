@@ -1,3 +1,4 @@
+from app.core.exceptions.exceptions import InternalServerErrorException
 from app.features.users.application.dto.get_user_by_id_params import GetUserByIdParams
 from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.domain.entities.user import User
@@ -8,7 +9,7 @@ from app.features.users.presentation.schemas.user_responses import UserResponse
 def map_update_user_request_to_params(user_id: str, request: UpdateUserRequest) -> UpdateUserParams:
     """Map update request payload to use-case parameters."""
     return UpdateUserParams(
-        id=user_id,
+        user_id=user_id,
         name=request.name,
         lastname=request.lastname,
         email=str(request.email),
@@ -23,8 +24,10 @@ def map_user_id_to_params(user_id: str) -> GetUserByIdParams:
 
 def map_user_entity_to_response(user: User) -> UserResponse:
     """Map user domain entity to HTTP response schema."""
+    if user.id is None:
+        raise InternalServerErrorException("user id is missing")
     return UserResponse(
-        id=user.id or "",
+        id=user.id,
         name=user.name,
         lastname=user.lastname,
         email=user.email.value,

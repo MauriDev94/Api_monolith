@@ -6,10 +6,10 @@ from app.core.exceptions.exceptions import InternalServerErrorException, Resourc
 from app.core.router.router import get_versioned_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.application.dto.delete_user_params import DeleteUserParams
-from app.features.users.application.usecases.delete_user_use_case import DeleteUser
-from app.features.users.application.usecases.get_all_users_use_case import GetAllUsers
-from app.features.users.application.usecases.get_user_by_id_use_case import GetUserById
-from app.features.users.application.usecases.update_user_use_case import UpdateUser
+from app.features.users.application.usecases.delete_user_use_case import DeleteUserUseCase
+from app.features.users.application.usecases.get_all_users_use_case import GetAllUsersUseCase
+from app.features.users.application.usecases.get_user_by_id_use_case import GetUserByIdUseCase
+from app.features.users.application.usecases.update_user_use_case import UpdateUserUseCase
 from app.features.users.di.dependencies import (
     get_delete_user_use_case,
     get_get_all_users_use_case,
@@ -50,7 +50,7 @@ def _ensure_self_access(path_user_id: str, current_user: User) -> None:
 @v1_router.get("/users")
 def get_all_users(
     _: Annotated[User, Depends(get_authenticated_user)],
-    get_all_users_use_case: Annotated[GetAllUsers, Depends(get_get_all_users_use_case)],
+    get_all_users_use_case: Annotated[GetAllUsersUseCase, Depends(get_get_all_users_use_case)],
 ) -> GetAllUsersResponse:
     """List all users for authenticated clients."""
     users = get_all_users_use_case.execute()
@@ -61,7 +61,7 @@ def get_all_users(
 def get_user_by_id(
     user_id: str,
     current_user: Annotated[User, Depends(get_authenticated_user)],
-    get_user_by_id_use_case: Annotated[GetUserById, Depends(get_get_user_by_id_use_case)],
+    get_user_by_id_use_case: Annotated[GetUserByIdUseCase, Depends(get_get_user_by_id_use_case)],
 ) -> GetUserByIdResponse:
     """Return a single user by identifier."""
     _ensure_self_access(path_user_id=user_id, current_user=current_user)
@@ -75,7 +75,7 @@ def update_user(
     user_id: str,
     request: UpdateUserRequest,
     current_user: Annotated[User, Depends(get_authenticated_user)],
-    update_user_use_case: Annotated[UpdateUser, Depends(get_update_user_use_case)],
+    update_user_use_case: Annotated[UpdateUserUseCase, Depends(get_update_user_use_case)],
 ) -> UpdateUserResponse:
     """Update user profile data."""
     _ensure_self_access(path_user_id=user_id, current_user=current_user)
@@ -88,7 +88,7 @@ def update_user(
 def delete_user(
     user_id: str,
     current_user: Annotated[User, Depends(get_authenticated_user)],
-    delete_user_use_case: Annotated[DeleteUser, Depends(get_delete_user_use_case)],
+    delete_user_use_case: Annotated[DeleteUserUseCase, Depends(get_delete_user_use_case)],
 ) -> DeleteUserResponse:
     """Delete an existing user."""
     _ensure_self_access(path_user_id=user_id, current_user=current_user)

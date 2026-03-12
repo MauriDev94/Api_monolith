@@ -6,7 +6,7 @@ from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
 
 
-class UpdateUser(UseCase[UpdateUserParams, User]):
+class UpdateUserUseCase(UseCase[UpdateUserParams, User]):
     """Update user profile and email in a single application flow."""
 
     def __init__(self, user_datasource: UserDatasource):
@@ -14,7 +14,7 @@ class UpdateUser(UseCase[UpdateUserParams, User]):
 
     def execute(self, params: UpdateUserParams) -> User:
         """Load user, apply domain mutations, validate email uniqueness, and persist once."""
-        user = self.user_datasource.get_user_by_id(params.id)
+        user = self.user_datasource.get_user_by_id(params.user_id)
         if user is None:
             raise ResourceNotFoundException("user not found")
 
@@ -22,10 +22,10 @@ class UpdateUser(UseCase[UpdateUserParams, User]):
         user.change_lastname(params.lastname)
         user.change_birthdate(params.birthdate)
 
-        normalized_email = Email(params.email).value
-        if user.email.value != normalized_email:
-            if self.user_datasource.is_email_registered(normalized_email, exclude_user_id=user.id):
+        email = Email(params.email)
+        if user.email.value != email.value:
+            if self.user_datasource.is_email_registered(email, exclude_user_id=user.id):
                 raise ResourceConflictException("email already registered")
-            user.change_email(normalized_email)
+            user.change_email(email)
 
         return self.user_datasource.update(user)

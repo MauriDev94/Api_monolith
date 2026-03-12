@@ -5,7 +5,7 @@ from app.features.users.application.dto.get_user_by_id_params import GetUserById
 from app.features.users.domain.entities.user import User
 
 
-class GetUserById(UseCase[GetUserByIdParams, User]):
+class GetUserByIdUseCase(UseCase[GetUserByIdParams, User]):
     """Retrieve a user by identifier."""
 
     def __init__(self, user_datasource: UserDatasource):

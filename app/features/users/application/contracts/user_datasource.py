@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.features.users.domain.entities.user import User
+from app.features.users.domain.value_objects.email import Email
 
 
 class UserDatasource(ABC):
@@ -17,7 +18,7 @@ class UserDatasource(ABC):
         pass
 
     @abstractmethod
-    def is_email_registered(self, email: str, exclude_user_id: str | None = None) -> bool:
+    def is_email_registered(self, email: Email, exclude_user_id: str | None = None) -> bool:
         """Return True when email already belongs to another persisted user."""
         pass
 

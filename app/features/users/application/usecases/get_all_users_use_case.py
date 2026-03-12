@@ -3,7 +3,7 @@ from app.features.users.application.contracts.user_datasource import UserDatasou
 from app.features.users.domain.entities.user import User
 
 
-class GetAllUsers(UseCaseNoParams[list[User]]):
+class GetAllUsersUseCase(UseCaseNoParams[list[User]]):
     """Retrieve all users from datasource."""
 
     def __init__(self, user_datasource: UserDatasource):
