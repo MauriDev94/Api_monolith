@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from sqlalchemy.orm import Session
 
-from app.core.exceptions.exceptions import ResourceConflictException, ResourceNotFoundException
+from app.core.exceptions.exceptions import ConflictError, NotFoundError
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.users.domain.entities.user import User
@@ -105,7 +105,7 @@ def test_should_raise_not_found_when_updating_missing_user(db_session: Session) 
         birthdate=date(1999, 1, 1),
     )
 
-    with pytest.raises(ResourceNotFoundException, match="user not found"):
+    with pytest.raises(NotFoundError, match="user not found"):
         repository.update(missing_user)
 
 
@@ -120,7 +120,7 @@ def test_should_raise_conflict_when_updating_to_existing_email(db_session: Sessi
     assert first_user is not None
     first_user.change_email("ana@mail.com")
 
-    with pytest.raises(ResourceConflictException, match="email already registered"):
+    with pytest.raises(ConflictError, match="email already registered"):
         repository.update(first_user)
 
 

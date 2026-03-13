@@ -1,5 +1,5 @@
 from app.common.use_case import UseCase
-from app.core.exceptions.exceptions import ResourceNotFoundException
+from app.core.exceptions.exceptions import NotFoundError
 from app.features.users.application.contracts.user_datasource import UserDatasource
 from app.features.users.application.dto.get_user_by_id_params import GetUserByIdParams
 from app.features.users.domain.entities.user import User
@@ -15,5 +15,5 @@ class GetUserByIdUseCase(UseCase[GetUserByIdParams, User]):
         """Return user when it exists, otherwise raise not-found error."""
         user = self.user_datasource.get_user_by_id(params.user_id)
         if user is None:
-            raise ResourceNotFoundException("user not found")
+            raise NotFoundError("user not found")
         return user

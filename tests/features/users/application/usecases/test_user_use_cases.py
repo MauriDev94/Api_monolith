@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.core.exceptions.exceptions import ResourceConflictException, ResourceNotFoundException
+from app.core.exceptions.exceptions import ConflictError, NotFoundError
 from app.features.users.application.contracts.user_datasource import UserDatasource
 from app.features.users.application.dto.delete_user_params import DeleteUserParams
 from app.features.users.application.dto.get_user_by_id_params import GetUserByIdParams
@@ -48,7 +48,7 @@ def test_should_raise_not_found_when_get_user_by_id_returns_none() -> None:
     datasource.get_user_by_id.return_value = None
     use_case = GetUserByIdUseCase(user_datasource=datasource)
 
-    with pytest.raises(ResourceNotFoundException, match="user not found"):
+    with pytest.raises(NotFoundError, match="user not found"):
         use_case.execute(GetUserByIdParams(user_id="missing"))
 
 
@@ -129,7 +129,7 @@ def test_should_raise_conflict_when_new_email_is_already_registered() -> None:
     datasource.is_email_registered.return_value = True
     use_case = UpdateUserUseCase(user_datasource=datasource)
 
-    with pytest.raises(ResourceConflictException, match="email already registered"):
+    with pytest.raises(ConflictError, match="email already registered"):
         use_case.execute(
             UpdateUserParams(
                 user_id="user-1",
@@ -150,7 +150,7 @@ def test_should_raise_not_found_when_updating_missing_user() -> None:
     datasource.get_user_by_id.return_value = None
     use_case = UpdateUserUseCase(user_datasource=datasource)
 
-    with pytest.raises(ResourceNotFoundException, match="user not found"):
+    with pytest.raises(NotFoundError, match="user not found"):
         use_case.execute(
             UpdateUserParams(
                 user_id="missing",

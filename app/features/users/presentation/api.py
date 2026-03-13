@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from app.core.exceptions.exceptions import InternalServerErrorException, ResourceNotFoundException
+from app.core.exceptions.exceptions import InternalServerError, NotFoundError
 from app.core.router.router import get_versioned_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.application.dto.delete_user_params import DeleteUserParams
@@ -36,7 +36,7 @@ v1_router = get_versioned_router("v1")
 def _require_user_id(current_user: User) -> str:
     """Guarantee a non-empty authenticated user id for authorization checks."""
     if current_user.id is None:
-        raise InternalServerErrorException("authenticated user id is missing")
+        raise InternalServerError("authenticated user id is missing")
     return current_user.id
 
 
@@ -44,7 +44,7 @@ def _ensure_self_access(path_user_id: str, current_user: User) -> None:
     """Allow access only to the authenticated user's own resource."""
     if path_user_id != _require_user_id(current_user):
         # Keep not-found semantics to avoid user-id enumeration.
-        raise ResourceNotFoundException("user not found")
+        raise NotFoundError("user not found")
 
 
 @v1_router.get("/users")

@@ -1,4 +1,4 @@
-from app.core.exceptions.exceptions import InternalServerErrorException
+from app.core.exceptions.exceptions import InternalServerError
 from app.features.users.application.dto.get_user_by_id_params import GetUserByIdParams
 from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.domain.entities.user import User
@@ -25,7 +25,7 @@ def map_user_id_to_params(user_id: str) -> GetUserByIdParams:
 def map_user_entity_to_response(user: User) -> UserResponse:
     """Map user domain entity to HTTP response schema."""
     if user.id is None:
-        raise InternalServerErrorException("user id is missing")
+        raise InternalServerError("user id is missing")
     return UserResponse(
         id=user.id,
         name=user.name,

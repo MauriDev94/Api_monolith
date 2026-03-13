@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guía de coordinación del sistema de agentes para el proyecto monolito modular FastAPI con Clean Architecture + DDD.
+Guía de coordinación del sistema de agentes para mis proyectos modulares FastAPI con Clean Architecture + DDD.
 
 ---
 

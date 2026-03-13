@@ -1,5 +1,5 @@
 from app.common.use_case import UseCase
-from app.core.exceptions.exceptions import ResourceConflictException, ResourceNotFoundException
+from app.core.exceptions.exceptions import ConflictError, NotFoundError
 from app.features.users.application.contracts.user_datasource import UserDatasource
 from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.domain.entities.user import User
@@ -16,7 +16,7 @@ class UpdateUserUseCase(UseCase[UpdateUserParams, User]):
         """Load user, apply domain mutations, validate email uniqueness, and persist once."""
         user = self.user_datasource.get_user_by_id(params.user_id)
         if user is None:
-            raise ResourceNotFoundException("user not found")
+            raise NotFoundError("user not found")
 
         user.change_name(params.name)
         user.change_lastname(params.lastname)
@@ -25,7 +25,7 @@ class UpdateUserUseCase(UseCase[UpdateUserParams, User]):
         email = Email(params.email)
         if user.email.value != email.value:
             if self.user_datasource.is_email_registered(email, exclude_user_id=user.id):
-                raise ResourceConflictException("email already registered")
+                raise ConflictError("email already registered")
             user.change_email(email)
 
         return self.user_datasource.update(user)

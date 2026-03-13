@@ -1,7 +1,7 @@
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions.exceptions import DatabaseException, ResourceConflictException, ResourceNotFoundException
+from app.core.exceptions.exceptions import ConflictError, DatabaseError, NotFoundError
 from app.features.users.application.contracts.user_datasource import UserDatasource
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
@@ -23,7 +23,7 @@ class UserRepository(UserDatasource):
         try:
             users_model = self.session.query(UserModel).all()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve users") from exc
+            raise DatabaseError("failed to retrieve users") from exc
 
         return [map_user_model_to_entity(user_model) for user_model in users_model]
 
@@ -32,7 +32,7 @@ class UserRepository(UserDatasource):
         try:
             user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve user by id") from exc
+            raise DatabaseError("failed to retrieve user by id") from exc
 
         if user_model is None:
             return None
@@ -46,20 +46,20 @@ class UserRepository(UserDatasource):
                 query = query.filter(UserModel.id != exclude_user_id)
             return query.first() is not None
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to check email availability") from exc
+            raise DatabaseError("failed to check email availability") from exc
 
     def update(self, user: User) -> User:
         """Persist mutable user state in a single update operation."""
         if user.id is None:
-            raise ResourceNotFoundException("user not found")
+            raise NotFoundError("user not found")
 
         try:
             user_model = self.session.query(UserModel).filter(UserModel.id == user.id).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve user for update") from exc
+            raise DatabaseError("failed to retrieve user for update") from exc
 
         if user_model is None:
-            raise ResourceNotFoundException("user not found")
+            raise NotFoundError("user not found")
 
         map_user_entity_to_model(user_model=user_model, user=user)
 
@@ -68,10 +68,10 @@ class UserRepository(UserDatasource):
             self.session.refresh(user_model)
         except IntegrityError as exc:
             self.session.rollback()
-            raise ResourceConflictException("email already registered") from exc
+            raise ConflictError("email already registered") from exc
         except SQLAlchemyError as exc:
             self.session.rollback()
-            raise DatabaseException("failed to update user") from exc
+            raise DatabaseError("failed to update user") from exc
 
         return map_user_model_to_entity(user_model)
 
@@ -80,7 +80,7 @@ class UserRepository(UserDatasource):
         try:
             user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve user for deletion") from exc
+            raise DatabaseError("failed to retrieve user for deletion") from exc
 
         if user_model is None:
             return None
@@ -90,6 +90,6 @@ class UserRepository(UserDatasource):
             self.session.commit()
         except SQLAlchemyError as exc:
             self.session.rollback()
-            raise DatabaseException("failed to delete user") from exc
+            raise DatabaseError("failed to delete user") from exc
 
         return None
