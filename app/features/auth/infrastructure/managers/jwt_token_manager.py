@@ -41,14 +41,16 @@ class JwtTokenManager(TokenManager):
     def decode_access_token(self, token: str) -> dict[str, Any]:
         """Decode and validate access token claims."""
         payload = self._decode_token(token)
-        if payload.get("token_type") != "access":
+        token_type = payload.get("type") or payload.get("token_type")
+        if token_type != "access":
             raise InvalidCredentialsException()
         return payload
 
     def decode_refresh_token(self, token: str) -> dict[str, Any]:
         """Decode and validate refresh token claims."""
         payload = self._decode_token(token)
-        if payload.get("token_type") != "refresh":
+        token_type = payload.get("type") or payload.get("token_type")
+        if token_type != "refresh":
             raise InvalidCredentialsException()
         return payload
 
@@ -62,12 +64,14 @@ class JwtTokenManager(TokenManager):
         now = datetime.now(timezone.utc)
         payload: dict[str, Any] = {
             "sub": subject,
-            "token_type": token_type,
+            "type": token_type,
             "iat": int(now.timestamp()),
             "exp": int((now + ttl).timestamp()),
         }
         if claims:
-            payload.update(claims)
+            reserved = {"sub", "iat", "exp", "type", "token_type"}
+            sanitized_claims = {key: value for key, value in claims.items() if key not in reserved}
+            payload.update(sanitized_claims)
         return jwt.encode(payload, self._secret, algorithm=self._ALGORITHM)
 
     def _decode_token(self, token: str) -> dict[str, Any]:

@@ -9,6 +9,7 @@ from app.core.exceptions.exceptions import InvalidCredentialsException
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
+from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.di.dependencies import get_login_user_use_case, get_register_user_use_case
 from app.features.auth.presentation.api import v1_router
@@ -94,7 +95,8 @@ def test_should_return_401_when_login_email_format_is_invalid() -> None:
     auth_datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
-    login_use_case = LoginUser(auth_datasource, password_manager, token_manager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
+    login_use_case = LoginUser(auth_datasource, password_manager, token_manager, token_revocation_store)
     client.app.dependency_overrides[get_login_user_use_case] = lambda: login_use_case
 
     response = client.post(

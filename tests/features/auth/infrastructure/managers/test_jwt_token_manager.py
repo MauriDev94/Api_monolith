@@ -13,7 +13,7 @@ def test_should_create_and_decode_access_token() -> None:
     payload = manager.decode_access_token(token)
 
     assert payload["sub"] == "user-1"
-    assert payload["token_type"] == "access"
+    assert payload["type"] == "access"
 
 
 # Tipo de test: Unit

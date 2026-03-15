@@ -1,3 +1,4 @@
+from app.core.exceptions.exceptions import InternalServerError
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.application.dto.token_pair_result import TokenPairResult
 from app.features.auth.presentation.schemas.auth_requests import RegisterRequest
@@ -40,8 +41,10 @@ def map_token_pair_result_to_login_response(result: TokenPairResult) -> LoginRes
 
 def map_user_entity_to_auth_user_response(user: User) -> AuthUserResponse:
     """Map user entity to public auth user response."""
+    if user.id is None:
+        raise InternalServerError("user id is missing")
     return AuthUserResponse(
-        id=user.id or "",
+        id=user.id,
         name=user.name,
         lastname=user.lastname,
         email=user.email.value,

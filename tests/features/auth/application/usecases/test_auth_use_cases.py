@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 import pytest
 
@@ -7,6 +7,7 @@ from app.core.exceptions.exceptions import InvalidCredentialsException, Resource
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
+from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
@@ -87,7 +88,8 @@ def test_should_raise_invalid_credentials_when_login_email_format_is_invalid() -
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
-    use_case = LoginUser(datasource, password_manager, token_manager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
+    use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
     with pytest.raises(InvalidCredentialsException):
         use_case.execute(LoginUserParams(email="user+tag@mail.com", password="bad"))
@@ -101,8 +103,9 @@ def test_should_raise_invalid_credentials_when_login_user_not_found() -> None:
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
     datasource.get_user_by_email.return_value = None
-    use_case = LoginUser(datasource, password_manager, token_manager)
+    use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
     with pytest.raises(InvalidCredentialsException):
         use_case.execute(LoginUserParams(email="x@mail.com", password="bad"))
@@ -114,8 +117,9 @@ def test_should_normalize_email_before_login_lookup() -> None:
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
     datasource.get_user_by_email.return_value = None
-    use_case = LoginUser(datasource, password_manager, token_manager)
+    use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
     with pytest.raises(InvalidCredentialsException):
         use_case.execute(LoginUserParams(email="  MAURI@MAIL.COM  ", password="bad"))
@@ -129,9 +133,10 @@ def test_should_raise_invalid_credentials_when_login_password_is_invalid() -> No
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
     datasource.get_user_by_email.return_value = make_user()
     password_manager.verify_password.return_value = False
-    use_case = LoginUser(datasource, password_manager, token_manager)
+    use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
     with pytest.raises(InvalidCredentialsException):
         use_case.execute(LoginUserParams(email="mauri@mail.com", password="bad"))
@@ -143,16 +148,20 @@ def test_should_return_token_pair_when_login_is_valid() -> None:
     datasource = Mock(spec=AuthDatasource)
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
     datasource.get_user_by_email.return_value = make_user()
     password_manager.verify_password.return_value = True
     token_manager.create_access_token.return_value = "access-token"
     token_manager.create_refresh_token.return_value = "refresh-token"
-    use_case = LoginUser(datasource, password_manager, token_manager)
+    token_manager.decode_refresh_token.return_value = {"exp": 1_700_000_000}
+    use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
     result = use_case.execute(LoginUserParams(email="mauri@mail.com", password="ok"))
 
     token_manager.create_access_token.assert_called_once_with(subject="user-1")
-    token_manager.create_refresh_token.assert_called_once_with(subject="user-1")
+    token_manager.create_refresh_token.assert_called_once_with(subject="user-1", claims=ANY)
+    token_manager.decode_refresh_token.assert_called_once_with("refresh-token")
+    token_revocation_store.store_active.assert_called_once()
     assert result.access_token == "access-token"
     assert result.refresh_token == "refresh-token"
 
@@ -162,7 +171,8 @@ def test_should_raise_invalid_credentials_when_refresh_subject_is_missing() -> N
     """Valida que lanza invalido credenciales cuando refresh subject es faltante."""
     token_manager = Mock(spec=TokenManager)
     token_manager.decode_refresh_token.return_value = {"sub": ""}
-    use_case = RefreshAccessToken(token_manager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
+    use_case = RefreshAccessToken(token_manager, token_revocation_store)
 
     with pytest.raises(InvalidCredentialsException):
         use_case.execute(RefreshTokenParams(refresh_token="invalid"))
@@ -172,15 +182,25 @@ def test_should_raise_invalid_credentials_when_refresh_subject_is_missing() -> N
 def test_should_return_new_access_token_when_refresh_is_valid() -> None:
     """Valida que retorna new acceso token cuando refresh es valido."""
     token_manager = Mock(spec=TokenManager)
-    token_manager.decode_refresh_token.return_value = {"sub": "user-1"}
+    token_revocation_store = Mock(spec=TokenRevocationStore)
+    token_manager.decode_refresh_token.side_effect = [
+        {"sub": "user-1", "jti": "jti-1"},
+        {"exp": 1_700_000_000},
+    ]
     token_manager.create_access_token.return_value = "new-access"
-    use_case = RefreshAccessToken(token_manager)
+    token_manager.create_refresh_token.return_value = "new-refresh"
+    token_revocation_store.is_revoked.return_value = False
+    use_case = RefreshAccessToken(token_manager, token_revocation_store)
 
     result = use_case.execute(RefreshTokenParams(refresh_token="refresh"))
 
     token_manager.create_access_token.assert_called_once_with(subject="user-1")
+    token_manager.create_refresh_token.assert_called_once_with(subject="user-1", claims=ANY)
+    token_revocation_store.is_revoked.assert_called_once_with("jti-1")
+    token_revocation_store.revoke.assert_called_once_with("jti-1")
+    token_revocation_store.store_active.assert_called_once()
     assert result.access_token == "new-access"
-    assert result.refresh_token == "refresh"
+    assert result.refresh_token == "new-refresh"
 
 
 # Tipo de test: Unit

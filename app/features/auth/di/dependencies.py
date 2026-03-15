@@ -9,6 +9,7 @@ from app.core.providers.env_config import get_env_config
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
+from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.usecases.get_current_user_use_case import GetCurrentUser
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
@@ -16,6 +17,9 @@ from app.features.auth.application.usecases.register_user_use_case import Regist
 from app.features.auth.infrastructure.managers.jwt_token_manager import JwtTokenManager
 from app.features.auth.infrastructure.managers.password_manager_impl import PasswordManagerImpl
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
+from app.features.auth.infrastructure.repositories.token_revocation_repository import (
+    TokenRevocationRepository,
+)
 
 
 def get_auth_repository(
@@ -37,6 +41,13 @@ def get_token_manager(
     return JwtTokenManager(secret_key=env_config.jwt_secret_key)
 
 
+def get_token_revocation_store(
+    db_session: Annotated[Session, Depends(get_db_session)],
+) -> TokenRevocationStore:
+    """Provide refresh token revocation store backed by SQLAlchemy."""
+    return TokenRevocationRepository(session=db_session)
+
+
 def get_register_user_use_case(
     auth_datasource: Annotated[AuthDatasource, Depends(get_auth_repository)],
     password_manager: Annotated[PasswordManager, Depends(get_password_manager)],
@@ -49,20 +60,30 @@ def get_login_user_use_case(
     auth_datasource: Annotated[AuthDatasource, Depends(get_auth_repository)],
     password_manager: Annotated[PasswordManager, Depends(get_password_manager)],
     token_manager: Annotated[TokenManager, Depends(get_token_manager)],
+    token_revocation_store: Annotated[
+        TokenRevocationStore, Depends(get_token_revocation_store)
+    ],
 ) -> LoginUser:
     """Provide LoginUser use case with required dependencies."""
     return LoginUser(
         auth_datasource=auth_datasource,
         password_manager=password_manager,
         token_manager=token_manager,
+        token_revocation_store=token_revocation_store,
     )
 
 
 def get_refresh_access_token_use_case(
     token_manager: Annotated[TokenManager, Depends(get_token_manager)],
+    token_revocation_store: Annotated[
+        TokenRevocationStore, Depends(get_token_revocation_store)
+    ],
 ) -> RefreshAccessToken:
     """Provide RefreshAccessToken use case."""
-    return RefreshAccessToken(token_manager=token_manager)
+    return RefreshAccessToken(
+        token_manager=token_manager,
+        token_revocation_store=token_revocation_store,
+    )
 
 
 def get_current_user_use_case(
