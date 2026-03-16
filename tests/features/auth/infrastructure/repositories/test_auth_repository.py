@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from sqlalchemy.orm import Session
 
-from app.core.exceptions.exceptions import ResourceConflictException
+from app.core.exceptions.exceptions import ConflictError
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 
@@ -88,5 +88,5 @@ def test_should_raise_conflict_when_registering_duplicate_email(db_session: Sess
 
     repository.register_user(params=first_params, password_hash="hashed-password")
 
-    with pytest.raises(ResourceConflictException, match="email already registered"):
+    with pytest.raises(ConflictError, match="email already registered"):
         repository.register_user(params=duplicate_params, password_hash="another-hash")

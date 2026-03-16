@@ -1,5 +1,5 @@
 from app.common.use_case import UseCase
-from app.core.exceptions.exceptions import InvalidCredentialsException
+from app.core.exceptions.exceptions import UnauthorizedError
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.users.domain.entities.user import User
@@ -16,9 +16,9 @@ class GetCurrentUser(UseCase[str, User]):
         payload = self.token_manager.decode_access_token(params)
         subject = str(payload.get("sub", ""))
         if not subject:
-            raise InvalidCredentialsException()
+            raise UnauthorizedError()
 
         user = self.auth_datasource.get_user_by_id(subject)
         if user is None:
-            raise InvalidCredentialsException()
+            raise UnauthorizedError()
         return user

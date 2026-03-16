@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from app.common.use_case import UseCase
-from app.core.exceptions.exceptions import InternalServerError, InvalidCredentialsException
+from app.core.exceptions.exceptions import InternalServerError, UnauthorizedError
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
@@ -32,18 +32,18 @@ class LoginUser(UseCase[LoginUserParams, TokenPairResult]):
             normalized_email = Email(params.email).value
         except ValueError as exc:
             # Keep authentication response stable and avoid leaking format details.
-            raise InvalidCredentialsException() from exc
+            raise UnauthorizedError("Invalid email or password") from exc
 
         user = self.auth_datasource.get_user_by_email(normalized_email)
         if user is None:
-            raise InvalidCredentialsException()
+            raise UnauthorizedError("Invalid email or password")
 
         is_valid_password = self.password_manager.verify_password(
             params.password,
             user.password_hash,
         )
         if not is_valid_password:
-            raise InvalidCredentialsException()
+            raise UnauthorizedError("Invalid email or password")
 
         if user.id is None:
             raise InternalServerError("authenticated user id is missing")

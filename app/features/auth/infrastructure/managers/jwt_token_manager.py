@@ -4,7 +4,7 @@ from typing import Any
 import jwt
 from jwt import InvalidTokenError
 
-from app.core.exceptions.exceptions import InvalidCredentialsException
+from app.core.exceptions.exceptions import UnauthorizedError
 from app.features.auth.application.contracts.token_manager import TokenManager
 
 
@@ -43,7 +43,7 @@ class JwtTokenManager(TokenManager):
         payload = self._decode_token(token)
         token_type = payload.get("type") or payload.get("token_type")
         if token_type != "access":
-            raise InvalidCredentialsException()
+            raise UnauthorizedError()
         return payload
 
     def decode_refresh_token(self, token: str) -> dict[str, Any]:
@@ -51,7 +51,7 @@ class JwtTokenManager(TokenManager):
         payload = self._decode_token(token)
         token_type = payload.get("type") or payload.get("token_type")
         if token_type != "refresh":
-            raise InvalidCredentialsException()
+            raise UnauthorizedError()
         return payload
 
     def _encode_token(
@@ -78,5 +78,5 @@ class JwtTokenManager(TokenManager):
         try:
             payload = jwt.decode(token, self._secret, algorithms=[self._ALGORITHM])
         except InvalidTokenError as exc:
-            raise InvalidCredentialsException() from exc
+            raise UnauthorizedError() from exc
         return dict(payload)

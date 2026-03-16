@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.exceptions.error_handling import register_exception_handlers
-from app.core.exceptions.exceptions import InvalidCredentialsException
+from app.core.exceptions.exceptions import UnauthorizedError
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
@@ -75,7 +75,7 @@ def test_should_return_400_when_register_email_violates_domain_policy() -> None:
 def test_should_return_401_when_login_credentials_are_invalid() -> None:
     """Valida que login retorna 401 cuando las credenciales son inválidas."""
     client = create_test_client()
-    login_use_case = StubUseCase(error=InvalidCredentialsException())
+    login_use_case = StubUseCase(error=UnauthorizedError("Invalid email or password"))
     client.app.dependency_overrides[get_login_user_use_case] = lambda: login_use_case
 
     response = client.post(

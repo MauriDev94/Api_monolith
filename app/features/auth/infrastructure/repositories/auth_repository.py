@@ -3,7 +3,7 @@ from uuid import uuid4
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions.exceptions import DatabaseException, ResourceConflictException
+from app.core.exceptions.exceptions import ConflictError, DatabaseError
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.users.domain.entities.user import User
@@ -23,7 +23,7 @@ class AuthRepository(AuthDatasource):
         try:
             user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve user by id") from exc
+            raise DatabaseError("failed to retrieve user by id") from exc
 
         if user_model is None:
             return None
@@ -36,7 +36,7 @@ class AuthRepository(AuthDatasource):
         try:
             user_model = self.session.query(UserModel).filter(UserModel.email == normalized_email).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve user by email") from exc
+            raise DatabaseError("failed to retrieve user by email") from exc
 
         if user_model is None:
             return None
@@ -61,9 +61,9 @@ class AuthRepository(AuthDatasource):
             self.session.refresh(user_model)
         except IntegrityError as exc:
             self.session.rollback()
-            raise ResourceConflictException("email already registered") from exc
+            raise ConflictError("email already registered") from exc
         except SQLAlchemyError as exc:
             self.session.rollback()
-            raise DatabaseException("failed to register user") from exc
+            raise DatabaseError("failed to register user") from exc
 
         return map_user_model_to_entity(user_model)

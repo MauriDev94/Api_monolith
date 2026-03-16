@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from app.common.use_case import UseCase
-from app.core.exceptions.exceptions import InvalidCredentialsException
+from app.core.exceptions.exceptions import UnauthorizedError
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
@@ -21,11 +21,11 @@ class RefreshAccessToken(UseCase[RefreshTokenParams, TokenPairResult]):
         subject = str(payload.get("sub", ""))
         jti = str(payload.get("jti", ""))
         if not subject or not jti:
-            raise InvalidCredentialsException()
+            raise UnauthorizedError()
 
         if self.token_revocation_store.is_revoked(jti):
             self.token_revocation_store.revoke_all_for_user(subject)
-            raise InvalidCredentialsException()
+            raise UnauthorizedError()
 
         self.token_revocation_store.revoke(jti)
         access_token = self.token_manager.create_access_token(subject=subject)

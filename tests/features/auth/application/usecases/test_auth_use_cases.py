@@ -3,7 +3,7 @@ from unittest.mock import ANY, Mock
 
 import pytest
 
-from app.core.exceptions.exceptions import InvalidCredentialsException, ResourceConflictException
+from app.core.exceptions.exceptions import ConflictError, UnauthorizedError
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
@@ -38,7 +38,7 @@ def test_should_normalize_email_before_register_conflict_check() -> None:
     datasource.get_user_by_email.return_value = make_user()
     use_case = RegisterUser(auth_datasource=datasource, password_manager=password_manager)
 
-    with pytest.raises(ResourceConflictException, match="email already registered"):
+    with pytest.raises(ConflictError, match="email already registered"):
         use_case.execute(
             RegisterUserParams(
                 name="Mauri",
@@ -91,7 +91,7 @@ def test_should_raise_invalid_credentials_when_login_email_format_is_invalid() -
     token_revocation_store = Mock(spec=TokenRevocationStore)
     use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         use_case.execute(LoginUserParams(email="user+tag@mail.com", password="bad"))
 
     datasource.get_user_by_email.assert_not_called()
@@ -107,7 +107,7 @@ def test_should_raise_invalid_credentials_when_login_user_not_found() -> None:
     datasource.get_user_by_email.return_value = None
     use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         use_case.execute(LoginUserParams(email="x@mail.com", password="bad"))
 
 
@@ -121,7 +121,7 @@ def test_should_normalize_email_before_login_lookup() -> None:
     datasource.get_user_by_email.return_value = None
     use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         use_case.execute(LoginUserParams(email="  MAURI@MAIL.COM  ", password="bad"))
 
     datasource.get_user_by_email.assert_called_once_with("mauri@mail.com")
@@ -138,7 +138,7 @@ def test_should_raise_invalid_credentials_when_login_password_is_invalid() -> No
     password_manager.verify_password.return_value = False
     use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         use_case.execute(LoginUserParams(email="mauri@mail.com", password="bad"))
 
 
@@ -174,7 +174,7 @@ def test_should_raise_invalid_credentials_when_refresh_subject_is_missing() -> N
     token_revocation_store = Mock(spec=TokenRevocationStore)
     use_case = RefreshAccessToken(token_manager, token_revocation_store)
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         use_case.execute(RefreshTokenParams(refresh_token="invalid"))
 
 
@@ -211,7 +211,7 @@ def test_should_raise_invalid_credentials_when_access_token_subject_is_missing()
     token_manager.decode_access_token.return_value = {"sub": ""}
     use_case = GetCurrentUser(datasource, token_manager)
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         use_case.execute("token")
 
 
@@ -224,7 +224,7 @@ def test_should_raise_invalid_credentials_when_current_user_not_found() -> None:
     datasource.get_user_by_id.return_value = None
     use_case = GetCurrentUser(datasource, token_manager)
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         use_case.execute("token")
 
 

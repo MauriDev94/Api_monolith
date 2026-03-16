@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.exceptions.exceptions import InvalidCredentialsException
+from app.core.exceptions.exceptions import UnauthorizedError
 from app.features.auth.infrastructure.managers.jwt_token_manager import JwtTokenManager
 
 
@@ -21,7 +21,7 @@ def test_should_raise_invalid_credentials_when_decoding_invalid_token() -> None:
     """Valida que lanza invalido credenciales cuando decoding invalido token."""
     manager = JwtTokenManager(secret_key="secret-key")
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         manager.decode_access_token("invalid.token.value")
 
 
@@ -31,5 +31,5 @@ def test_should_raise_invalid_credentials_when_token_type_is_wrong() -> None:
     manager = JwtTokenManager(secret_key="secret-key")
     refresh_token = manager.create_refresh_token(subject="user-1")
 
-    with pytest.raises(InvalidCredentialsException):
+    with pytest.raises(UnauthorizedError):
         manager.decode_access_token(refresh_token)
