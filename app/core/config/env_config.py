@@ -10,6 +10,12 @@ class EnvConfig(BaseSettings):
     db_port: int
     db_host: str
     jwt_secret_key: str
+    smtp_host: str | None = None
+    smtp_port: int | None = None
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_sender_email: str | None = None
+    smtp_use_tls: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",
