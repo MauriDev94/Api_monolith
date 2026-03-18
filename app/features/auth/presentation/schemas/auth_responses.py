@@ -47,3 +47,9 @@ class CurrentUserResponse(BaseModel):
     """Response schema for current-user endpoint."""
 
     user: AuthUserResponse
+
+
+class OtpResponse(BaseModel):
+    """Response schema for OTP endpoints."""
+
+    message: str

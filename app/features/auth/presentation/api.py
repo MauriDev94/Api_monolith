@@ -6,6 +6,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.core.router.router import get_versioned_router
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
+from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
+from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
@@ -13,20 +15,27 @@ from app.features.auth.di.dependencies import (
     get_login_user_use_case,
     get_refresh_access_token_use_case,
     get_register_user_use_case,
+    get_request_otp_use_case,
+    get_verify_otp_use_case,
 )
 from app.features.auth.presentation.mappers.auth_mapper import (
     map_register_request_to_params,
     map_token_pair_result_to_login_response,
     map_token_pair_result_to_response,
     map_user_entity_to_auth_user_response,
+    map_request_otp_to_params,
+    map_verify_otp_to_params,
 )
 from app.features.auth.presentation.schemas.auth_requests import (
     RefreshTokenRequest,
     RegisterRequest,
+    RequestOtpRequest,
+    VerifyOtpRequest,
 )
 from app.features.auth.presentation.schemas.auth_responses import (
     CurrentUserResponse,
     LoginResponse,
+    OtpResponse,
     RefreshTokenResponse,
     RegisterResponse,
 )
@@ -79,3 +88,25 @@ def get_current_user(
 ) -> CurrentUserResponse:
     """Return authenticated user profile from bearer token."""
     return CurrentUserResponse(user=map_user_entity_to_auth_user_response(current_user))
+
+
+@v1_router.post("/request-otp", response_model=OtpResponse)
+def request_otp(
+    request: RequestOtpRequest,
+    request_otp_use_case: Annotated[RequestOtpUseCase, Depends(get_request_otp_use_case)],
+) -> OtpResponse:
+    """Generate and deliver a one-time password."""
+    params = map_request_otp_to_params(request.user_id, request.purpose)
+    request_otp_use_case.execute(params)
+    return OtpResponse(message="OTP sent")
+
+
+@v1_router.post("/verify-otp", response_model=OtpResponse)
+def verify_otp(
+    request: VerifyOtpRequest,
+    verify_otp_use_case: Annotated[VerifyOtpUseCase, Depends(get_verify_otp_use_case)],
+) -> OtpResponse:
+    """Validate and consume a one-time password."""
+    params = map_verify_otp_to_params(request.user_id, request.code, request.purpose)
+    verify_otp_use_case.execute(params)
+    return OtpResponse(message="OTP verified")

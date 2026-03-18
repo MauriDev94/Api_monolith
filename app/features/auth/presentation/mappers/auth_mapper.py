@@ -1,6 +1,8 @@
 from app.core.exceptions.exceptions import InternalServerError
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.application.dto.token_pair_result import TokenPairResult
+from app.features.auth.application.dto.request_otp_params import RequestOtpParams
+from app.features.auth.application.dto.verify_otp_params import VerifyOtpParams
 from app.features.auth.presentation.schemas.auth_requests import RegisterRequest
 from app.features.auth.presentation.schemas.auth_responses import (
     AuthUserResponse,
@@ -52,3 +54,13 @@ def map_user_entity_to_auth_user_response(user: User) -> AuthUserResponse:
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
+
+
+def map_request_otp_to_params(user_id: str, purpose: str) -> RequestOtpParams:
+    """Map OTP request payload to use-case params."""
+    return RequestOtpParams(user_id=user_id, purpose=purpose)
+
+
+def map_verify_otp_to_params(user_id: str, code: str, purpose: str) -> VerifyOtpParams:
+    """Map OTP verify payload to use-case params."""
+    return VerifyOtpParams(user_id=user_id, code=code, purpose=purpose)
