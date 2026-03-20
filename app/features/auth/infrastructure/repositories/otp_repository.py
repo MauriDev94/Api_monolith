@@ -108,7 +108,15 @@ class OtpRepository(OtpDatasource):
             user_id=model.user_id,
             code=model.code,
             purpose=model.purpose,
-            expires_at=model.expires_at,
-            used_at=model.used_at,
-            created_at=model.created_at,
+            expires_at=OtpRepository._ensure_aware(model.expires_at),
+            used_at=OtpRepository._ensure_aware(model.used_at),
+            created_at=OtpRepository._ensure_aware(model.created_at),
         )
+
+    @staticmethod
+    def _ensure_aware(value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
