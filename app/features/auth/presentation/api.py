@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from app.core.exceptions.exceptions import InternalServerError
 from app.core.router.router import get_versioned_router
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
@@ -93,10 +94,13 @@ def get_current_user(
 @v1_router.post("/request-otp", response_model=OtpResponse)
 def request_otp(
     request: RequestOtpRequest,
+    current_user: Annotated[User, Depends(get_authenticated_user)],
     request_otp_use_case: Annotated[RequestOtpUseCase, Depends(get_request_otp_use_case)],
 ) -> OtpResponse:
     """Generate and deliver a one-time password."""
-    params = map_request_otp_to_params(request.user_id, request.purpose)
+    if current_user.id is None:
+        raise InternalServerError("user id is missing")
+    params = map_request_otp_to_params(request, current_user.id)
     request_otp_use_case.execute(params)
     return OtpResponse(message="OTP sent")
 
@@ -104,9 +108,12 @@ def request_otp(
 @v1_router.post("/verify-otp", response_model=OtpResponse)
 def verify_otp(
     request: VerifyOtpRequest,
+    current_user: Annotated[User, Depends(get_authenticated_user)],
     verify_otp_use_case: Annotated[VerifyOtpUseCase, Depends(get_verify_otp_use_case)],
 ) -> OtpResponse:
     """Validate and consume a one-time password."""
-    params = map_verify_otp_to_params(request.user_id, request.code, request.purpose)
+    if current_user.id is None:
+        raise InternalServerError("user id is missing")
+    params = map_verify_otp_to_params(request, current_user.id)
     verify_otp_use_case.execute(params)
     return OtpResponse(message="OTP verified")

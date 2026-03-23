@@ -18,6 +18,7 @@ from app.features.auth.di.dependencies import (
     get_verify_otp_use_case,
 )
 from app.features.auth.presentation.api import v1_router
+from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
 
@@ -119,10 +120,11 @@ def test_should_return_200_when_request_otp_is_valid() -> None:
     client = create_test_client()
     request_otp_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_request_otp_use_case] = lambda: request_otp_use_case
+    client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
         "/auth/v1/request-otp",
-        json={"user_id": "user-1", "purpose": "login"},
+        json={"purpose": "login"},
     )
 
     assert response.status_code == 200
@@ -136,10 +138,11 @@ def test_should_return_404_when_request_otp_user_not_found() -> None:
     client = create_test_client()
     request_otp_use_case = StubUseCase(error=NotFoundError("user not found"))
     client.app.dependency_overrides[get_request_otp_use_case] = lambda: request_otp_use_case
+    client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
         "/auth/v1/request-otp",
-        json={"user_id": "missing", "purpose": "login"},
+        json={"purpose": "login"},
     )
 
     assert response.status_code == 404
@@ -151,14 +154,16 @@ def test_should_return_200_when_verify_otp_is_valid() -> None:
     client = create_test_client()
     verify_otp_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_verify_otp_use_case] = lambda: verify_otp_use_case
+    client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
         "/auth/v1/verify-otp",
-        json={"user_id": "user-1", "code": "123456", "purpose": "login"},
+        json={"code": "123456", "purpose": "login"},
     )
 
     assert response.status_code == 200
     assert response.json() == {"message": "OTP verified"}
+    assert verify_otp_use_case.received.user_id == "user-1"
     assert verify_otp_use_case.received.code == "123456"
 
 
@@ -167,10 +172,11 @@ def test_should_return_401_when_verify_otp_is_invalid() -> None:
     client = create_test_client()
     verify_otp_use_case = StubUseCase(error=UnauthorizedError("Invalid otp code"))
     client.app.dependency_overrides[get_verify_otp_use_case] = lambda: verify_otp_use_case
+    client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
         "/auth/v1/verify-otp",
-        json={"user_id": "user-1", "code": "123456", "purpose": "login"},
+        json={"code": "123456", "purpose": "login"},
     )
 
     assert response.status_code == 401
