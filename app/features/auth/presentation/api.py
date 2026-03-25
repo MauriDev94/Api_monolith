@@ -41,6 +41,10 @@ from app.features.auth.presentation.schemas.auth_responses import (
     RegisterResponse,
 )
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
+from app.features.auth.presentation.security_dependencies import (
+    enforce_request_otp_rate_limit,
+    enforce_verify_otp_rate_limit,
+)
 from app.features.users.domain.entities.user import User
 
 v1_router = get_versioned_router("v1")
@@ -94,6 +98,7 @@ def get_current_user(
 @v1_router.post("/request-otp", response_model=OtpResponse)
 def request_otp(
     request: RequestOtpRequest,
+    _: Annotated[None, Depends(enforce_request_otp_rate_limit)],
     current_user: Annotated[User, Depends(get_authenticated_user)],
     request_otp_use_case: Annotated[RequestOtpUseCase, Depends(get_request_otp_use_case)],
 ) -> OtpResponse:
@@ -108,6 +113,7 @@ def request_otp(
 @v1_router.post("/verify-otp", response_model=OtpResponse)
 def verify_otp(
     request: VerifyOtpRequest,
+    _: Annotated[None, Depends(enforce_verify_otp_rate_limit)],
     current_user: Annotated[User, Depends(get_authenticated_user)],
     verify_otp_use_case: Annotated[VerifyOtpUseCase, Depends(get_verify_otp_use_case)],
 ) -> OtpResponse:

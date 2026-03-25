@@ -9,6 +9,7 @@ from app.core.providers.env_config import get_env_config
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.email_sender import EmailSender
 from app.features.auth.application.contracts.password_manager import PasswordManager
+from app.features.auth.application.contracts.rate_limiter import RateLimiter
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.contracts.otp_datasource import OtpDatasource
@@ -27,6 +28,9 @@ from app.features.auth.infrastructure.repositories.token_revocation_repository i
 from app.features.auth.infrastructure.repositories.otp_repository import OtpRepository
 from app.features.auth.infrastructure.providers.smtp_email_sender import SmtpEmailSender
 from app.features.auth.infrastructure.providers.console_email_sender import ConsoleEmailSender
+from app.features.auth.infrastructure.security.in_memory_rate_limiter import InMemoryRateLimiter
+
+_rate_limiter = InMemoryRateLimiter()
 
 
 def get_auth_repository(
@@ -76,6 +80,11 @@ def get_email_sender(
         sender_email=env_config.smtp_sender_email,
         use_tls=env_config.smtp_use_tls,
     )
+
+
+def get_rate_limiter() -> RateLimiter:
+    """Provide shared in-memory rate limiter instance."""
+    return _rate_limiter
 
 
 def get_register_user_use_case(

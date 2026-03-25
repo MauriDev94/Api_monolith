@@ -11,6 +11,7 @@ from app.core.exceptions.exceptions import (
     ForbiddenError,
     InternalServerError,
     NotFoundError,
+    TooManyRequestsError,
     UnauthorizedError,
     ValidationError,
 )
@@ -148,6 +149,17 @@ async def validation_error_exception_handler(request: Request, exc: ValidationEr
         content={"message": str(exc) or "Validation error"},
     )
 
+async def too_many_requests_exception_handler(
+    request: Request,
+    exc: TooManyRequestsError,
+):
+    """Return a rate-limit response for excessive request bursts."""
+    _request_logger(request).warning(f"TooManyRequestsError: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={"message": str(exc) or "Too many requests"},
+    )
+
 
 def register_exception_handlers(app: FastAPI):
     """Register all global exception handlers in priority order."""
@@ -161,5 +173,6 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(ForbiddenError, forbidden_exception_handler)
     app.add_exception_handler(ConflictError, resource_conflict_exception_handler)
     app.add_exception_handler(NotFoundError, resource_not_found_exception_handler)
+    app.add_exception_handler(TooManyRequestsError, too_many_requests_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 

@@ -22,6 +22,10 @@ class ValidationError(AppError):
     """Mapped to HTTP 422."""
 
 
+class TooManyRequestsError(AppError):
+    """Mapped to HTTP 429."""
+
+
 class InternalServerError(AppError):
     """Mapped to HTTP 500."""
 

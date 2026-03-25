@@ -5,14 +5,16 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.exceptions.error_handling import register_exception_handlers
-from app.core.exceptions.exceptions import NotFoundError, UnauthorizedError
+from app.core.exceptions.exceptions import NotFoundError, TooManyRequestsError, UnauthorizedError
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
+from app.features.auth.application.contracts.rate_limiter import RateLimiter
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.di.dependencies import (
     get_login_user_use_case,
+    get_rate_limiter,
     get_register_user_use_case,
     get_request_otp_use_case,
     get_verify_otp_use_case,
@@ -34,6 +36,17 @@ class StubUseCase:
         if self.error is not None:
             raise self.error
         return self.result
+
+
+class StubRateLimiter(RateLimiter):
+    def __init__(self) -> None:
+        self.hits: dict[str, int] = {}
+
+    def check_or_raise(self, key: str, limit: int, window_seconds: int) -> None:
+        count = self.hits.get(key, 0) + 1
+        self.hits[key] = count
+        if count > limit:
+            raise TooManyRequestsError("Too many requests, try again later")
 
 
 def make_user() -> User:
@@ -120,6 +133,7 @@ def test_should_return_200_when_request_otp_is_valid() -> None:
     client = create_test_client()
     request_otp_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_request_otp_use_case] = lambda: request_otp_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
     client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
@@ -138,6 +152,7 @@ def test_should_return_404_when_request_otp_user_not_found() -> None:
     client = create_test_client()
     request_otp_use_case = StubUseCase(error=NotFoundError("user not found"))
     client.app.dependency_overrides[get_request_otp_use_case] = lambda: request_otp_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
     client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
@@ -154,6 +169,7 @@ def test_should_return_200_when_verify_otp_is_valid() -> None:
     client = create_test_client()
     verify_otp_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_verify_otp_use_case] = lambda: verify_otp_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
     client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
@@ -172,6 +188,7 @@ def test_should_return_401_when_verify_otp_is_invalid() -> None:
     client = create_test_client()
     verify_otp_use_case = StubUseCase(error=UnauthorizedError("Invalid otp code"))
     client.app.dependency_overrides[get_verify_otp_use_case] = lambda: verify_otp_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
     client.app.dependency_overrides[get_authenticated_user] = make_user
 
     response = client.post(
@@ -181,3 +198,21 @@ def test_should_return_401_when_verify_otp_is_invalid() -> None:
 
     assert response.status_code == 401
     assert response.json()["message"] == "Invalid otp code"
+
+
+# Tipo de test: Integration
+def test_should_return_429_when_request_otp_rate_limit_is_exceeded() -> None:
+    client = create_test_client()
+    request_otp_use_case = StubUseCase(result=None)
+    limiter = StubRateLimiter()
+    client.app.dependency_overrides[get_request_otp_use_case] = lambda: request_otp_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: limiter
+    client.app.dependency_overrides[get_authenticated_user] = make_user
+
+    for _ in range(3):
+        response = client.post("/auth/v1/request-otp", json={"purpose": "login"})
+        assert response.status_code == 200
+
+    response = client.post("/auth/v1/request-otp", json={"purpose": "login"})
+
+    assert response.status_code == 429
