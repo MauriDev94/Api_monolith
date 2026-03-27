@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.exceptions.exceptions import NotFoundError, TooManyRequestsError, UnauthorizedError
+from app.features.auth.application.constants import OTP_PURPOSE_PASSWORD_CHANGE
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.rate_limiter import RateLimiter
@@ -138,13 +139,12 @@ def test_should_return_200_when_request_otp_is_valid() -> None:
 
     response = client.post(
         "/auth/v1/request-otp",
-        json={"purpose": "login"},
     )
 
     assert response.status_code == 200
     assert response.json() == {"message": "OTP sent"}
     assert request_otp_use_case.received.user_id == "user-1"
-    assert request_otp_use_case.received.purpose == "login"
+    assert request_otp_use_case.received.purpose == OTP_PURPOSE_PASSWORD_CHANGE
 
 
 # Tipo de test: Integration
@@ -157,7 +157,6 @@ def test_should_return_404_when_request_otp_user_not_found() -> None:
 
     response = client.post(
         "/auth/v1/request-otp",
-        json={"purpose": "login"},
     )
 
     assert response.status_code == 404
@@ -174,13 +173,14 @@ def test_should_return_200_when_verify_otp_is_valid() -> None:
 
     response = client.post(
         "/auth/v1/verify-otp",
-        json={"code": "123456", "purpose": "login"},
+        json={"code": "123456"},
     )
 
     assert response.status_code == 200
     assert response.json() == {"message": "OTP verified"}
     assert verify_otp_use_case.received.user_id == "user-1"
     assert verify_otp_use_case.received.code == "123456"
+    assert verify_otp_use_case.received.purpose == OTP_PURPOSE_PASSWORD_CHANGE
 
 
 # Tipo de test: Integration
@@ -193,7 +193,7 @@ def test_should_return_401_when_verify_otp_is_invalid() -> None:
 
     response = client.post(
         "/auth/v1/verify-otp",
-        json={"code": "123456", "purpose": "login"},
+        json={"code": "123456"},
     )
 
     assert response.status_code == 401
@@ -210,9 +210,9 @@ def test_should_return_429_when_request_otp_rate_limit_is_exceeded() -> None:
     client.app.dependency_overrides[get_authenticated_user] = make_user
 
     for _ in range(3):
-        response = client.post("/auth/v1/request-otp", json={"purpose": "login"})
+        response = client.post("/auth/v1/request-otp")
         assert response.status_code == 200
 
-    response = client.post("/auth/v1/request-otp", json={"purpose": "login"})
+    response = client.post("/auth/v1/request-otp")
 
     assert response.status_code == 429

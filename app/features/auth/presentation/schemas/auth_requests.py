@@ -30,14 +30,7 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str = Field(min_length=1)
 
 
-class RequestOtpRequest(BaseModel):
-    """Request schema used to request an OTP."""
-
-    purpose: str = Field(min_length=1, max_length=50)
-
-
 class VerifyOtpRequest(BaseModel):
     """Request schema used to verify an OTP."""
 
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
-    purpose: str = Field(min_length=1, max_length=50)

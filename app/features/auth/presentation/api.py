@@ -30,7 +30,6 @@ from app.features.auth.presentation.mappers.auth_mapper import (
 from app.features.auth.presentation.schemas.auth_requests import (
     RefreshTokenRequest,
     RegisterRequest,
-    RequestOtpRequest,
     VerifyOtpRequest,
 )
 from app.features.auth.presentation.schemas.auth_responses import (
@@ -97,7 +96,6 @@ def get_current_user(
 
 @v1_router.post("/request-otp", response_model=OtpResponse)
 def request_otp(
-    request: RequestOtpRequest,
     _: Annotated[None, Depends(enforce_request_otp_rate_limit)],
     current_user: Annotated[User, Depends(get_authenticated_user)],
     request_otp_use_case: Annotated[RequestOtpUseCase, Depends(get_request_otp_use_case)],
@@ -105,7 +103,7 @@ def request_otp(
     """Generate and deliver a one-time password."""
     if current_user.id is None:
         raise InternalServerError("user id is missing")
-    params = map_request_otp_to_params(request, current_user.id)
+    params = map_request_otp_to_params(current_user.id)
     request_otp_use_case.execute(params)
     return OtpResponse(message="OTP sent")
 
