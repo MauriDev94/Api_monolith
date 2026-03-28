@@ -23,3 +23,8 @@ class AuthDatasource(ABC):
     @abstractmethod
     def register_user(self, params: RegisterUserParams, password_hash: str) -> User:
         pass
+
+    @abstractmethod
+    def update_password(self, user_id: str, password_hash: str) -> None:
+        """Persist a new password hash for an existing user."""
+        pass

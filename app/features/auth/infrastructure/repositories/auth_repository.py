@@ -67,3 +67,15 @@ class AuthRepository(AuthDatasource):
             raise DatabaseError("failed to register user") from exc
 
         return map_user_model_to_entity(user_model)
+
+    def update_password(self, user_id: str, password_hash: str) -> None:
+        """Update user password hash by id."""
+        try:
+            user_model = self.session.query(UserModel).filter(UserModel.id == user_id).first()
+            if user_model is None:
+                return None
+            user_model.password_hash = password_hash
+            self.session.commit()
+        except SQLAlchemyError as exc:
+            self.session.rollback()
+            raise DatabaseError("failed to update user password") from exc
