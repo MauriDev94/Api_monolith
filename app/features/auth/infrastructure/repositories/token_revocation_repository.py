@@ -59,8 +59,11 @@ class TokenRevocationRepository(TokenRevocationStore):
         if model.revoked_at is not None:
             return True
 
+        expires_at = model.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
         now = datetime.now(timezone.utc)
-        return model.expires_at <= now
+        return expires_at <= now
 
     def revoke_all_for_user(self, user_id: str) -> None:
         try:

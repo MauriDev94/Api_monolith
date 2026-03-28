@@ -4,6 +4,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.core.providers.db import get_db_session
+from app.features.auth.application.contracts.email_sender import EmailSender
+from app.features.auth.di.dependencies import get_email_sender, get_rate_limiter
+from app.features.auth.infrastructure.security.in_memory_rate_limiter import InMemoryRateLimiter
 from app.main import app
 
 
@@ -42,6 +45,14 @@ def _login_user(client: TestClient, *, email: str, password: str) -> dict:
 
 def _auth_headers(access_token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {access_token}"}
+
+
+class CaptureEmailSender(EmailSender):
+    def __init__(self) -> None:
+        self.last_otp_code: str | None = None
+
+    def send_otp(self, to_email: str, code: str, purpose: str) -> None:
+        self.last_otp_code = code
 
 
 # E2E happy path: register -> login -> protected endpoints -> refresh -> continue with new token.
@@ -201,5 +212,96 @@ def test_should_enforce_auth_and_ownership_error_scenarios(db_session: Session) 
             },
         )
         assert invalid_email_response.status_code == 400
+    finally:
+        app.dependency_overrides.clear()
+
+
+# Tipo de test: E2E
+def test_should_change_password_with_otp_and_reject_reused_code(db_session: Session) -> None:
+    """Valida flujo real: request otp -> change password -> login nuevo -> rechaza OTP reutilizado."""
+    app.dependency_overrides[get_db_session] = _override_db_session(db_session)
+    capture_email_sender = CaptureEmailSender()
+    app.dependency_overrides[get_email_sender] = lambda: capture_email_sender
+    app.dependency_overrides[get_rate_limiter] = lambda: InMemoryRateLimiter()
+    client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        _register_user(
+            client,
+            name="Mauri",
+            lastname="Salinas",
+            email="mauri@mail.com",
+            password="pass1234",
+        )
+        old_login_payload = _login_user(client, email="mauri@mail.com", password="pass1234")
+        old_access_token = old_login_payload["access_token"]
+
+        request_otp_response = client.post(
+            "/auth/v1/request-otp",
+            headers=_auth_headers(old_access_token),
+        )
+        assert request_otp_response.status_code == 200
+        assert capture_email_sender.last_otp_code is not None
+        otp_code = capture_email_sender.last_otp_code
+
+        change_password_response = client.post(
+            "/auth/v1/change-password",
+            headers=_auth_headers(old_access_token),
+            json={"code": otp_code, "new_password": "newpass1234"},
+        )
+        assert change_password_response.status_code == 200
+
+        old_password_login_response = client.post(
+            "/auth/v1/login",
+            data={"username": "mauri@mail.com", "password": "pass1234"},
+        )
+        assert old_password_login_response.status_code == 401
+
+        new_login_payload = _login_user(client, email="mauri@mail.com", password="newpass1234")
+        new_access_token = new_login_payload["access_token"]
+
+        reuse_otp_response = client.post(
+            "/auth/v1/change-password",
+            headers=_auth_headers(new_access_token),
+            json={"code": otp_code, "new_password": "anotherpass1234"},
+        )
+        assert reuse_otp_response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+
+# Tipo de test: E2E
+def test_should_rate_limit_change_password_attempts(db_session: Session) -> None:
+    """Valida que /change-password aplica rate limit y retorna 429 al exceder intentos."""
+    app.dependency_overrides[get_db_session] = _override_db_session(db_session)
+    limiter = InMemoryRateLimiter()
+    app.dependency_overrides[get_rate_limiter] = lambda: limiter
+    client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        _register_user(
+            client,
+            name="Mauri",
+            lastname="Salinas",
+            email="mauri@mail.com",
+            password="pass1234",
+        )
+        login_payload = _login_user(client, email="mauri@mail.com", password="pass1234")
+        access_token = login_payload["access_token"]
+
+        for _ in range(5):
+            response = client.post(
+                "/auth/v1/change-password",
+                headers=_auth_headers(access_token),
+                json={"code": "000000", "new_password": "newpass1234"},
+            )
+            assert response.status_code == 401
+
+        rate_limited_response = client.post(
+            "/auth/v1/change-password",
+            headers=_auth_headers(access_token),
+            json={"code": "000000", "new_password": "newpass1234"},
+        )
+        assert rate_limited_response.status_code == 429
     finally:
         app.dependency_overrides.clear()
