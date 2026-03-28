@@ -90,3 +90,31 @@ def test_should_raise_conflict_when_registering_duplicate_email(db_session: Sess
 
     with pytest.raises(ConflictError, match="email already registered"):
         repository.register_user(params=duplicate_params, password_hash="another-hash")
+
+
+# Tipo de test: Integration
+def test_should_update_password_hash_for_existing_user(db_session: Session) -> None:
+    """Valida que update_password persiste el nuevo hash para un usuario existente."""
+    repository = AuthRepository(session=db_session)
+    params = RegisterUserParams(
+        name="Mauri",
+        lastname="Salinas",
+        email="mauri@mail.com",
+        password="plain1234",
+        birthdate=date(2000, 1, 1),
+    )
+    created_user = repository.register_user(params=params, password_hash="old-hash")
+
+    repository.update_password(user_id=created_user.id or "", password_hash="new-hash")
+    updated_user = repository.get_user_by_id(created_user.id or "")
+
+    assert updated_user is not None
+    assert updated_user.password_hash == "new-hash"
+
+
+# Tipo de test: Integration
+def test_should_ignore_update_password_when_user_does_not_exist(db_session: Session) -> None:
+    """Valida que update_password no falla cuando el usuario no existe."""
+    repository = AuthRepository(session=db_session)
+
+    repository.update_password(user_id="missing-id", password_hash="new-hash")
