@@ -114,14 +114,19 @@ def request_otp(
     return OtpResponse(message="OTP sent")
 
 
-@v1_router.post("/verify-otp", response_model=OtpResponse)
+@v1_router.post(
+    "/verify-otp",
+    response_model=OtpResponse,
+    deprecated=True,
+    summary="Deprecated: verify OTP (use /change-password)",
+)
 def verify_otp(
     request: VerifyOtpRequest,
     _: Annotated[None, Depends(enforce_verify_otp_rate_limit)],
     current_user: Annotated[User, Depends(get_authenticated_user)],
     verify_otp_use_case: Annotated[VerifyOtpUseCase, Depends(get_verify_otp_use_case)],
 ) -> OtpResponse:
-    """Validate and consume a one-time password."""
+    """Deprecated endpoint. Prefer /auth/v1/change-password for password-change flow."""
     if current_user.id is None:
         raise InternalServerError("user id is missing")
     params = map_verify_otp_to_params(request, current_user.id)
