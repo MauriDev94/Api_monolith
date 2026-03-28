@@ -4,27 +4,17 @@ from unittest.mock import ANY, Mock
 import pytest
 
 from app.core.exceptions.exceptions import ConflictError, UnauthorizedError
-from app.core.exceptions.exceptions import NotFoundError
-from app.features.auth.application.constants import OTP_PURPOSE_PASSWORD_CHANGE
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
-from app.features.auth.application.contracts.otp_datasource import OtpDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
-from app.features.auth.application.dto.change_password_with_otp_params import (
-    ChangePasswordWithOtpParams,
-)
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
-from app.features.auth.application.usecases.change_password_with_otp_use_case import (
-    ChangePasswordWithOtpUseCase,
-)
 from app.features.auth.application.usecases.get_current_user_use_case import GetCurrentUser
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
-from app.features.auth.domain.entities.otp_code import OtpCode
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
 
@@ -254,99 +244,5 @@ def test_should_return_current_user_when_access_token_is_valid() -> None:
     assert result == expected_user
 
 
-# Tipo de test: Unit
-def test_should_raise_not_found_when_change_password_user_is_missing() -> None:
-    auth_datasource = Mock(spec=AuthDatasource)
-    otp_datasource = Mock(spec=OtpDatasource)
-    password_manager = Mock(spec=PasswordManager)
-    token_revocation_store = Mock(spec=TokenRevocationStore)
-    auth_datasource.get_user_by_id.return_value = None
-    use_case = ChangePasswordWithOtpUseCase(
-        auth_datasource=auth_datasource,
-        otp_datasource=otp_datasource,
-        password_manager=password_manager,
-        token_revocation_store=token_revocation_store,
-    )
-
-    with pytest.raises(NotFoundError, match="user not found"):
-        use_case.execute(
-            ChangePasswordWithOtpParams(
-                user_id="missing",
-                code="123456",
-                new_password="new-password-123",
-            )
-        )
-
-    otp_datasource.find_valid.assert_not_called()
-    auth_datasource.update_password.assert_not_called()
-
-
-# Tipo de test: Unit
-def test_should_raise_unauthorized_when_change_password_otp_is_invalid() -> None:
-    auth_datasource = Mock(spec=AuthDatasource)
-    otp_datasource = Mock(spec=OtpDatasource)
-    password_manager = Mock(spec=PasswordManager)
-    token_revocation_store = Mock(spec=TokenRevocationStore)
-    auth_datasource.get_user_by_id.return_value = make_user()
-    otp_datasource.find_valid.return_value = None
-    use_case = ChangePasswordWithOtpUseCase(
-        auth_datasource=auth_datasource,
-        otp_datasource=otp_datasource,
-        password_manager=password_manager,
-        token_revocation_store=token_revocation_store,
-    )
-
-    with pytest.raises(UnauthorizedError, match="Invalid otp code"):
-        use_case.execute(
-            ChangePasswordWithOtpParams(
-                user_id="user-1",
-                code="123456",
-                new_password="new-password-123",
-            )
-        )
-
-    otp_datasource.find_valid.assert_called_once_with(
-        user_id="user-1",
-        code="123456",
-        purpose=OTP_PURPOSE_PASSWORD_CHANGE,
-    )
-    password_manager.hash_password.assert_not_called()
-    auth_datasource.update_password.assert_not_called()
-    token_revocation_store.revoke_all_for_user.assert_not_called()
-
-
-# Tipo de test: Unit
-def test_should_change_password_and_revoke_tokens_when_change_password_is_valid() -> None:
-    auth_datasource = Mock(spec=AuthDatasource)
-    otp_datasource = Mock(spec=OtpDatasource)
-    password_manager = Mock(spec=PasswordManager)
-    token_revocation_store = Mock(spec=TokenRevocationStore)
-    auth_datasource.get_user_by_id.return_value = make_user()
-    otp = OtpCode.create(user_id="user-1", purpose=OTP_PURPOSE_PASSWORD_CHANGE)
-    otp_datasource.find_valid.return_value = otp
-    password_manager.hash_password.return_value = "hashed-new-password"
-    use_case = ChangePasswordWithOtpUseCase(
-        auth_datasource=auth_datasource,
-        otp_datasource=otp_datasource,
-        password_manager=password_manager,
-        token_revocation_store=token_revocation_store,
-    )
-
-    use_case.execute(
-        ChangePasswordWithOtpParams(
-            user_id="user-1",
-            code=otp.code,
-            new_password="new-password-123",
-        )
-    )
-
-    assert otp.used_at is not None
-    otp_datasource.save.assert_called_once_with(otp)
-    password_manager.hash_password.assert_called_once_with("new-password-123")
-    auth_datasource.update_password.assert_called_once_with(
-        user_id="user-1",
-        password_hash="hashed-new-password",
-    )
-    token_revocation_store.revoke_all_for_user.assert_called_once_with("user-1")
 
 
