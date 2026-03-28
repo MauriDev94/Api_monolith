@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import hashlib
 from uuid import uuid4
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -25,7 +26,7 @@ class OtpRepository(OtpDatasource):
         model = OtpModel(
             id=str(uuid4()),
             user_id=otp.user_id,
-            code=otp.code,
+            code_hash=self._hash_code(otp.code),
             purpose=otp.purpose,
             expires_at=otp.expires_at,
             used_at=otp.used_at,
@@ -39,7 +40,7 @@ class OtpRepository(OtpDatasource):
             self.session.rollback()
             raise DatabaseError("failed to store otp") from exc
 
-        return self._to_entity(model)
+        return self._to_entity(model, code_override=otp.code)
 
     def _update(self, otp: OtpCode) -> OtpCode:
         try:
@@ -50,7 +51,7 @@ class OtpRepository(OtpDatasource):
         if model is None:
             raise DatabaseError("otp not found for update")
 
-        model.code = otp.code
+        model.code_hash = self._hash_code(otp.code)
         model.purpose = otp.purpose
         model.expires_at = otp.expires_at
         model.used_at = otp.used_at
@@ -62,16 +63,17 @@ class OtpRepository(OtpDatasource):
             self.session.rollback()
             raise DatabaseError("failed to update otp") from exc
 
-        return self._to_entity(model)
+        return self._to_entity(model, code_override=otp.code)
 
     def find_valid(self, user_id: str, code: str, purpose: str) -> OtpCode | None:
         now = datetime.now(timezone.utc)
+        code_hash = self._hash_code(code)
         try:
             model = (
                 self.session.query(OtpModel)
                 .filter(
                     OtpModel.user_id == user_id,
-                    OtpModel.code == code,
+                    OtpModel.code_hash == code_hash,
                     OtpModel.purpose == purpose,
                     OtpModel.used_at.is_(None),
                     OtpModel.expires_at > now,
@@ -83,7 +85,7 @@ class OtpRepository(OtpDatasource):
 
         if model is None:
             return None
-        return self._to_entity(model)
+        return self._to_entity(model, code_override=code)
 
     def invalidate_all(self, user_id: str, purpose: str) -> None:
         now = datetime.now(timezone.utc)
@@ -102,11 +104,11 @@ class OtpRepository(OtpDatasource):
             raise DatabaseError("failed to invalidate otps") from exc
 
     @staticmethod
-    def _to_entity(model: OtpModel) -> OtpCode:
+    def _to_entity(model: OtpModel, code_override: str | None = None) -> OtpCode:
         return OtpCode(
             id=model.id,
             user_id=model.user_id,
-            code=model.code,
+            code=code_override or "000000",
             purpose=model.purpose,
             expires_at=OtpRepository._ensure_aware(model.expires_at),
             used_at=OtpRepository._ensure_aware(model.used_at),
@@ -120,3 +122,7 @@ class OtpRepository(OtpDatasource):
         if value.tzinfo is None:
             return value.replace(tzinfo=timezone.utc)
         return value
+
+    @staticmethod
+    def _hash_code(code: str) -> str:
+        return hashlib.sha256(code.encode("utf-8")).hexdigest()

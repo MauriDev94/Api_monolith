@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
+import hashlib
 
 from sqlalchemy.orm import Session
 
@@ -6,6 +7,7 @@ from app.features.auth.application.dto.register_user_params import RegisterUserP
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.auth.infrastructure.repositories.otp_repository import OtpRepository
 from app.features.auth.domain.entities.otp_code import OtpCode
+from app.features.auth.infrastructure.models.otp_model import OtpModel
 
 
 def _seed_user_id(session: Session) -> str:
@@ -35,6 +37,9 @@ def test_should_create_and_return_persisted_otp(db_session: Session) -> None:
     assert persisted.user_id == user_id
     assert persisted.purpose == "login"
     assert persisted.code == otp.code
+    persisted_model = db_session.query(OtpModel).filter(OtpModel.id == persisted.id).first()
+    assert persisted_model is not None
+    assert persisted_model.code_hash == hashlib.sha256(otp.code.encode("utf-8")).hexdigest()
 
 
 # Tipo de test: Integration
