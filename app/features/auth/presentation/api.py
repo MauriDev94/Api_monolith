@@ -7,12 +7,16 @@ from app.core.exceptions.exceptions import InternalServerError
 from app.core.router.router import get_versioned_router
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
+from app.features.auth.application.usecases.change_password_with_otp_use_case import (
+    ChangePasswordWithOtpUseCase,
+)
 from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
 from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
 from app.features.auth.di.dependencies import (
+    get_change_password_with_otp_use_case,
     get_login_user_use_case,
     get_refresh_access_token_use_case,
     get_register_user_use_case,
@@ -20,6 +24,7 @@ from app.features.auth.di.dependencies import (
     get_verify_otp_use_case,
 )
 from app.features.auth.presentation.mappers.auth_mapper import (
+    map_change_password_request_to_params,
     map_register_request_to_params,
     map_token_pair_result_to_login_response,
     map_token_pair_result_to_response,
@@ -28,6 +33,7 @@ from app.features.auth.presentation.mappers.auth_mapper import (
     map_verify_otp_to_params,
 )
 from app.features.auth.presentation.schemas.auth_requests import (
+    ChangePasswordRequest,
     RefreshTokenRequest,
     RegisterRequest,
     VerifyOtpRequest,
@@ -121,3 +127,21 @@ def verify_otp(
     params = map_verify_otp_to_params(request, current_user.id)
     verify_otp_use_case.execute(params)
     return OtpResponse(message="OTP verified")
+
+
+@v1_router.post("/change-password", response_model=OtpResponse)
+def change_password(
+    request: ChangePasswordRequest,
+    _: Annotated[None, Depends(enforce_verify_otp_rate_limit)],
+    current_user: Annotated[User, Depends(get_authenticated_user)],
+    change_password_use_case: Annotated[
+        ChangePasswordWithOtpUseCase,
+        Depends(get_change_password_with_otp_use_case),
+    ],
+) -> OtpResponse:
+    """Change password after validating OTP and revoke active sessions."""
+    if current_user.id is None:
+        raise InternalServerError("user id is missing")
+    params = map_change_password_request_to_params(request, current_user.id)
+    change_password_use_case.execute(params)
+    return OtpResponse(message="Password changed. Please login again")

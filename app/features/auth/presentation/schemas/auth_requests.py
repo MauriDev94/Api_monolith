@@ -34,3 +34,10 @@ class VerifyOtpRequest(BaseModel):
     """Request schema used to verify an OTP."""
 
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request schema used to change password with OTP."""
+
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    new_password: str = Field(min_length=8, max_length=128)

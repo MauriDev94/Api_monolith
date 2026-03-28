@@ -1,11 +1,17 @@
 from app.core.exceptions.exceptions import InternalServerError
 from app.features.auth.application.constants import OTP_PURPOSE_PASSWORD_CHANGE
+from app.features.auth.application.dto.change_password_with_otp_params import (
+    ChangePasswordWithOtpParams,
+)
 from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.application.dto.request_otp_params import RequestOtpParams
 from app.features.auth.application.dto.token_pair_result import TokenPairResult
 from app.features.auth.application.dto.verify_otp_params import VerifyOtpParams
-from app.features.auth.presentation.schemas.auth_requests import RegisterRequest
-from app.features.auth.presentation.schemas.auth_requests import VerifyOtpRequest
+from app.features.auth.presentation.schemas.auth_requests import (
+    ChangePasswordRequest,
+    RegisterRequest,
+    VerifyOtpRequest,
+)
 from app.features.auth.presentation.schemas.auth_responses import (
     AuthUserResponse,
     LoginResponse,
@@ -69,4 +75,16 @@ def map_verify_otp_to_params(request: VerifyOtpRequest, user_id: str) -> VerifyO
         user_id=user_id,
         code=request.code,
         purpose=OTP_PURPOSE_PASSWORD_CHANGE,
+    )
+
+
+def map_change_password_request_to_params(
+    request: ChangePasswordRequest,
+    user_id: str,
+) -> ChangePasswordWithOtpParams:
+    """Map password-change payload to use-case params."""
+    return ChangePasswordWithOtpParams(
+        user_id=user_id,
+        code=request.code,
+        new_password=request.new_password,
     )

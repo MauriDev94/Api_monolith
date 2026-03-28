@@ -14,6 +14,7 @@ from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.di.dependencies import (
+    get_change_password_with_otp_use_case,
     get_login_user_use_case,
     get_rate_limiter,
     get_register_user_use_case,
@@ -216,3 +217,44 @@ def test_should_return_429_when_request_otp_rate_limit_is_exceeded() -> None:
     response = client.post("/auth/v1/request-otp")
 
     assert response.status_code == 429
+
+
+# Tipo de test: Integration
+def test_should_return_200_when_change_password_with_otp_is_valid() -> None:
+    client = create_test_client()
+    change_password_use_case = StubUseCase(result=None)
+    client.app.dependency_overrides[get_change_password_with_otp_use_case] = (
+        lambda: change_password_use_case
+    )
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
+    client.app.dependency_overrides[get_authenticated_user] = make_user
+
+    response = client.post(
+        "/auth/v1/change-password",
+        json={"code": "123456", "new_password": "new-password-123"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Password changed. Please login again"}
+    assert change_password_use_case.received.user_id == "user-1"
+    assert change_password_use_case.received.code == "123456"
+    assert change_password_use_case.received.new_password == "new-password-123"
+
+
+# Tipo de test: Integration
+def test_should_return_401_when_change_password_otp_is_invalid() -> None:
+    client = create_test_client()
+    change_password_use_case = StubUseCase(error=UnauthorizedError("Invalid otp code"))
+    client.app.dependency_overrides[get_change_password_with_otp_use_case] = (
+        lambda: change_password_use_case
+    )
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
+    client.app.dependency_overrides[get_authenticated_user] = make_user
+
+    response = client.post(
+        "/auth/v1/change-password",
+        json={"code": "123456", "new_password": "new-password-123"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["message"] == "Invalid otp code"

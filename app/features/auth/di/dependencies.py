@@ -14,6 +14,9 @@ from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
 from app.features.auth.application.contracts.otp_datasource import OtpDatasource
 from app.features.auth.application.usecases.get_current_user_use_case import GetCurrentUser
+from app.features.auth.application.usecases.change_password_with_otp_use_case import (
+    ChangePasswordWithOtpUseCase,
+)
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
@@ -151,3 +154,20 @@ def get_verify_otp_use_case(
 ) -> VerifyOtpUseCase:
     """Provide VerifyOtpUseCase use case."""
     return VerifyOtpUseCase(otp_datasource=otp_datasource)
+
+
+def get_change_password_with_otp_use_case(
+    auth_datasource: Annotated[AuthDatasource, Depends(get_auth_repository)],
+    otp_datasource: Annotated[OtpDatasource, Depends(get_otp_repository)],
+    password_manager: Annotated[PasswordManager, Depends(get_password_manager)],
+    token_revocation_store: Annotated[
+        TokenRevocationStore, Depends(get_token_revocation_store)
+    ],
+) -> ChangePasswordWithOtpUseCase:
+    """Provide ChangePasswordWithOtpUseCase use case."""
+    return ChangePasswordWithOtpUseCase(
+        auth_datasource=auth_datasource,
+        otp_datasource=otp_datasource,
+        password_manager=password_manager,
+        token_revocation_store=token_revocation_store,
+    )
