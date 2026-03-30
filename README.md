@@ -125,6 +125,32 @@ uvicorn app.main:app --reload
 
 ---
 
+## Comandos de desarrollo
+
+### PowerShell (Windows)
+
+```powershell
+.\scripts\dev.ps1 up
+.\scripts\dev.ps1 logs
+.\scripts\dev.ps1 migrate
+.\scripts\dev.ps1 test
+.\scripts\dev.ps1 test-auth
+.\scripts\dev.ps1 down
+```
+
+### Makefile (Linux/macOS)
+
+```bash
+make up
+make logs
+make migrate
+make test
+make test-auth
+make down
+```
+
+---
+
 ## Endpoints principales
 
 ### Auth (`/auth/v1`)
@@ -229,4 +255,3 @@ tests/
 - CI con GitHub Actions (tests + migraciones).
 - CD básico a entorno de deploy.
 - Observabilidad mínima (health, logs, métricas).
-
