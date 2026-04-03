@@ -135,6 +135,9 @@ uvicorn app.main:app --reload
 .\scripts\dev.ps1 migrate
 .\scripts\dev.ps1 test
 .\scripts\dev.ps1 test-auth
+.\scripts\dev.ps1 lint
+.\scripts\dev.ps1 format
+.\scripts\dev.ps1 check-format
 .\scripts\dev.ps1 down
 ```
 
@@ -146,6 +149,9 @@ make logs
 make migrate
 make test
 make test-auth
+make lint
+make format
+make check-format
 make down
 ```
 

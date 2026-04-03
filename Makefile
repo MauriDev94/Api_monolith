@@ -1,4 +1,4 @@
-.PHONY: up down logs shell test test-auth migrate
+.PHONY: up down logs shell test test-auth migrate lint format check-format
 
 up:
 	docker compose -f docker-compose-dev.yaml up --build
@@ -20,3 +20,13 @@ test-auth:
 
 migrate:
 	.venv/bin/alembic upgrade head
+
+lint:
+	.venv/bin/ruff check app tests
+
+format:
+	.venv/bin/ruff check app tests --fix
+	.venv/bin/black app tests
+
+check-format:
+	.venv/bin/black --check app tests
