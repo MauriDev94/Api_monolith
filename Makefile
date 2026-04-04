@@ -1,4 +1,4 @@
-.PHONY: up down logs shell test test-auth migrate lint format check-format
+.PHONY: up down logs shell test test-auth migrate lint format check-format hooks-install hooks-run
 
 up:
 	docker compose -f docker-compose-dev.yaml up --build
@@ -30,3 +30,9 @@ format:
 
 check-format:
 	.venv/bin/black --check app tests
+
+hooks-install:
+	.venv/bin/pre-commit install
+
+hooks-run:
+	.venv/bin/pre-commit run --all-files

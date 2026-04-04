@@ -138,6 +138,8 @@ uvicorn app.main:app --reload
 .\scripts\dev.ps1 lint
 .\scripts\dev.ps1 format
 .\scripts\dev.ps1 check-format
+.\scripts\dev.ps1 hooks-install
+.\scripts\dev.ps1 hooks-run
 .\scripts\dev.ps1 down
 ```
 
@@ -152,8 +154,38 @@ make test-auth
 make lint
 make format
 make check-format
+make hooks-install
+make hooks-run
 make down
 ```
+
+---
+
+## Hooks automáticos (pre-commit)
+
+Este proyecto usa hooks de `pre-commit` para ejecutar validaciones antes de cada commit.
+
+Incluye:
+
+- `check-merge-conflict`
+- `end-of-file-fixer`
+- `trailing-whitespace`
+- `ruff --fix`
+- `black`
+
+Instalación local:
+
+```powershell
+.\scripts\dev.ps1 hooks-install
+```
+
+Ejecución manual sobre todo el repo:
+
+```powershell
+.\scripts\dev.ps1 hooks-run
+```
+
+Después de instalar, cada `git commit` ejecutará los hooks automáticamente.
 
 ---
 

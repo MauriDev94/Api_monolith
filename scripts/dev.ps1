@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("up", "down", "logs", "test", "test-auth", "migrate", "lint", "format", "check-format")]
+    [ValidateSet("up", "down", "logs", "test", "test-auth", "migrate", "lint", "format", "check-format", "hooks-install", "hooks-run")]
     [string]$Command
 )
 
@@ -36,5 +36,11 @@ switch ($Command) {
     }
     "check-format" {
         .venv\Scripts\black.exe --check app tests
+    }
+    "hooks-install" {
+        .venv\Scripts\pre-commit.exe install
+    }
+    "hooks-run" {
+        .venv\Scripts\pre-commit.exe run --all-files
     }
 }
