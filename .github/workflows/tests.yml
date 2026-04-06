@@ -28,10 +28,10 @@ jobs:
       - name: Run test suite
         env:
           PYTHONPATH: .
-          DB_USER: ${{ vars.CI_DB_USER }}
+          DB_USER: postgres
           DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
-          DB_NAME: ${{ vars.CI_DB_NAME }}
-          DB_PORT: ${{ vars.CI_DB_PORT }}
-          DB_HOST: ${{ vars.CI_DB_HOST }}
+          DB_NAME: monolith
+          DB_PORT: 5432
+          DB_HOST: localhost
           JWT_SECRET_KEY: ${{ secrets.CI_JWT_SECRET_KEY }}
         run: pytest -q
