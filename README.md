@@ -195,6 +195,9 @@ Workflow activo:
 
 - `.github/workflows/tests.yml`
 - Se ejecuta en `push` y `pull_request` contra `main`.
+- Jobs:
+  - `quality`: `ruff check .` + `black --check .`
+  - `tests`: `pytest` + cobertura (`--cov=app`) con mínimo `70%`
 
 Secrets requeridos en el repositorio:
 
@@ -205,6 +208,7 @@ Notas:
 
 - El job de CI genera un `.env` efímero antes de `pytest -q`.
 - No se versionan credenciales reales en el repo.
+- Se publica `coverage.xml` como artifact del workflow.
 
 ---
 

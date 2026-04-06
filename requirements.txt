@@ -2,6 +2,7 @@ fastapi[standard]==0.128.0
 SQLAlchemy>=2.0.36
 pydantic-settings==2.12.0
 pytest==9.0.2
+pytest-cov==7.0.0
 pytest-sugar==1.1.1
 psycopg2-binary==2.9.11
 argon2-cffi==25.1.0
