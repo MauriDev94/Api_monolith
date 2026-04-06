@@ -34,4 +34,13 @@ jobs:
           DB_PORT: 5432
           DB_HOST: localhost
           JWT_SECRET_KEY: ${{ secrets.CI_JWT_SECRET_KEY }}
-        run: pytest -q
+        run: |
+          cat > .env <<EOF
+          db_user=${DB_USER}
+          db_password=${DB_PASSWORD}
+          db_name=${DB_NAME}
+          db_port=${DB_PORT}
+          db_host=${DB_HOST}
+          jwt_secret_key=${JWT_SECRET_KEY}
+          EOF
+          pytest -q
