@@ -28,13 +28,20 @@ jobs:
       - name: Run test suite
         env:
           PYTHONPATH: .
+          CI_DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+          CI_JWT_SECRET_KEY: ${{ secrets.CI_JWT_SECRET_KEY }}
         run: |
+          if [ -z "$CI_DB_PASSWORD" ] || [ -z "$CI_JWT_SECRET_KEY" ]; then
+            echo "Missing required repository secrets: CI_DB_PASSWORD and/or CI_JWT_SECRET_KEY"
+            exit 1
+          fi
+
           cat > .env <<EOF
           db_user=postgres
-          db_password=${{ secrets.CI_DB_PASSWORD }}
+          db_password=${CI_DB_PASSWORD}
           db_name=monolith
           db_port=5432
           db_host=localhost
-          jwt_secret_key=${{ secrets.CI_JWT_SECRET_KEY }}
+          jwt_secret_key=${CI_JWT_SECRET_KEY}
           EOF
           pytest -q

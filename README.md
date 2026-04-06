@@ -189,6 +189,25 @@ Después de instalar, cada `git commit` ejecutará los hooks automáticamente.
 
 ---
 
+## CI (GitHub Actions)
+
+Workflow activo:
+
+- `.github/workflows/tests.yml`
+- Se ejecuta en `push` y `pull_request` contra `main`.
+
+Secrets requeridos en el repositorio:
+
+- `CI_DB_PASSWORD`
+- `CI_JWT_SECRET_KEY`
+
+Notas:
+
+- El job de CI genera un `.env` efímero antes de `pytest -q`.
+- No se versionan credenciales reales en el repo.
+
+---
+
 ## Endpoints principales
 
 ### Auth (`/auth/v1`)
@@ -258,7 +277,7 @@ pytest -q tests/e2e/test_auth_users_todos_e2e.py::test_should_change_password_wi
 
 Estado validado recientemente:
 
-- `69` tests pasando (`features/auth` + e2e relevantes)
+- `152` tests pasando (suite completa)
 
 ---
 
@@ -289,7 +308,6 @@ tests/
 
 ## Roadmap corto (siguiente etapa)
 
-- Dockerizar app completa (`Dockerfile` + `docker-compose` app+db).
-- CI con GitHub Actions (tests + migraciones).
+- CI extendido: lint + format-check + cobertura.
 - CD básico a entorno de deploy.
 - Observabilidad mínima (health, logs, métricas).
