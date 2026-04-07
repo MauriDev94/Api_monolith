@@ -7,3 +7,5 @@ logs
 .github/*
 !.github/workflows/
 !.github/workflows/**
+!.github/CODEOWNERS
+!.github/pull_request_template.md

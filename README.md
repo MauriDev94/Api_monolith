@@ -213,6 +213,21 @@ Notas:
 
 ---
 
+## Contribución (flujo PR)
+
+Flujo recomendado:
+
+- Crear rama de trabajo (`feature/...`, `fix/...`).
+- Abrir Pull Request usando el template en `.github/pull_request_template.md`.
+- Validar checks obligatorios (`quality` y `tests`).
+- Mergear a `main` solo con CI en verde.
+
+Propiedad de código:
+
+- Definida en `.github/CODEOWNERS`.
+
+---
+
 ## Endpoints principales
 
 ### Auth (`/auth/v1`)
