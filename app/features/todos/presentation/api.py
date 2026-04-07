@@ -25,7 +25,10 @@ from app.features.todos.presentation.mappers.todo_mapper import (
     map_update_todo_request_to_params,
     map_user_id_to_get_todos_params,
 )
-from app.features.todos.presentation.schemas.todo_requests import CreateTodoRequest, UpdateTodoRequest
+from app.features.todos.presentation.schemas.todo_requests import (
+    CreateTodoRequest,
+    UpdateTodoRequest,
+)
 from app.features.todos.presentation.schemas.todo_responses import (
     CreateTodoResponse,
     DeleteTodoResponse,

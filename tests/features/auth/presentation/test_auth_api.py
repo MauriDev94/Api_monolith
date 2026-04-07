@@ -117,7 +117,9 @@ def test_should_return_401_when_login_email_format_is_invalid() -> None:
     password_manager = Mock(spec=PasswordManager)
     token_manager = Mock(spec=TokenManager)
     token_revocation_store = Mock(spec=TokenRevocationStore)
-    login_use_case = LoginUser(auth_datasource, password_manager, token_manager, token_revocation_store)
+    login_use_case = LoginUser(
+        auth_datasource, password_manager, token_manager, token_revocation_store
+    )
     client.app.dependency_overrides[get_login_user_use_case] = lambda: login_use_case
 
     response = client.post(

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -31,13 +31,11 @@ class TokenRevocationRepository(TokenRevocationStore):
     def revoke(self, jti: str) -> None:
         try:
             model = (
-                self.session.query(RefreshTokenModel)
-                .filter(RefreshTokenModel.jti == jti)
-                .first()
+                self.session.query(RefreshTokenModel).filter(RefreshTokenModel.jti == jti).first()
             )
             if model is None:
                 return None
-            model.revoked_at = datetime.now(timezone.utc)
+            model.revoked_at = datetime.now(UTC)
             self.session.commit()
         except SQLAlchemyError as exc:
             self.session.rollback()
@@ -46,9 +44,7 @@ class TokenRevocationRepository(TokenRevocationStore):
     def is_revoked(self, jti: str) -> bool:
         try:
             model = (
-                self.session.query(RefreshTokenModel)
-                .filter(RefreshTokenModel.jti == jti)
-                .first()
+                self.session.query(RefreshTokenModel).filter(RefreshTokenModel.jti == jti).first()
             )
         except SQLAlchemyError as exc:
             raise DatabaseError("failed to check refresh token revocation") from exc
@@ -61,13 +57,13 @@ class TokenRevocationRepository(TokenRevocationStore):
 
         expires_at = model.expires_at
         if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        now = datetime.now(timezone.utc)
+            expires_at = expires_at.replace(tzinfo=UTC)
+        now = datetime.now(UTC)
         return expires_at <= now
 
     def revoke_all_for_user(self, user_id: str) -> None:
         try:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             self.session.query(RefreshTokenModel).filter(
                 RefreshTokenModel.user_id == user_id,
                 RefreshTokenModel.revoked_at.is_(None),

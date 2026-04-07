@@ -34,7 +34,9 @@ class AuthRepository(AuthDatasource):
         normalized_email = Email(email).value
 
         try:
-            user_model = self.session.query(UserModel).filter(UserModel.email == normalized_email).first()
+            user_model = (
+                self.session.query(UserModel).filter(UserModel.email == normalized_email).first()
+            )
         except SQLAlchemyError as exc:
             raise DatabaseError("failed to retrieve user by email") from exc
 

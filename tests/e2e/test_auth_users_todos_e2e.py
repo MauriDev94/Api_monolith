@@ -19,7 +19,9 @@ def _override_db_session(session: Session):
     return _provider
 
 
-def _register_user(client: TestClient, *, name: str, lastname: str, email: str, password: str) -> dict:
+def _register_user(
+    client: TestClient, *, name: str, lastname: str, email: str, password: str
+) -> dict:
     response = client.post(
         "/auth/v1/register",
         json={
@@ -124,13 +126,19 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
         assert refresh_response.status_code == 200
         new_access_token = refresh_response.json()["tokens"]["access_token"]
 
-        list_with_new_token_response = client.get("/v1/todos", headers=_auth_headers(new_access_token))
+        list_with_new_token_response = client.get(
+            "/v1/todos", headers=_auth_headers(new_access_token)
+        )
         assert list_with_new_token_response.status_code == 200
 
-        delete_todo_response = client.delete(f"/v1/todos/{todo_id}", headers=_auth_headers(new_access_token))
+        delete_todo_response = client.delete(
+            f"/v1/todos/{todo_id}", headers=_auth_headers(new_access_token)
+        )
         assert delete_todo_response.status_code == 200
 
-        get_deleted_response = client.get(f"/v1/todos/{todo_id}", headers=_auth_headers(new_access_token))
+        get_deleted_response = client.get(
+            f"/v1/todos/{todo_id}", headers=_auth_headers(new_access_token)
+        )
         assert get_deleted_response.status_code == 404
     finally:
         app.dependency_overrides.clear()

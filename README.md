@@ -196,7 +196,7 @@ Workflow activo:
 - `.github/workflows/tests.yml`
 - Se ejecuta en `push` y `pull_request` contra `main`.
 - Jobs:
-  - `quality`: `ruff` (gate inicial enfocado en errores críticos `E,F,B`)
+  - `quality`: `ruff` (gate inicial enfocado en errores críticos `E,F,B`) + `black --check .`
   - `tests`: `pytest` + cobertura (`--cov=app`) con mínimo `70%`
 
 Secrets requeridos en el repositorio:

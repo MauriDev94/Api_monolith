@@ -157,4 +157,3 @@ def test_should_return_500_for_unhandled_exceptions() -> None:
 
     assert response.status_code == 500
     assert response.json()["message"] == "Internal server error"
-

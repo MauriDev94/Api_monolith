@@ -24,7 +24,9 @@ def test_should_normalize_user_text_fields_and_email() -> None:
     assert user.password_hash == "hash"
 
 
-@pytest.mark.parametrize("field, value", [("name", "   "), ("lastname", ""), ("password_hash", " ")])
+@pytest.mark.parametrize(
+    "field, value", [("name", "   "), ("lastname", ""), ("password_hash", " ")]
+)
 # Tipo de test: Unit
 def test_should_raise_when_required_user_text_field_is_empty(field: str, value: str) -> None:
     """Valida que lanza error cuando un campo de texto requerido esta vacio."""

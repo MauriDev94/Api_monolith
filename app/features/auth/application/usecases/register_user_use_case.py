@@ -29,4 +29,6 @@ class RegisterUser(UseCase[RegisterUserParams, User]):
             password=params.password,
             birthdate=params.birthdate,
         )
-        return self.auth_datasource.register_user(params=normalized_params, password_hash=password_hash)
+        return self.auth_datasource.register_user(
+            params=normalized_params, password_hash=password_hash
+        )

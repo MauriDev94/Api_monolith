@@ -42,7 +42,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-
 async def value_error_exception_handler(request: Request, exc: ValueError):
     """Normalize domain validation errors into a consistent 400 response."""
     _request_logger(request).warning(f"ValueError: {exc}")
@@ -50,6 +49,7 @@ async def value_error_exception_handler(request: Request, exc: ValueError):
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"message": str(exc) or "Validation error"},
     )
+
 
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Map HTTP exceptions while hiding details for 5xx responses."""
@@ -115,6 +115,7 @@ async def unauthorized_exception_handler(request: Request, exc: UnauthorizedErro
         content={"message": str(exc) or "Unauthorized"},
     )
 
+
 async def forbidden_exception_handler(request: Request, exc: ForbiddenError):
     """Return a forbidden response for access control violations."""
     _request_logger(request).warning(f"ForbiddenError: {exc}")
@@ -141,6 +142,7 @@ async def resource_not_found_exception_handler(request: Request, exc: NotFoundEr
         content={"message": str(exc) or "Resource not found"},
     )
 
+
 async def validation_error_exception_handler(request: Request, exc: ValidationError):
     """Return a validation response for domain/application validation errors."""
     _request_logger(request).warning(f"ValidationError: {exc}")
@@ -148,6 +150,7 @@ async def validation_error_exception_handler(request: Request, exc: ValidationEr
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"message": str(exc) or "Validation error"},
     )
+
 
 async def too_many_requests_exception_handler(
     request: Request,
@@ -175,4 +178,3 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(NotFoundError, resource_not_found_exception_handler)
     app.add_exception_handler(TooManyRequestsError, too_many_requests_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
-

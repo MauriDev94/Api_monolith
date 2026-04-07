@@ -87,7 +87,9 @@ def test_should_update_profile_and_email_and_persist_once() -> None:
     result = use_case.execute(params)
 
     datasource.get_user_by_id.assert_called_once_with("user-1")
-    datasource.is_email_registered.assert_called_once_with(Email("new@mail.com"), exclude_user_id="user-1")
+    datasource.is_email_registered.assert_called_once_with(
+        Email("new@mail.com"), exclude_user_id="user-1"
+    )
     datasource.update.assert_called_once()
     persisted_user = datasource.update.call_args.args[0]
     assert persisted_user.name == "Mauricio"

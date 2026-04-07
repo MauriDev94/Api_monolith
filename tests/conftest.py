@@ -45,10 +45,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         if (
             "/tests/core/exceptions/" in path
             or "/tests/features/" in path
-            and (
-                "/infrastructure/repositories/" in path
-                or "/presentation/" in path
-            )
+            and ("/infrastructure/repositories/" in path or "/presentation/" in path)
         ):
             item.add_marker(pytest.mark.integration)
             continue

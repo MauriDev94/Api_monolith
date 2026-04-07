@@ -4,7 +4,10 @@ from app.features.todos.application.dto.get_todo_by_id_params import GetTodoById
 from app.features.todos.application.dto.get_todos_params import GetTodosParams
 from app.features.todos.application.dto.update_todo_params import UpdateTodoParams
 from app.features.todos.domain.entities.todo import Todo
-from app.features.todos.presentation.schemas.todo_requests import CreateTodoRequest, UpdateTodoRequest
+from app.features.todos.presentation.schemas.todo_requests import (
+    CreateTodoRequest,
+    UpdateTodoRequest,
+)
 from app.features.todos.presentation.schemas.todo_responses import TodoResponse
 
 
@@ -17,7 +20,9 @@ def map_create_todo_request_to_params(user_id: str, request: CreateTodoRequest) 
     )
 
 
-def map_update_todo_request_to_params(todo_id: str, user_id: str, request: UpdateTodoRequest) -> UpdateTodoParams:
+def map_update_todo_request_to_params(
+    todo_id: str, user_id: str, request: UpdateTodoRequest
+) -> UpdateTodoParams:
     """Map update request payload and path params to use-case parameters."""
     return UpdateTodoParams(
         todo_id=todo_id,

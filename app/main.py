@@ -20,6 +20,7 @@ app.include_router(users_v1_router, tags=["v1 Users"])
 # Todo endpoints are protected and scoped by authenticated user ownership.
 app.include_router(todos_v1_router, tags=["v1 Todos"])
 
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -29,9 +30,7 @@ def custom_openapi():
         description="API docs",
         routes=app.routes,
     )
-    security_schemes = openapi_schema.setdefault("components", {}).setdefault(
-        "securitySchemes", {}
-    )
+    security_schemes = openapi_schema.setdefault("components", {}).setdefault("securitySchemes", {})
     security_schemes["BearerAuth"] = {
         "type": "http",
         "scheme": "bearer",
@@ -52,6 +51,7 @@ def custom_openapi():
                 security.append({"BearerAuth": []})
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 app.openapi = custom_openapi
 

@@ -64,7 +64,9 @@ def test_should_get_todo_by_id(db_session: Session) -> None:
     """Valida que get-by-id retorna la tarea persistida."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
-    created = repository.create_todo(CreateTodoParams(user_id=user_id, title="Study", description=None))
+    created = repository.create_todo(
+        CreateTodoParams(user_id=user_id, title="Study", description=None)
+    )
 
     todo = repository.get_todo_by_id(created.id or "")
 
@@ -78,7 +80,9 @@ def test_should_update_todo(db_session: Session) -> None:
     """Valida que update persiste estado mutado de la entidad tarea."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
-    created = repository.create_todo(CreateTodoParams(user_id=user_id, title="Study", description=None))
+    created = repository.create_todo(
+        CreateTodoParams(user_id=user_id, title="Study", description=None)
+    )
     todo = repository.get_todo_by_id(created.id or "")
     assert todo is not None
 
@@ -99,7 +103,9 @@ def test_should_delete_todo(db_session: Session) -> None:
     """Valida que delete elimina la tarea."""
     repository = TodoRepository(session=db_session)
     user_id = _seed_user(db_session)
-    created = repository.create_todo(CreateTodoParams(user_id=user_id, title="Study", description=None))
+    created = repository.create_todo(
+        CreateTodoParams(user_id=user_id, title="Study", description=None)
+    )
 
     result = repository.delete_todo(created.id or "")
 
