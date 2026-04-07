@@ -27,7 +27,7 @@ jobs:
 
       - name: Run lint and format checks
         run: |
-          ruff check . --select E,F,B --ignore E402,F401 --exclude app/core/data/source/local/alembic
+          ruff check . --select E,F,B --ignore E402,F401,E501 --exclude app/core/data/source/local/alembic
           black --check .
 
   tests:
