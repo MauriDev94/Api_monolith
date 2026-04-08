@@ -1,5 +1,7 @@
 # Monolith API (FastAPI + Clean Architecture + DDD)
 
+[![CI](https://github.com/MauriDev94/Api_monolith/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/MauriDev94/Api_monolith/actions/workflows/tests.yml)
+
 Proyecto backend modular en FastAPI orientado a portafolio profesional.
 
 Arquitectura por feature y por capas:
@@ -195,6 +197,7 @@ Workflow activo:
 
 - `.github/workflows/tests.yml`
 - Se ejecuta en `push` y `pull_request` contra `main`.
+- Historial de ejecuciones: `Actions > CI` en GitHub.
 - Jobs:
   - `quality`: `ruff` (gate inicial enfocado en errores críticos `E,F,B`) + `black --check .`
   - `tests`: `pytest` + cobertura (`--cov=app`) con mínimo `70%`
