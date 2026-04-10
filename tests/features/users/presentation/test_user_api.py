@@ -117,7 +117,7 @@ def test_should_return_400_when_update_user_email_is_invalid() -> None:
         json={
             "name": "Ana",
             "lastname": "Lopez",
-            "email": "user+tag@mail.com",
+            "email": "invalid-mail",
             "birthdate": "2000-01-01",
         },
     )

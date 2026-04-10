@@ -93,7 +93,7 @@ def test_should_raise_invalid_credentials_when_login_email_format_is_invalid() -
     use_case = LoginUser(datasource, password_manager, token_manager, token_revocation_store)
 
     with pytest.raises(UnauthorizedError):
-        use_case.execute(LoginUserParams(email="user+tag@mail.com", password="bad"))
+        use_case.execute(LoginUserParams(email="invalid-mail", password="bad"))
 
     datasource.get_user_by_email.assert_not_called()
 

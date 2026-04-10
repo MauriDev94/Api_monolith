@@ -11,7 +11,7 @@ class Email:
     _MAX_EMAIL_LENGTH = 254
     _MAX_LOCAL_PART_LENGTH = 64
 
-    _LOCAL_PART_PATTERN = re.compile(r"^[a-z0-9._-]+$")
+    _LOCAL_PART_PATTERN = re.compile(r"^[a-z0-9._+-]+$")
     _DOMAIN_LABEL_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
 
     def __post_init__(self) -> None:
