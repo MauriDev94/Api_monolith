@@ -81,7 +81,7 @@ def test_should_return_400_when_register_email_violates_domain_policy() -> None:
         json={
             "name": "Mauri",
             "lastname": "Salinas",
-            "email": "user+tag@mail.com",
+            "email": "invalid-mail",
             "password": "plain1234",
             "birthdate": "2000-01-01",
         },
@@ -124,7 +124,7 @@ def test_should_return_401_when_login_email_format_is_invalid() -> None:
 
     response = client.post(
         "/auth/v1/login",
-        data={"username": "user+tag@mail.com", "password": "bad"},
+        data={"username": "invalid-mail", "password": "bad"},
     )
 
     assert response.status_code == 401

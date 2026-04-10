@@ -215,7 +215,7 @@ def test_should_enforce_auth_and_ownership_error_scenarios(db_session: Session) 
             json={
                 "name": "Mauri",
                 "lastname": "Salinas",
-                "email": "user+tag@mail.com",
+                "email": "invalid-mail",
                 "birthdate": "2000-01-01",
             },
         )

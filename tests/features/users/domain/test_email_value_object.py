@@ -20,6 +20,8 @@ def test_should_normalize_email_value() -> None:
         "x@outlook.cl",
         "user@mail-domain.com",
         "user@mail1.com",
+        "user+tag@gmail.com",
+        "user+alias+extra@domain.com",
     ],
 )
 # Tipo de test: Unit
@@ -40,7 +42,6 @@ def test_should_accept_valid_email_formats(raw_email: str) -> None:
         "user..name@mail.com",
         "user@mail..com",
         "user@mail.c",
-        "user+tag@mail.com",
         "user%name@mail.com",
         "user&name@mail.com",
         "user/name@mail.com",
