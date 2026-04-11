@@ -1,16 +1,42 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from pydantic_settings import BaseSettings
 
 from app.core.config.logger_config import setup_logger
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.middleware.request_context import attach_request_id_middleware
+from app.core.middleware.security_headers import attach_security_headers
 from app.features.auth.presentation.api import v1_router as auth_v1_router
 from app.features.todos.presentation.api import v1_router as todos_v1_router
 from app.features.users.presentation.api import v1_router as users_v1_router
 
+
+class AppSettings(BaseSettings):
+    """Application settings from environment."""
+
+    cors_allowed_origins: list[str] = ["http://localhost:3000"]
+    cors_allow_credentials: bool = True
+
+
+settings = AppSettings()
 setup_logger()
 app = FastAPI()
 register_exception_handlers(app)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Security headers middleware
+app.middleware("http")(attach_security_headers)
+
+# Request context middleware
 app.middleware("http")(attach_request_id_middleware)
 
 # Auth endpoints include register/login/refresh/me.
