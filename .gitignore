@@ -1,9 +1,11 @@
 .venv
 .env
+.ruff_cache
 __pycache__
 logs
 .pytest_cache
-.ruff_cache
+AGENTS.md
+prd.md
 *.pyc
 .github/*
 !.github/workflows/
