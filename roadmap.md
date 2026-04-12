@@ -101,13 +101,11 @@ SMTP_USE_TLS=true
 ---
 
 ### 2.2 — Corregir AGENTS.md
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-12)
 
-- [ ] Actualizar paths de skills a `~/.config/opencode/skills/`
-- [ ] O crear skills locales en `.github/skills/`
-- [ ] Documentar estructura real de tests
-
-**Archivo:** `AGENTS.md`
+- [x] Reemplazar enfoque acoplado a un solo runtime por convención agnóstica (Codex/OpenCode)
+- [x] Documentar resolución de agents/skills por entorno
+- [x] Confirmar política local-only para agents/skills y artefactos SDD
 
 ---
 
@@ -256,6 +254,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
 | 2026-04-10 | ✅ Fix 1.4: Agrega validaciones de seguridad (PR #5) |
 | 2026-04-10 | ✅ Fix 1.3: Agrega .env.example (PR #4 merged) |
@@ -267,6 +266,6 @@ SMTP_USE_TLS=true
 
 ## Notas
 
-- **Versión Python:**(CI: 3.13, Dockerfile: 3.12) — corregir en 1.2
-- **Skills:** Desincronizados entre AGENTS.md y realidad — corregir en 2.2
+- **Versión Python:** (CI: 3.12, Dockerfile: 3.12) ✅
+- **Skills/agentes:** Convención agnóstica aplicada en AGENTS.md ✅
 - **SDD:** Inicializado en modo Engram (local-first).
