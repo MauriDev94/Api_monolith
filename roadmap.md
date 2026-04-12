@@ -105,10 +105,7 @@ SMTP_USE_TLS=true
 
 - [x] Reemplazar enfoque acoplado a un solo runtime por convención agnóstica (Codex/OpenCode)
 - [x] Documentar resolución de agents/skills por entorno
-- [x] Mantener `AGENTS.md` como fuente canónica del proyecto
 - [x] Confirmar política local-only para agents/skills y artefactos SDD
-
-**Archivo:** `AGENTS.md`
 
 ---
 
