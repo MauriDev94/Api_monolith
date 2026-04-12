@@ -211,6 +211,14 @@ AppError          # base — todos los errores de dominio/aplicación heredan de
 
 ---
 
+## Regla de versionado (local-only)
+
+- Los agentes locales (`.github/agents/`) y skills locales del usuario (`~/.codex/skills/`, `~/.config/opencode/skills/`, etc.) son **solo de entorno local**.
+- No deben incluirse en commits ni PRs al remoto, salvo instrucción explícita para publicar templates genéricos.
+- Artefactos SDD locales (`.atl/`) se mantienen fuera del remoto por defecto; si se requiere compartir, se documenta y aprueba explícitamente.
+
+---
+
 ## Skills de referencia
 
 Cada agente debe leer el skill correspondiente antes de actuar:
