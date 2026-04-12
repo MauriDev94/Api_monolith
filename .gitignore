@@ -12,5 +12,4 @@ prd.md
 !.github/workflows/**
 !.github/CODEOWNERS
 !.github/pull_request_template.md
-prd.md
 .atl
