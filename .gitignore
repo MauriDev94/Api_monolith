@@ -3,9 +3,12 @@
 __pycache__
 logs
 .pytest_cache
+.ruff_cache
 *.pyc
 .github/*
 !.github/workflows/
 !.github/workflows/**
 !.github/CODEOWNERS
 !.github/pull_request_template.md
+prd.md
+.atl
