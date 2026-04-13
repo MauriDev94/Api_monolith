@@ -166,13 +166,19 @@ SMTP_USE_TLS=true
 ---
 
 ### 3.2 — Agregar tests de dominio todos
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-13)
 
-- [ ] `test_todo_entity.py`
-- [ ] Coverage para edge cases
+- [x] `test_todo_entity.py` (ya existía con 6 tests)
+- [x] Coverage para edge cases (normalize, empty validation, mutation methods)
 
-**Archivos a crear:**
-- `tests/features/todos/domain/test_todo_entity.py`
+**Tests existentes:**
+- test_should_normalize_todo_text_fields
+- test_should_convert_blank_description_to_none
+- test_should_raise_when_required_text_field_is_empty (parametrized)
+- test_should_mutate_todo_with_behavior_methods
+- test_should_raise_when_renaming_todo_with_invalid_title
+
+**Resultado:** 6 tests passing ✅
 
 ---
 
@@ -281,6 +287,7 @@ SMTP_USE_TLS=true
 |-------|--------|
 | 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
 | 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
+| 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
