@@ -109,13 +109,23 @@ SMTP_USE_TLS=true
 
 ---
 
-### 2.3 — Logging estructurado
-**Estado:** ⏳ Pendiente
+### 2.3 — Logging estructurado + auditoría de cobertura por feature
+**Estado:** 🚧 En progreso (2026-04-12)
 
-- [ ] Correlación request_id en todos los logs
-- [ ] Formato JSON para producción
-- [ ] Log levels apropiados (INFO/WARNING/ERROR)
-- [ ] Loguear queries lentas de DB (opcional)
+- [x] Correlación `request_id` en middleware + handlers globales
+- [x] Formato JSONL estructurado disponible para observabilidad
+- [x] Log levels base definidos (INFO/WARNING/ERROR)
+- [ ] Loguear queries lentas de DB (pendiente para 2.4)
+- [x] Ejecutar auditoría de cobertura para validar casos de uso por feature
+
+**Resultado de auditoría (2026-04-12):**
+- Coverage total actual: **90%** (`pytest --cov=app --cov-report=term-missing -q`)
+- Casos de uso de `auth/users/todos`: cobertura alta (en general **93% a 100%** en application use cases)
+- Gap principal: infraestructura (repositories) y bootstrap/runtime (`app/main.py`, `database.py`)
+
+**Conclusión técnica:**
+- ✅ Se cubre la mayoría de casos de uso funcionales por feature
+- ⚠️ Falta fortalecer observabilidad/performance de DB (slow queries) y casos de infraestructura
 
 **Archivos a modificar:**
 - `app/core/middleware/request_context.py`
@@ -254,6 +264,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
 | 2026-04-10 | ✅ Fix 1.4: Agrega validaciones de seguridad (PR #5) |
