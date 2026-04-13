@@ -153,15 +153,15 @@ SMTP_USE_TLS=true
 **Prioridad:** 🟡 Esta semana
 
 ### 3.1 — Completar tests de infraestructura auth
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-13)
 
-- [ ] `OtpRepository` integration tests
-- [ ] `RefreshTokenRepository` integration tests
-- [ ] `TokenRevocationRepository` integration tests
+- [x] `OtpRepository` integration tests (ya existían)
+- [x] `TokenRevocationRepository` integration tests (6 tests creados)
 
-**Archivos a crear:**
-- `tests/features/auth/infrastructure/repositories/test_otp_repository.py`
-- `tests/features/auth/infrastructure/repositories/test_refresh_token_repository.py`
+**Nota:** `RefreshTokenRepository` no existe en el código — se usa `TokenRevocationRepository`.
+
+**Archivos creados:**
+- `tests/features/auth/infrastructure/repositories/test_token_revocation_repository.py`
 
 ---
 
@@ -280,6 +280,7 @@ SMTP_USE_TLS=true
 | Fecha | Cambio |
 |-------|--------|
 | 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
+| 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
