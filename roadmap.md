@@ -115,7 +115,7 @@ SMTP_USE_TLS=true
 - [x] Correlación `request_id` en middleware + handlers globales
 - [x] Formato JSONL estructurado disponible para observabilidad
 - [x] Log levels base definidos (INFO/WARNING/ERROR)
-- [ ] Loguear queries lentas de DB (pendiente para 2.4)
+- [x] Loguear queries lentas de DB (completado en 2.4)
 - [x] Ejecutar auditoría de cobertura para validar casos de uso por feature
 
 **Resultado de auditoría (2026-04-12):**
@@ -130,6 +130,21 @@ SMTP_USE_TLS=true
 **Archivos a modificar:**
 - `app/core/middleware/request_context.py`
 - `app/core/config/logger_config.py`
+
+---
+
+### 2.4 — Logging de queries lentas de DB
+**Estado:** ✅ Completado (2026-04-13)
+
+- [x] Implementar event listeners en `database.py` para before/after cursor execute
+- [x] Agregar threshold configurable (1.0s por defecto)
+- [x] Loguear queries que excedan el threshold con WARNING y metadata (slow_query: true, duration)
+- [x] Desactivar `echo=True` en engine para evitar ruido en logs
+
+**Archivo modificado:**
+- `app/core/data/source/local/database.py`
+
+**Resultado:** Queries lentas ahora se loguean automáticamente en `logs/app_YYYY-MM-DD.log` con nivel WARNING y contexto de duración.
 
 ---
 
@@ -264,6 +279,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
