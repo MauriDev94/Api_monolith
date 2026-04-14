@@ -10,8 +10,8 @@
 | Fase | Prioridad | Estado |
 |------|-----------|--------|
 | 1. Correcciones Críticas | 🟢 | ✅ Completado |
-| 2. SDD + Observabilidad | 🟡 | 🚧 En progreso |
-| 3. Testing + Coverage | 🟡 | ⏳ Pendiente |
+| 2. SDD + Observabilidad | 🟢 | ✅ Completado |
+| 3. Testing + Coverage | 🟢 | ✅ Completado (92% coverage) |
 | 4. Deploy | 🟢 | ⏳ Pendiente |
 | 5. Polish | 🟢 | ⏳ Pendiente |
 
@@ -150,7 +150,7 @@ SMTP_USE_TLS=true
 
 ## Fase 3: Testing + Coverage
 
-**Prioridad:** 🟡 Esta semana
+**Prioridad:** 🟢 Completado
 
 ### 3.1 — Completar tests de infraestructura auth
 **Estado:** ✅ Completado (2026-04-13)
@@ -183,11 +183,24 @@ SMTP_USE_TLS=true
 ---
 
 ### 3.3 — Subir coverage mínimo a 80%
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-13)
 
-- [ ] Coverage actual: ~70% (ver en CI)
-- [ ] Target: 80%
-- [ ] Identificar gaps con `pytest --cov --cov-report=term-missing`
+- [x] Coverage actual: **92%** (target 80% excedido)
+- [x] Auditoría de tests completada (159 tests)
+- [x] Tests agregados para coverage gaps:
+
+**Tests creados:**
+- `tests/core/test_main.py` (5 tests): healthcheck, custom_openapi, BearerAuth
+- `tests/core/test_database.py` (6 tests): slow query logging, engine config
+
+**Coverage por capa:**
+- Domain: 95%+
+- Application use cases: 95%+
+- Infrastructure: 75-95%
+- Presentation (API): 91-96%
+- Core (main, database): 92%
+
+**Resultado:** 170 tests passing ✅
 
 ---
 
@@ -287,6 +300,7 @@ SMTP_USE_TLS=true
 |-------|--------|
 | 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
 | 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
+| 2026-04-13 | ✅ 3.3: Coverage 92% (11 tests nuevos para main + database) |
 | 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
