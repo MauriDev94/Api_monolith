@@ -178,6 +178,17 @@ SMTP_USE_TLS=true
 - test_should_mutate_todo_with_behavior_methods
 - test_should_raise_when_renaming_todo_with_invalid_title
 
+
+- [x] `test_todo_entity.py` (ya existía con 6 tests)
+- [x] Coverage para edge cases (normalize, empty validation, mutation methods)
+
+**Tests existentes:**
+- test_should_normalize_todo_text_fields
+- test_should_convert_blank_description_to_none
+- test_should_raise_when_required_text_field_is_empty (parametrized)
+- test_should_mutate_todo_with_behavior_methods
+- test_should_raise_when_renaming_todo_with_invalid_title
+
 **Resultado:** 6 tests passing ✅
 
 ---
