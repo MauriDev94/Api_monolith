@@ -10,9 +10,9 @@
 | Fase | Prioridad | Estado |
 |------|-----------|--------|
 | 1. Correcciones Críticas | 🟢 | ✅ Completado |
-| 2. SDD + Observabilidad | 🟡 | 🚧 En progreso |
-| 3. Testing + Coverage | 🟡 | ⏳ Pendiente |
-| 4. Deploy | 🟢 | ⏳ Pendiente |
+| 2. SDD + Observabilidad | 🟢 | ✅ Completado |
+| 3. Testing + Coverage | 🟢 | ✅ Completado (92% coverage) |
+| 4. Deploy | 🟡 | 📋 Planificado (Render + PostgreSQL) |
 | 5. Polish | 🟢 | ⏳ Pendiente |
 
 ---
@@ -183,20 +183,33 @@ SMTP_USE_TLS=true
 ---
 
 ### 3.3 — Subir coverage mínimo a 80%
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-13)
 
-- [ ] Coverage actual: ~70% (ver en CI)
-- [ ] Target: 80%
-- [ ] Identificar gaps con `pytest --cov --cov-report=term-missing`
+- [x] Coverage actual: **92%** (target 80% excedido)
+- [x] Auditoría de tests completada (159 tests)
+- [x] Tests agregados para coverage gaps:
+
+**Tests creados:**
+- `tests/core/test_main.py` (5 tests): healthcheck, custom_openapi, BearerAuth
+- `tests/core/test_database.py` (6 tests): slow query logging, engine config
+
+**Coverage por capa:**
+- Domain: 95%+
+- Application use cases: 95%+
+- Infrastructure: 75-95%
+- Presentation (API): 91-96%
+- Core (main, database): 92%
+
+**Resultado:** 170 tests passing ✅
 
 ---
 
 ## Fase 4: Deploy
 
-**Prioridad:** 🟢 MVP listo
+**Prioridad:** 🟡 Esta semana
 
 ### 4.1 — Dockerfile multi-stage
-**Estado:** ⏳ Pendiente
+**Estado:** 📋 Planificado
 
 - [ ] Separar dev/prod stages
 - [ ] Optimizar tamaño de imagen final
@@ -207,24 +220,26 @@ SMTP_USE_TLS=true
 ---
 
 ### 4.2 — Configurar plataforma de deploy
-**Estado:** ⏳ Pendiente
+**Estado:** 📋 Planificado
 
-- [ ] Elegir: Railway, Render, Fly.io, o similar
+- [x] Elegir: **Render** (recomendado por free tier + PostgreSQL incluido)
 - [ ] Configurar PostgreSQL managed
 - [ ] Variables de entorno en la plataforma
 - [ ] Healthcheck profundo (`/health` con DB ping)
 
-**Opciones:**
+**Opciones evaluadas:**
 | Plataforma | Pros | Cons |
 |------------|------|------|
-| Railway | Deploy automático, PostgreSQL incluido | Límite gratuito bajo |
-| Render | Free tier generoso | Cold starts lentos |
+| Railway | Deploy automático, PostgreSQL incluido | Límite gratuito bajo ($5/mes) |
+| Render ✅ | Free tier generoso (750h/mes), PostgreSQL incluido | Cold starts lentos |
 | Fly.io | Multi-region | Configuración más compleja |
+
+**Selección:** Render — suficiente para MVP, simple de configurar.
 
 ---
 
 ### 4.3 — Workflow CD
-**Estado:** ⏳ Pendiente
+**Estado:** 📋 Planificado
 
 - [ ] GitHub Actions para deploy automático
 - [ ] Build → Test → Push → Deploy
@@ -235,7 +250,7 @@ SMTP_USE_TLS=true
 ---
 
 ### 4.4 — Healthcheck profundo
-**Estado:** ⏳ Pendiente
+**Estado:** 📋 Planificado
 
 - [ ] Endpoint `/health` con DB ping
 - [ ] Readiness vs Liveness probes separadas
@@ -285,9 +300,15 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
-| 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
-| 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
+| 2026-04-13 | 📋 Fase 4: Planificado - Render como plataforma, Docker multi-stage, CD workflow, /health |
+| 2026-04-13 | ✅ 3.3: Coverage 92% (11 tests nuevos para main + database) |
 | 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
+| 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
+<<<<<<< HEAD
+| 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
+=======
+| 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
+>>>>>>> c1a93a5 (docs(roadmap): actualiza Fase 3 como completada (92% coverage))
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
