@@ -11,6 +11,7 @@ class TodoResponse(BaseModel):
     title: str
     description: str | None
     is_completed: bool
+    due_date: datetime | None
     created_at: datetime | None
     updated_at: datetime | None
 

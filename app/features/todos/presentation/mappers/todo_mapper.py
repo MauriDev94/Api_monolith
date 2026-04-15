@@ -17,6 +17,7 @@ def map_create_todo_request_to_params(user_id: str, request: CreateTodoRequest) 
         user_id=user_id,
         title=request.title,
         description=request.description,
+        due_date=request.due_date,
     )
 
 
@@ -30,6 +31,7 @@ def map_update_todo_request_to_params(
         title=request.title,
         description=request.description,
         is_completed=request.is_completed,
+        due_date=request.due_date,
     )
 
 
@@ -56,6 +58,7 @@ def map_todo_entity_to_response(todo: Todo) -> TodoResponse:
         title=todo.title,
         description=todo.description,
         is_completed=todo.is_completed,
+        due_date=todo.due_date,
         created_at=todo.created_at,
         updated_at=todo.updated_at,
     )

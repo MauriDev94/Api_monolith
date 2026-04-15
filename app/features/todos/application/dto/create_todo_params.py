@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(slots=True)
@@ -8,3 +9,4 @@ class CreateTodoParams:
     user_id: str
     title: str
     description: str | None = None
+    due_date: datetime | None = None

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(slots=True)
@@ -10,3 +11,4 @@ class UpdateTodoParams:
     title: str
     description: str | None
     is_completed: bool
+    due_date: datetime | None = None

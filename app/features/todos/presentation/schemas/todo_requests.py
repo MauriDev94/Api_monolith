@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -8,6 +10,7 @@ class CreateTodoRequest(BaseModel):
 
     title: str = Field(min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=2000)
+    due_date: datetime | None = Field(default=None)
 
 
 class UpdateTodoRequest(BaseModel):
@@ -18,3 +21,4 @@ class UpdateTodoRequest(BaseModel):
     title: str = Field(min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=2000)
     is_completed: bool
+    due_date: datetime | None = Field(default=None)
