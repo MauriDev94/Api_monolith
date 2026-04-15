@@ -8,6 +8,7 @@ from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.middleware.request_context import attach_request_id_middleware
 from app.core.middleware.security_headers import attach_security_headers
 from app.features.auth.presentation.api import v1_router as auth_v1_router
+from app.features.notifications.presentation.api import v1_router as notifications_v1_router
 from app.features.todos.presentation.api import v1_router as todos_v1_router
 from app.features.users.presentation.api import v1_router as users_v1_router
 
@@ -45,6 +46,8 @@ app.include_router(auth_v1_router, tags=["v1 Auth"], prefix="/auth")
 app.include_router(users_v1_router, tags=["v1 Users"])
 # Todo endpoints are protected and scoped by authenticated user ownership.
 app.include_router(todos_v1_router, tags=["v1 Todos"])
+# Notification endpoints for user alerts and reminders.
+app.include_router(notifications_v1_router, tags=["v1 Notifications"])
 
 
 def custom_openapi():
