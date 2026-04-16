@@ -256,25 +256,25 @@ SMTP_USE_TLS=true
 ---
 
 ### 4.3 — Scheduler de Recordatorios
-**Estado:** 📋 Planificado
+**Estado:** ✅ Completado (2026-04-15)
 
-- [ ] Implementar background job (APScheduler o similar)
-- [ ] Query de TODOs con due_date próximo
-- [ ] Crear notification + enviar email
+- [x] Implementar job de recordatorios (process_reminders)
+- [x] Query de TODOs con due_date próximo (próximo día por defecto)
+- [x] Crear notification para cada recordatorio
+- [x] Endpoint interno para testing (POST /internal/reminders/process)
 
-**Archivos a crear:**
-- `app/features/notifications/infrastructure/jobs/reminder_scheduler.py`
+**Nota:** Email no implementado aún — se puede agregar después usando SMTP existente.
+
+**Archivos creados:**
+- `app/features/notifications/application/usecases/process_reminders_use_case.py`
 
 ---
 
 ### 4.4 — Endpoints de Notificaciones
-**Estado:** 📋 Planificado
+**Estado:** ✅ Completado (en 4.2)
 
-- [ ] GET `/notifications` (listar notificaciones del usuario)
-- [ ] PATCH `/notifications/{id}/read` (marcar como leída)
-
-**Archivo a crear:**
-- `app/features/notifications/presentation/api.py`
+- [x] GET `/notifications` (listar notificaciones del usuario)
+- [x] PATCH `/notifications/{id}/read` (marcar como leída)
 
 ---
 
