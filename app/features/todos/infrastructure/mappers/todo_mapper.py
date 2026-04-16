@@ -10,6 +10,7 @@ def map_todo_model_to_entity(todo_model: TodoModel) -> Todo:
         title=todo_model.title,
         description=todo_model.description,
         is_completed=todo_model.is_completed,
+        due_date=todo_model.due_date,
         created_at=todo_model.created_at,
         updated_at=todo_model.updated_at,
     )
@@ -20,4 +21,5 @@ def map_todo_entity_to_model(todo_model: TodoModel, todo: Todo) -> TodoModel:
     todo_model.title = todo.title
     todo_model.description = todo.description
     todo_model.is_completed = todo.is_completed
+    todo_model.due_date = todo.due_date
     return todo_model

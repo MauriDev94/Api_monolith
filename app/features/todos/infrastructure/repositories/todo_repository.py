@@ -27,6 +27,7 @@ class TodoRepository(TodoDatasource):
             title=params.title,
             description=params.description,
             is_completed=False,
+            due_date=params.due_date,
         )
 
         try:

@@ -12,8 +12,10 @@
 | 1. Correcciones Críticas | 🟢 | ✅ Completado |
 | 2. SDD + Observabilidad | 🟢 | ✅ Completado |
 | 3. Testing + Coverage | 🟢 | ✅ Completado (92% coverage) |
-| 4. Deploy | 🟡 | 📋 Planificado (Render + PostgreSQL) |
-| 5. Polish | 🟢 | ⏳ Pendiente |
+| 4. Recordatorios (TODOs) | 🟡 | 📋 Planificado |
+| 5. Newsletter | 🟡 | 📋 Planificado |
+| 6. Deploy | 🟢 | 📋 Planificado (Render + PostgreSQL) |
+| 7. Polish | 🟢 | ⏳ Pendiente |
 
 ---
 
@@ -204,11 +206,124 @@ SMTP_USE_TLS=true
 
 ---
 
-## Fase 4: Deploy
+## Fase 4: Sistema de Recordatorios de TODOs
 
-**Prioridad:** 🟡 Esta semana
+**Prioridad:** 🟡 Antes del Deploy
 
-### 4.1 — Dockerfile multi-stage
+### 4.1 — Agregar due_date a Todo
+**Estado:** ✅ Completado (2026-04-15)
+
+- [x] Agregar campo `due_date` al dominio de `Todo` (nullable, no pasado, timezone-aware)
+- [x] Agregar `due_date` al TodoModel
+- [x] Actualizar mappers, DTOs, schemas
+- [x] Agregar 6 tests para due_date (12 total en entity)
+
+**Archivos modificados:**
+- `app/features/todos/domain/entities/todo.py`
+- `app/features/todos/infrastructure/models/todo_model.py`
+- `app/features/todos/infrastructure/mappers/todo_mapper.py`
+- `app/features/todos/application/dto/create_todo_params.py`
+- `app/features/todos/application/dto/update_todo_params.py`
+- `app/features/todos/presentation/schemas/todo_requests.py`
+- `app/features/todos/presentation/schemas/todo_responses.py`
+- `app/features/todos/presentation/mappers/todo_mapper.py`
+- `tests/features/todos/domain/test_todo_entity.py`
+
+**Resultado:** 165 tests passing ✅
+
+---
+
+### 4.2 — Notification Domain
+**Estado:** ✅ Completado (2026-04-15)
+
+- [x] Crear `Notification` entity con NotificationType, NotificationStatus
+- [x] Crear `NotificationRepository` con método factory `create_for_todo_reminder()`
+- [x] Crear modelo `NotificationModel` y mappers
+- [x] Crear API endpoints: `GET /notifications`, `PATCH /notifications/{id}/read`
+
+**Archivos creados:**
+- `app/features/notifications/domain/entities/notification.py`
+- `app/features/notifications/application/contracts/notification_store.py`
+- `app/features/notifications/infrastructure/models/notification_model.py`
+- `app/features/notifications/infrastructure/repositories/notification_repository.py`
+- `app/features/notifications/infrastructure/mappers/notification_mapper.py`
+- `app/features/notifications/presentation/schemas/notification_schemas.py`
+- `app/features/notifications/presentation/mappers/notification_mapper.py`
+- `app/features/notifications/presentation/api.py`
+
+**Resultado:** Tests passing ✅
+
+---
+
+### 4.3 — Scheduler de Recordatorios
+**Estado:** 📋 Planificado
+
+- [ ] Implementar background job (APScheduler o similar)
+- [ ] Query de TODOs con due_date próximo
+- [ ] Crear notification + enviar email
+
+**Archivos a crear:**
+- `app/features/notifications/infrastructure/jobs/reminder_scheduler.py`
+
+---
+
+### 4.4 — Endpoints de Notificaciones
+**Estado:** 📋 Planificado
+
+- [ ] GET `/notifications` (listar notificaciones del usuario)
+- [ ] PATCH `/notifications/{id}/read` (marcar como leída)
+
+**Archivo a crear:**
+- `app/features/notifications/presentation/api.py`
+
+---
+
+## Fase 5: Newsletter
+
+**Prioridad:** 🟡 Antes del Deploy
+
+### 5.1 — Newsletter Domain
+**Estado:** 📋 Planificado
+
+- [ ] Crear `Subscriber` entity
+- [ ] Crear `Campaign` entity
+- [ ] Crear `NewsletterTemplate` value object
+
+**Archivos a crear:**
+- `app/features/newsletter/domain/entities/subscriber.py`
+- `app/features/newsletter/domain/entities/campaign.py`
+
+---
+
+### 5.2 — Newsletter Infrastructure
+**Estado:** 📋 Planificado
+
+- [ ] Crear `SubscriberRepository`
+- [ ] Integrar con email sender existente (SMTP)
+
+**Archivos a crear:**
+- `app/features/newsletter/infrastructure/repositories/subscriber_repository.py`
+- `app/features/newsletter/infrastructure/models/subscriber_model.py`
+
+---
+
+### 5.3 — Newsletter API
+**Estado:** 📋 Planificado
+
+- [ ] POST `/newsletter/subscribe`
+- [ ] DELETE `/newsletter/unsubscribe`
+- [ ] POST `/newsletter/send` (admin only)
+
+**Archivo a crear:**
+- `app/features/newsletter/presentation/api.py`
+
+---
+
+## Fase 6: Deploy
+
+**Prioridad:** 🟡 Después de Features Nuevas
+
+### 6.1 — Dockerfile multi-stage
 **Estado:** 📋 Planificado
 
 - [ ] Separar dev/prod stages
@@ -219,7 +334,7 @@ SMTP_USE_TLS=true
 
 ---
 
-### 4.2 — Configurar plataforma de deploy
+### 6.2 — Configurar plataforma de deploy
 **Estado:** 📋 Planificado
 
 - [x] Elegir: **Render** (recomendado por free tier + PostgreSQL incluido)
@@ -238,7 +353,7 @@ SMTP_USE_TLS=true
 
 ---
 
-### 4.3 — Workflow CD
+### 6.3 — Workflow CD
 **Estado:** 📋 Planificado
 
 - [ ] GitHub Actions para deploy automático
@@ -249,7 +364,7 @@ SMTP_USE_TLS=true
 
 ---
 
-### 4.4 — Healthcheck profundo
+### 6.4 — Healthcheck profundo
 **Estado:** 📋 Planificado
 
 - [ ] Endpoint `/health` con DB ping
@@ -260,7 +375,7 @@ SMTP_USE_TLS=true
 
 ---
 
-## Fase 5: Polish
+## Fase 7: Polish
 
 **Prioridad:** 🟢 Después del MVP
 
