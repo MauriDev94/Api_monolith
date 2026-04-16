@@ -256,25 +256,25 @@ SMTP_USE_TLS=true
 ---
 
 ### 4.3 — Scheduler de Recordatorios
-**Estado:** 📋 Planificado
+**Estado:** ✅ Completado (2026-04-15)
 
-- [ ] Implementar background job (APScheduler o similar)
-- [ ] Query de TODOs con due_date próximo
-- [ ] Crear notification + enviar email
+- [x] Implementar job de recordatorios (process_reminders)
+- [x] Query de TODOs con due_date próximo (próximo día por defecto)
+- [x] Crear notification para cada recordatorio
+- [x] Endpoint interno para testing (POST /internal/reminders/process)
 
-**Archivos a crear:**
-- `app/features/notifications/infrastructure/jobs/reminder_scheduler.py`
+**Nota:** Email no implementado aún — se puede agregar después usando SMTP existente.
+
+**Archivos creados:**
+- `app/features/notifications/application/usecases/process_reminders_use_case.py`
 
 ---
 
 ### 4.4 — Endpoints de Notificaciones
-**Estado:** 📋 Planificado
+**Estado:** ✅ Completado (en 4.2)
 
-- [ ] GET `/notifications` (listar notificaciones del usuario)
-- [ ] PATCH `/notifications/{id}/read` (marcar como leída)
-
-**Archivo a crear:**
-- `app/features/notifications/presentation/api.py`
+- [x] GET `/notifications` (listar notificaciones del usuario)
+- [x] PATCH `/notifications/{id}/read` (marcar como leída)
 
 ---
 
@@ -419,11 +419,7 @@ SMTP_USE_TLS=true
 | 2026-04-13 | ✅ 3.3: Coverage 92% (11 tests nuevos para main + database) |
 | 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
 | 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
-<<<<<<< HEAD
 | 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
-=======
-| 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
->>>>>>> c1a93a5 (docs(roadmap): actualiza Fase 3 como completada (92% coverage))
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
