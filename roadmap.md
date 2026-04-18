@@ -12,9 +12,9 @@
 | 1. Correcciones Críticas | 🟢 | ✅ Completado |
 | 2. SDD + Observabilidad | 🟢 | ✅ Completado |
 | 3. Testing + Coverage | 🟢 | ✅ Completado (92% coverage) |
-| 4. Recordatorios (TODOs) | 🟡 | 📋 Planificado |
-| 5. Newsletter | 🟡 | 📋 Planificado |
-| 6. Deploy | 🟢 | 📋 Planificado (Render + PostgreSQL) |
+| 4. Recordatorios (TODOs) | 🟢 | ✅ Completado |
+| 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
+| 6. Deploy | 🟡 | 📋 Planificado (Render con PostgreSQL) |
 | 7. Polish | 🟢 | ⏳ Pendiente |
 
 ---
@@ -278,108 +278,47 @@ SMTP_USE_TLS=true
 
 ---
 
-## Fase 5: Newsletter
 
-**Prioridad:** 🟡 Antes del Deploy
-
-### 5.1 — Newsletter Domain
-**Estado:** 📋 Planificado
-
-- [ ] Crear `Subscriber` entity
-- [ ] Crear `Campaign` entity
-- [ ] Crear `NewsletterTemplate` value object
-
-**Archivos a crear:**
-- `app/features/newsletter/domain/entities/subscriber.py`
-- `app/features/newsletter/domain/entities/campaign.py`
-
----
-
-### 5.2 — Newsletter Infrastructure
-**Estado:** 📋 Planificado
-
-- [ ] Crear `SubscriberRepository`
-- [ ] Integrar con email sender existente (SMTP)
-
-**Archivos a crear:**
-- `app/features/newsletter/infrastructure/repositories/subscriber_repository.py`
-- `app/features/newsletter/infrastructure/models/subscriber_model.py`
-
----
-
-### 5.3 — Newsletter API
-**Estado:** 📋 Planificado
-
-- [ ] POST `/newsletter/subscribe`
-- [ ] DELETE `/newsletter/unsubscribe`
-- [ ] POST `/newsletter/send` (admin only)
-
-**Archivo a crear:**
-- `app/features/newsletter/presentation/api.py`
-
----
-
-## Fase 6: Deploy
+## Fase 5: Deploy
 
 **Prioridad:** 🟡 Después de Features Nuevas
 
-### 6.1 — Dockerfile multi-stage
-**Estado:** 📋 Planificado
+### 5.1 — Dockerfile multi-stage
+**Estado:** ✅ Ya configurado
 
-- [ ] Separar dev/prod stages
-- [ ] Optimizar tamaño de imagen final
-- [ ] Multi-platform support (opcional)
-
-**Archivo a modificar:** `Dockerfile`
+- [x] Dockerfile existente ya optimizado (python:3.12-slim)
+- [x] Healthcheck integrado
+- [x] Usuario no-root
 
 ---
 
-### 6.2 — Configurar plataforma de deploy
+### 5.2 — Configurar plataforma de deploy
 **Estado:** 📋 Planificado
 
-- [x] Elegir: **Render** (recomendado por free tier + PostgreSQL incluido)
-- [ ] Configurar PostgreSQL managed
+- [x] Elegir: **Render** (100% gratis sin CC)
+- [x] Healthcheck `/health` con DB ping (implementado)
+- [ ] Configurar PostgreSQL managed en Render
 - [ ] Variables de entorno en la plataforma
-- [ ] Healthcheck profundo (`/health` con DB ping)
 
-**Opciones evaluadas:**
-| Plataforma | Pros | Cons |
-|------------|------|------|
-| Railway | Deploy automático, PostgreSQL incluido | Límite gratuito bajo ($5/mes) |
-| Render ✅ | Free tier generoso (750h/mes), PostgreSQL incluido | Cold starts lentos |
-| Fly.io | Multi-region | Configuración más compleja |
-
-**Selección:** Render — suficiente para MVP, simple de configurar.
+**Plataforma:** Render — 750 hrs/mes, PostgreSQL 90 días
 
 ---
 
-### 6.3 — Workflow CD
+### 5.3 — Workflow CD
 **Estado:** 📋 Planificado
 
 - [ ] GitHub Actions para deploy automático
-- [ ] Build → Test → Push → Deploy
-- [ ] Notificaciones de deploy fallido
+- [ ] Build → Test → Deploy en Render
 
 **Archivo a crear:** `.github/workflows/deploy.yml`
 
 ---
 
-### 6.4 — Healthcheck profundo
-**Estado:** 📋 Planificado
-
-- [ ] Endpoint `/health` con DB ping
-- [ ] Readiness vs Liveness probes separadas
-- [ ] Métricas básicas (opcional)
-
-**Archivo a modificar:** `app/main.py`
-
----
-
-## Fase 7: Polish
+## Fase 6: Polish
 
 **Prioridad:** 🟢 Después del MVP
 
-### 5.1 — OpenAPI custom info
+### 6.1 — OpenAPI custom info
 **Estado:** ⏳ Pendiente
 
 - [ ] Título descriptivo
@@ -391,7 +330,7 @@ SMTP_USE_TLS=true
 
 ---
 
-### 5.2 — Documentación
+### 6.2 — Documentación
 **Estado:** ⏳ Pendiente
 
 - [ ] README con estado real del proyecto
@@ -402,7 +341,7 @@ SMTP_USE_TLS=true
 
 ---
 
-### 5.3 — Cleanup técnico
+### 6.3 — Cleanup técnico
 **Estado:** ⏳ Pendiente
 
 - [ ] Dependencias outdated en `requirements.txt`
@@ -419,11 +358,7 @@ SMTP_USE_TLS=true
 | 2026-04-13 | ✅ 3.3: Coverage 92% (11 tests nuevos para main + database) |
 | 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
 | 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
-<<<<<<< HEAD
 | 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
-=======
-| 2026-04-13 | ✅ 2.4: Logging de queries lentas de DB (threshold 1.0s, event listeners) |
->>>>>>> c1a93a5 (docs(roadmap): actualiza Fase 3 como completada (92% coverage))
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |

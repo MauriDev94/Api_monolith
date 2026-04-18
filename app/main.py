@@ -89,3 +89,22 @@ app.openapi = custom_openapi
 def read_root():
     """Basic liveness endpoint for local smoke checks."""
     return {"status": "success", "message": "API is running"}
+
+
+@app.get("/health")
+def health_check():
+    """Deep health check with database connectivity."""
+    from app.core.providers.db import get_db_session
+
+    db_status = "healthy"
+    try:
+        db_session_gen = get_db_session()
+        db_session = next(db_session_gen)
+        db_session.execute("SELECT 1")
+    except Exception:
+        db_status = "unhealthy"
+
+    return {
+        "status": "healthy",
+        "database": db_status,
+    }
