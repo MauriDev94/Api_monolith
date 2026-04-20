@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from loguru import logger
 from pydantic_settings import BaseSettings
 
+from app.core.config.env_config import EnvConfig
 from app.core.config.logger_config import setup_logger
+from app.core.data.source.local.database import Database
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.middleware.request_context import attach_request_id_middleware
 from app.core.middleware.security_headers import attach_security_headers
@@ -24,6 +27,22 @@ settings = AppSettings()
 setup_logger()
 app = FastAPI()
 register_exception_handlers(app)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables on startup if they don't exist (for Render free tier)."""
+    if settings.cors_allowed_origins != ["http://localhost:3000"]:
+        # Only run in production (not local dev)
+        try:
+            from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
+
+            db = Database(EnvConfig())
+            SqlAlchemyBase.metadata.create_all(bind=db.engine)
+            logger.info("Database tables created successfully")
+        except Exception as e:
+            logger.error(f"Failed to create database tables: {e}")
+
 
 # CORS middleware
 app.add_middleware(
