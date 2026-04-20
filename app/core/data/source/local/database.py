@@ -2,6 +2,7 @@ import time
 from collections.abc import Generator
 
 from loguru import logger
+from sqlalchemy import event
 from sqlalchemy.engine import URL, create_engine
 from sqlalchemy.engine.events import DBAPIConnection
 from sqlalchemy.orm import Session, sessionmaker
@@ -36,13 +37,13 @@ class Database:
     def _setup_slow_query_logging(self):
         """Register event listeners for slow query detection."""
 
-        @self.engine.listen_for("before_cursor_execute")
+        @event.listens_for(self.engine, "before_cursor_execute")
         def before_execute(
             conn: DBAPIConnection, cursor, statement, parameters, context, executemany
         ):
             conn.info.setdefault("query_start_time", []).append(time.monotonic())
 
-        @self.engine.listen_for("after_cursor_execute")
+        @event.listens_for(self.engine, "after_cursor_execute")
         def after_execute(
             conn: DBAPIConnection, cursor, statement, parameters, context, executemany
         ):
