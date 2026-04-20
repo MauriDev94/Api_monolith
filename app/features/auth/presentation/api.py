@@ -1,20 +1,20 @@
 from typing import Annotated
 
-from fastapi import Depends, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.exceptions.exceptions import InternalServerError
+from app.core.exceptions.exceptions import ConflictError, InternalServerError
 from app.core.router.router import get_versioned_router
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
 from app.features.auth.application.usecases.change_password_with_otp_use_case import (
     ChangePasswordWithOtpUseCase,
 )
-from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
-from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
+from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
+from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.di.dependencies import (
     get_change_password_with_otp_use_case,
     get_login_user_use_case,
@@ -26,10 +26,10 @@ from app.features.auth.di.dependencies import (
 from app.features.auth.presentation.mappers.auth_mapper import (
     map_change_password_request_to_params,
     map_register_request_to_params,
+    map_request_otp_to_params,
     map_token_pair_result_to_login_response,
     map_token_pair_result_to_response,
     map_user_entity_to_auth_user_response,
-    map_request_otp_to_params,
     map_verify_otp_to_params,
 )
 from app.features.auth.presentation.schemas.auth_requests import (
@@ -45,10 +45,10 @@ from app.features.auth.presentation.schemas.auth_responses import (
     RefreshTokenResponse,
     RegisterResponse,
 )
-from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.auth.presentation.security_dependencies import (
     enforce_request_otp_rate_limit,
     enforce_verify_otp_rate_limit,
+    get_authenticated_user,
 )
 from app.features.users.domain.entities.user import User
 
@@ -61,7 +61,10 @@ def register_user(
     register_user_use_case: Annotated[RegisterUser, Depends(get_register_user_use_case)],
 ) -> RegisterResponse:
     """Create a user account using validated request payload."""
-    user = register_user_use_case.execute(map_register_request_to_params(request))
+    try:
+        user = register_user_use_case.execute(map_register_request_to_params(request))
+    except ConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return RegisterResponse(user=map_user_entity_to_auth_user_response(user))
 
 
