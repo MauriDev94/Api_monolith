@@ -32,7 +32,10 @@ register_exception_handlers(app)
 @app.on_event("startup")
 async def startup_event():
     """Create database tables on startup if they don't exist (for Render free tier)."""
-    if settings.cors_allowed_origins != ["http://localhost:3000"]:
+    import os
+
+    app_env = os.getenv("APP_ENV", "dev")
+    if app_env == "production":
         # Only run in production (not local dev)
         try:
             from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
