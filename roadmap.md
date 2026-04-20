@@ -1,7 +1,7 @@
 # Roadmap — Monolith API a MVP Profesional
 
-**Última actualización:** 2026-04-11
-**Estado general:** En progreso
+**Última actualización:** 2026-04-20
+**Estado general:** ✅ En producción (Render)
 
 ---
 
@@ -14,7 +14,7 @@
 | 3. Testing + Coverage | 🟢 | ✅ Completado (92% coverage) |
 | 4. Recordatorios (TODOs) | 🟢 | ✅ Completado |
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
-| 6. Deploy | 🟡 | 📋 Planificado (Render con PostgreSQL) |
+| 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
 | 7. Polish | 🟢 | ⏳ Pendiente |
 
 ---
@@ -281,10 +281,10 @@ SMTP_USE_TLS=true
 
 ## Fase 5: Deploy
 
-**Prioridad:** 🟡 Después de Features Nuevas
+**Prioridad:** 🟢 Completado (2026-04-20)
 
 ### 5.1 — Dockerfile multi-stage
-**Estado:** ✅ Ya configurado
+**Estado:** ✅ Completado
 
 - [x] Dockerfile existente ya optimizado (python:3.12-slim)
 - [x] Healthcheck integrado
@@ -293,14 +293,20 @@ SMTP_USE_TLS=true
 ---
 
 ### 5.2 — Configurar plataforma de deploy
-**Estado:** 📋 Planificado
+**Estado:** ✅ Completado (2026-04-20)
 
 - [x] Elegir: **Render** (100% gratis sin CC)
-- [x] Healthcheck `/health` con DB ping (implementado)
-- [ ] Configurar PostgreSQL managed en Render
-- [ ] Variables de entorno en la plataforma
+- [x] Healthcheck `/health` con DB ping
+- [x] PostgreSQL managed en Render (monolith_gl63)
+- [x] Variables de entorno configuradas
+- [x] Auto-create tables en startup (workaround para free tier)
 
-**Plataforma:** Render — 750 hrs/mes, PostgreSQL 90 días
+**URL en producción:** https://api-monolith.onrender.com
+
+**Funcionalidades verificadas:**
+- Registro usuario → 201 ✅
+- Email duplicado → 409 ✅
+- Health check → 200 ✅
 
 ---
 
@@ -310,7 +316,8 @@ SMTP_USE_TLS=true
 - [ ] GitHub Actions para deploy automático
 - [ ] Build → Test → Deploy en Render
 
-**Archivo a crear:** `.github/workflows/deploy.yml`
+**Nota:** El deploy actual es automático con push a main (auto-deploy enabled).
+**Archivo a crear (opcional):** `.github/workflows/deploy.yml`
 
 ---
 
@@ -354,11 +361,13 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
-| 2026-04-13 | 📋 Fase 4: Planificado - Render como plataforma, Docker multi-stage, CD workflow, /health |
+| 2026-04-20 | 🚀 **Deploy a producción (Render)!** - API live en https://api-monolith.onrender.com |
+| 2026-04-20 | ✅ Fix: SQLAlchemy 2.0 event.listens_for compatibility |
+| 2026-04-20 | ✅ Fix: ConflictError handler retorna 409 (handler global funciona) |
+| 2026-04-20 | ✅ Fix: Auto-create tables en startup para Render free tier |
 | 2026-04-13 | ✅ 3.3: Coverage 92% (11 tests nuevos para main + database) |
 | 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
 | 2026-04-13 | ✅ 3.1: Tests TokenRevocationRepository (6 tests) |
-| 2026-04-13 | ✅ 3.2: Tests dominio Todo entity (6 tests ya existían) |
 | 2026-04-12 | 🚧 2.3: Auditoría de logging + cobertura (90%, casos de uso cubiertos) |
 | 2026-04-12 | ✅ 2.2: Convención agnóstica de agents/skills (Codex + OpenCode) |
 | 2026-04-11 | ✅ 2.1: SDD inicializado en modo Engram + skill registry local |
