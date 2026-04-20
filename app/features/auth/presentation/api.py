@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.exceptions.exceptions import ConflictError, InternalServerError
+from app.core.exceptions.exceptions import InternalServerError
 from app.core.router.router import get_versioned_router
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
@@ -61,10 +61,7 @@ def register_user(
     register_user_use_case: Annotated[RegisterUser, Depends(get_register_user_use_case)],
 ) -> RegisterResponse:
     """Create a user account using validated request payload."""
-    try:
-        user = register_user_use_case.execute(map_register_request_to_params(request))
-    except ConflictError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    user = register_user_use_case.execute(map_register_request_to_params(request))
     return RegisterResponse(user=map_user_entity_to_auth_user_response(user))
 
 
