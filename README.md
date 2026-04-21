@@ -337,8 +337,9 @@ app/
 ├── common/
 └── features/
     ├── auth/
-    ├── users/
-    └── todos/
+    ├── notifications/
+    ├── todos/
+    └── users/
 tests/
 ├── features/
 └── e2e/
@@ -346,8 +347,14 @@ tests/
 
 ---
 
-## Roadmap corto (siguiente etapa)
+## Estado del proyecto
 
-- CI extendido: lint + format-check + cobertura.
-- CD básico a entorno de deploy.
-- Observabilidad mínima (health, logs, métricas).
+| Item | Estado |
+|------|--------|
+| CI con coverage | ✅ 92% |
+| CD a producción | ✅ Render auto-deploy |
+| Health check | ✅ /health |
+| Observabilidad | ✅ logs + slow queries |
+| API en producción | ✅ https://api-monolith.onrender.com |
+
+**MVP completo para portafolio profesional.**
