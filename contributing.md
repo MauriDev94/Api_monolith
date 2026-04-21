@@ -102,6 +102,34 @@ En GitHub aparece el botón **"Compare & pull request"** automáticamente.
 - Descripción con qué cambiaste y por qué (no cómo)
 - Referencia al issue si existe: `Closes #12`
 
+**Template de descripción de PR (copiar y usar en cada PR):**
+
+```markdown
+## Summary
+[Una línea: qué hace este PR]
+
+## Type of Change
+- [ ] Feature
+- [ ] Fix
+- [ ] Docs
+- [ ] Chore
+
+## Checklist
+- [ ] Tests passing
+- [ ] CI en verde (pre-commit)
+
+## Cambios
+### [Nombre del cambio]
+- [ ] [Descripcion del cambio]
+
+## How to Test
+1. [Paso 1]
+2. [Paso 2]
+
+## Risks and Rollback
+[Bajo/Medio/Alto riesgo] - [Descripción del rollback]
+```
+
 **Estrategia de merge:** usar siempre **Squash and merge** para mantener el historial de main limpio.
 
 ---
