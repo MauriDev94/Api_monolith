@@ -82,7 +82,7 @@ def custom_openapi():
         "Construida con FastAPI + Clean Architecture + DDD.",
         routes=app.routes,
         contact={
-            "name": "Mauricio",
+            "name": "MauriDev",
             "url": "https://github.com/MauriDev94",
             "email": "mauridev94@gmail.com",
         },
