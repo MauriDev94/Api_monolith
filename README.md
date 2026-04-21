@@ -1,6 +1,11 @@
 # Monolith API (FastAPI + Clean Architecture + DDD)
 
 [![CI](https://github.com/MauriDev94/Api_monolith/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/MauriDev94/Api_monolith/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-92%25-green)](https://github.com/MauriDev94/Api_monolith/actions)
+[![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
+[![Deploy](https://img.shields.io/badge/deploy-Render-purple)](https://api-monolith.onrender.com)
+
+API en producción: https://api-monolith.onrender.com
 
 Proyecto backend modular en FastAPI orientado a portafolio profesional.
 
@@ -29,6 +34,11 @@ Features implementadas:
   - listar, detalle, actualizar, eliminar
 - `Todos`
   - CRUD protegido por usuario autenticado
+  - Campo `due_date` con recordatorios
+- `Notifications`
+  - Listar notificaciones del usuario
+  - Marcar como leída
+  - Recordatorios automáticos de TODOs próximos
 
 Hardening de seguridad ya aplicado:
 
@@ -122,7 +132,8 @@ alembic downgrade -1
 uvicorn app.main:app --reload
 ```
 
-- Health check: `GET /`
+- Health check local: `GET /health`
+- Health check producción: `GET https://api-monolith.onrender.com/health`
 - Swagger: `http://127.0.0.1:8000/docs`
 
 ---
@@ -200,7 +211,7 @@ Workflow activo:
 - Historial de ejecuciones: `Actions > CI` en GitHub.
 - Jobs:
   - `quality`: `ruff` (gate inicial enfocado en errores críticos `E,F,B`) + `black --check .`
-  - `tests`: `pytest` + cobertura (`--cov=app`) con mínimo `70%`
+  - `tests`: `pytest` + cobertura (`--cov=app`) con mínimo `70%` (actualmente `92%`)
 
 Secrets requeridos en el repositorio:
 
@@ -250,13 +261,18 @@ Propiedad de código:
 - `PUT /v1/users/{user_id}`
 - `DELETE /v1/users/{user_id}`
 
-### Todos (`/v1`)
+### Todos (`/v1/todos`)
 
 - `POST /v1/todos`
 - `GET /v1/todos`
 - `GET /v1/todos/{todo_id}`
 - `PUT /v1/todos/{todo_id}`
 - `DELETE /v1/todos/{todo_id}`
+
+### Notifications (`/notifications`)
+
+- `GET /notifications`
+- `PATCH /notifications/{notification_id}/read`
 
 ---
 
@@ -300,7 +316,8 @@ pytest -q tests/e2e/test_auth_users_todos_e2e.py::test_should_change_password_wi
 
 Estado validado recientemente:
 
-- `152` tests pasando (suite completa)
+- `165+` tests pasando (suite completa)
+- `92%` coverage
 
 ---
 
