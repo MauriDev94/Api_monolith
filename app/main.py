@@ -76,10 +76,20 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="Monolith API",
+        title="MauriDev Portfolio API",
         version="1.0.0",
-        description="API docs",
+        description="REST API para gestión de TODOs con autenticación JWT. "
+        "Construida con FastAPI + Clean Architecture + DDD.",
         routes=app.routes,
+        contact={
+            "name": "Mauricio",
+            "url": "https://github.com/MauriDev94",
+            "email": "mauridev94@gmail.com",
+        },
+        license_info={
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT",
+        },
     )
     security_schemes = openapi_schema.setdefault("components", {}).setdefault("securitySchemes", {})
     security_schemes["BearerAuth"] = {
