@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from loguru import logger
 from pydantic_settings import BaseSettings
+from sqlalchemy import text
 
 from app.core.config.env_config import EnvConfig
 from app.core.config.logger_config import setup_logger
@@ -40,7 +41,7 @@ async def startup_event():
         try:
             from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
-            db = Database(EnvConfig())
+            db = Database(EnvConfig())  # type: ignore
             SqlAlchemyBase.metadata.create_all(bind=db.engine)
             logger.info("Database tables created successfully")
         except Exception as e:
@@ -52,8 +53,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_allowed_origins,
     allow_credentials=settings.cors_allow_credentials,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Security headers middleware
@@ -99,10 +100,19 @@ def custom_openapi():
     }
     openapi_schema.setdefault("security", []).append({"BearerAuth": []})
 
-    # Allow BearerAuth alongside existing OAuth2 requirements per operation.
-    for path_item in openapi_schema.get("paths", {}).values():
+    PUBLIC_PATHS = {
+        "/auth/v1/register",
+        "/auth/v1/login",
+        "/auth/v1/refresh",
+        "/",
+        "/health",
+    }
+    for path, path_item in openapi_schema.get("paths", {}).items():
         for operation in path_item.values():
             if not isinstance(operation, dict):
+                continue
+            if path in PUBLIC_PATHS:
+                operation["security"] = []  # override explícito: sin auth
                 continue
             security = operation.get("security")
             if security is None:
@@ -110,6 +120,7 @@ def custom_openapi():
                 continue
             if all("BearerAuth" not in item for item in security):
                 security.append({"BearerAuth": []})
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
@@ -130,13 +141,10 @@ def health_check():
 
     db_status = "healthy"
     try:
-        db_session_gen = get_db_session()
-        db_session = next(db_session_gen)
-        db_session.execute("SELECT 1")
+        db_gen = get_db_session()
+        db_session = next(db_gen)
+        db_session.execute(text("SELECT 1"))
     except Exception:
         db_status = "unhealthy"
 
-    return {
-        "status": "healthy",
-        "database": db_status,
-    }
+    return {"status": "healthy", "database": db_status}
