@@ -15,7 +15,7 @@
 | 4. Recordatorios (TODOs) | 🟢 | ✅ Completado |
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
-| 7. Refactor Notifications | 🟡 | ⏳ Pendiente |
+| 7. Refactor Notifications | 🟡 | 🚧 En progreso (7.1 completado) |
 
 ---
 
@@ -351,15 +351,9 @@ SMTP_USE_TLS=true
 ### 6.3 — Cleanup técnico
 **Estado:** ✅ Completado (2026-04-27)
 
-<<<<<<< refactor/7.1-notifications-propose
-- [x] Dependencias outdated en `requirements.txt`
-- [x] Limpiar imports no usados
-- [x] Actualizar pre-commit hooks si es necesario
-=======
 - [x] Dependencias outdated en `requirements.txt` (actualizadas a versiones vigentes, 2026-04-27)
 - [x] Limpiar imports no usados
 - [x] Actualizar pre-commit hooks si es necesario (ruff-format + bumps de versiones)
->>>>>>> main
 
 ---
 
@@ -402,13 +396,9 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
-<<<<<<< refactor/7.1-notifications-propose
 | 2026-04-27 | ✅ 7.1 completado: auditoría por capas + matriz API + DoD + estrategia opción B |
 | 2026-04-27 | ✅ 6.3 completado (dependencias + hooks actualizados, PR #22 merged) |
 | 2026-04-27 | 🚧 7.1 iniciado con estrategia opción B (refactor + ajustes API versionados) |
-=======
-| 2026-04-27 | ✅ 6.3: cleanup técnico completado (dependencias + pre-commit hooks actualizados) |
->>>>>>> main
 | 2026-04-27 | 📝 Se redefine la fase siguiente: **Refactor Notifications** pasa a ser Fase 7 |
 | 2026-04-24 | ✅ Fix de seguridad: CORS explícito, BearerAuth en endpoints públicos, health con SQLAlchemy text() |
 | 2026-04-21 | ✅ 6.2: README actualizado (estado real, badges, endpoints, notificaciones) |
