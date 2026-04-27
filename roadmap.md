@@ -15,7 +15,7 @@
 | 4. Recordatorios (TODOs) | 🟢 | ✅ Completado |
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
-| 7. Polish | 🟢 | 🚧 En progreso |
+| 7. Refactor Notifications | 🟡 | ⏳ Pendiente |
 
 ---
 
@@ -357,10 +357,40 @@ SMTP_USE_TLS=true
 
 ---
 
+## Fase 7: Refactor Feature Notifications
+
+**Prioridad:** 🟡 Siguiente iteración
+
+### 7.1 — Diagnóstico y diseño del refactor
+**Estado:** ⏳ Pendiente
+
+- [ ] Auditar responsabilidades por capa (domain/application/infrastructure/presentation/di)
+- [ ] Detectar duplicaciones y acoplamientos con todos/reminders
+- [ ] Definir plan de refactor incremental sin romper contratos API
+
+### 7.2 — Refactor por capas
+**Estado:** ⏳ Pendiente
+
+- [ ] Domain: invariantes y claridad de estados/eventos de notificación
+- [ ] Application: casos de uso más explícitos y consistentes
+- [ ] Infrastructure: repositorio/mappers más robustos + errores homogéneos
+- [ ] Presentation: contratos API, validaciones y respuestas consistentes
+- [ ] DI: providers limpios y testeables
+
+### 7.3 — Calidad y cobertura del refactor
+**Estado:** ⏳ Pendiente
+
+- [ ] Cobertura de tests de notifications >= 90% en casos críticos
+- [ ] Casos borde: ownership, idempotencia, race conditions y estados inválidos
+- [ ] Revisión final de observabilidad (logs con request_id y errores trazables)
+
+---
+
 ## Changelog
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-27 | 📝 Se redefine la fase siguiente: **Refactor Notifications** pasa a ser Fase 7 |
 | 2026-04-24 | ✅ Fix de seguridad: CORS explícito, BearerAuth en endpoints públicos, health con SQLAlchemy text() |
 | 2026-04-21 | ✅ 6.2: README actualizado (estado real, badges, endpoints, notificaciones) |
 | 2026-04-21 | ✅ 6.1: OpenAPI custom info + fix de naming de contacto |
