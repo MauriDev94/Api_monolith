@@ -362,13 +362,17 @@ SMTP_USE_TLS=true
 **Prioridad:** 🟡 Siguiente iteración
 
 ### 7.1 — Diagnóstico y diseño del refactor
-**Estado:** 🚧 En progreso (2026-04-27)
+**Estado:** ✅ Completado (2026-04-27)
 
-- [ ] Auditar responsabilidades por capa (domain/application/infrastructure/presentation/di)
-- [ ] Detectar duplicaciones y acoplamientos con todos/reminders
-- [ ] Definir matriz de contratos API no rompibles (compatibilidad y deprecaciones)
-- [ ] Definir criterios de aceptación técnicos por capa (DoD por domain/application/infrastructure/presentation/di)
-- [ ] Definir estrategia de compatibilidad **opción B**: refactor + ajustes API versionados
+- [x] Auditar responsabilidades por capa (domain/application/infrastructure/presentation/di)
+- [x] Detectar duplicaciones y acoplamientos con todos/reminders
+- [x] Definir matriz de contratos API no rompibles (compatibilidad y deprecaciones)
+- [x] Definir criterios de aceptación técnicos por capa (DoD por domain/application/infrastructure/presentation/di)
+- [x] Definir estrategia de compatibilidad **opción B**: refactor + ajustes API versionados
+
+**Artifacts 7.1:**
+- `docs/SDD_PROPOSAL_PHASE7_NOTIFICATIONS.md`
+- `docs/PHASE7_1_NOTIFICATIONS_AUDIT.md`
 
 ### 7.2 — Refactor por capas
 **Estado:** ⏳ Pendiente
@@ -392,6 +396,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-27 | ✅ 7.1 completado: auditoría por capas + matriz API + DoD + estrategia opción B |
 | 2026-04-27 | ✅ 6.3 completado (dependencias + hooks actualizados, PR #22 merged) |
 | 2026-04-27 | 🚧 7.1 iniciado con estrategia opción B (refactor + ajustes API versionados) |
 | 2026-04-27 | 📝 Se redefine la fase siguiente: **Refactor Notifications** pasa a ser Fase 7 |
