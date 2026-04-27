@@ -1,6 +1,6 @@
 # Roadmap — Monolith API a MVP Profesional
 
-**Última actualización:** 2026-04-20
+**Última actualización:** 2026-04-24
 **Estado general:** ✅ En producción (Render)
 
 ---
@@ -15,7 +15,7 @@
 | 4. Recordatorios (TODOs) | 🟢 | ✅ Completado |
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
-| 7. Polish | 🟢 | ⏳ Pendiente |
+| 7. Polish | 🟢 | 🚧 En progreso |
 
 ---
 
@@ -326,33 +326,33 @@ SMTP_USE_TLS=true
 **Prioridad:** 🟢 Después del MVP
 
 ### 6.1 — OpenAPI custom info
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-21)
 
-- [ ] Título descriptivo
-- [ ] Descripción de API
-- [ ] Información de contacto
-- [ ] Licencia
+- [x] Título descriptivo
+- [x] Descripción de API
+- [x] Información de contacto
+- [x] Licencia
 
 **Archivo a modificar:** `app/main.py`
 
 ---
 
 ### 6.2 — Documentación
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-21)
 
-- [ ] README con estado real del proyecto
-- [ ] Borrar secciones de roadmap viejo
-- [ ] Agregar badges: coverage, deploy, Python version
+- [x] README con estado real del proyecto
+- [x] Borrar secciones de roadmap viejo
+- [x] Agregar badges: coverage, deploy, Python version
 
 **Archivo a modificar:** `README.md`
 
 ---
 
 ### 6.3 — Cleanup técnico
-**Estado:** ⏳ Pendiente
+**Estado:** 🚧 En progreso
 
 - [ ] Dependencias outdated en `requirements.txt`
-- [ ] Limpiar imports no usados
+- [x] Limpiar imports no usados
 - [ ] Actualizar pre-commit hooks si es necesario
 
 ---
@@ -361,6 +361,9 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-24 | ✅ Fix de seguridad: CORS explícito, BearerAuth en endpoints públicos, health con SQLAlchemy text() |
+| 2026-04-21 | ✅ 6.2: README actualizado (estado real, badges, endpoints, notificaciones) |
+| 2026-04-21 | ✅ 6.1: OpenAPI custom info + fix de naming de contacto |
 | 2026-04-20 | 🚀 **Deploy a producción (Render)!** - API live en https://api-monolith.onrender.com |
 | 2026-04-20 | ✅ Fix: SQLAlchemy 2.0 event.listens_for compatibility |
 | 2026-04-20 | ✅ Fix: ConflictError handler retorna 409 (handler global funciona) |
