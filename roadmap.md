@@ -1,6 +1,6 @@
 # Roadmap — Monolith API a MVP Profesional
 
-**Última actualización:** 2026-04-24
+**Última actualización:** 2026-04-27
 **Estado general:** ✅ En producción (Render)
 
 ---
@@ -349,11 +349,11 @@ SMTP_USE_TLS=true
 ---
 
 ### 6.3 — Cleanup técnico
-**Estado:** 🚧 En progreso
+**Estado:** ✅ Completado (2026-04-27)
 
-- [ ] Dependencias outdated en `requirements.txt`
+- [x] Dependencias outdated en `requirements.txt`
 - [x] Limpiar imports no usados
-- [ ] Actualizar pre-commit hooks si es necesario
+- [x] Actualizar pre-commit hooks si es necesario
 
 ---
 
@@ -362,11 +362,13 @@ SMTP_USE_TLS=true
 **Prioridad:** 🟡 Siguiente iteración
 
 ### 7.1 — Diagnóstico y diseño del refactor
-**Estado:** ⏳ Pendiente
+**Estado:** 🚧 En progreso (2026-04-27)
 
 - [ ] Auditar responsabilidades por capa (domain/application/infrastructure/presentation/di)
 - [ ] Detectar duplicaciones y acoplamientos con todos/reminders
-- [ ] Definir plan de refactor incremental sin romper contratos API
+- [ ] Definir matriz de contratos API no rompibles (compatibilidad y deprecaciones)
+- [ ] Definir criterios de aceptación técnicos por capa (DoD por domain/application/infrastructure/presentation/di)
+- [ ] Definir estrategia de compatibilidad **opción B**: refactor + ajustes API versionados
 
 ### 7.2 — Refactor por capas
 **Estado:** ⏳ Pendiente
@@ -390,6 +392,8 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-27 | ✅ 6.3 completado (dependencias + hooks actualizados, PR #22 merged) |
+| 2026-04-27 | 🚧 7.1 iniciado con estrategia opción B (refactor + ajustes API versionados) |
 | 2026-04-27 | 📝 Se redefine la fase siguiente: **Refactor Notifications** pasa a ser Fase 7 |
 | 2026-04-24 | ✅ Fix de seguridad: CORS explícito, BearerAuth en endpoints públicos, health con SQLAlchemy text() |
 | 2026-04-21 | ✅ 6.2: README actualizado (estado real, badges, endpoints, notificaciones) |
