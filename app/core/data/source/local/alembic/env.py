@@ -1,11 +1,9 @@
-from logging.config import fileConfig
 import os
-
-from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy import pool
+from logging.config import fileConfig
 
 from alembic import context
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, pool
 
 # load the .env file
 load_dotenv(".env")
@@ -26,9 +24,6 @@ if not database_url:
 
 # import the base
 from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
-from app.features.users.infrastructure.models.user_model import UserModel  # type: ignore
-from app.features.todos.infrastructure.models.todo_model import TodoModel  # type: ignore
-
 
 # add your model's MetaData object here
 # for 'autogenerate' support
