@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from app.features.todos.application.dto.create_todo_params import CreateTodoParams
 from app.features.todos.domain.entities.todo import Todo
@@ -25,4 +26,11 @@ class TodoDatasource(ABC):
 
     @abstractmethod
     def delete_todo(self, todo_id: str) -> None:
+        pass
+
+    @abstractmethod
+    def get_todos_with_upcoming_due_date(
+        self, days_ahead: int, current_time: datetime
+    ) -> list[Todo]:
+        """Return all incomplete todos with due_date within the specified days."""
         pass

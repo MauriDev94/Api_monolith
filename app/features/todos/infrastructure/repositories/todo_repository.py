@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -98,3 +99,25 @@ class TodoRepository(TodoDatasource):
             raise DatabaseException("failed to delete todo") from exc
 
         return None
+
+    def get_todos_with_upcoming_due_date(
+        self, days_ahead: int, current_time: datetime
+    ) -> list[Todo]:
+        """Return all incomplete todos with due_date within the specified days."""
+        deadline = current_time + timedelta(days=days_ahead)
+
+        try:
+            todo_models = (
+                self.session.query(TodoModel)
+                .filter(
+                    TodoModel.due_date.isnot(None),
+                    TodoModel.due_date <= deadline,
+                    TodoModel.due_date >= current_time,
+                    TodoModel.is_completed.is_(False),
+                )
+                .all()
+            )
+        except SQLAlchemyError as exc:
+            raise DatabaseException("failed to retrieve todos with upcoming due date") from exc
+
+        return [map_todo_model_to_entity(m) for m in todo_models]
