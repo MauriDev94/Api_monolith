@@ -4,7 +4,10 @@ from uuid import uuid4
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions.exceptions import DatabaseException
+from app.core.exceptions.exceptions import DatabaseException, NotFoundError
+from app.features.notifications.application.contracts.notification_datasource import (
+    NotificationDatasource,
+)
 from app.features.notifications.application.contracts.notification_store import NotificationStore
 from app.features.notifications.domain.entities.notification import Notification, NotificationStatus
 from app.features.notifications.infrastructure.mappers.notification_mapper import (
@@ -13,7 +16,7 @@ from app.features.notifications.infrastructure.mappers.notification_mapper impor
 from app.features.notifications.infrastructure.models.notification_model import NotificationModel
 
 
-class NotificationRepository(NotificationStore):
+class NotificationRepository(NotificationDatasource, NotificationStore):
     """SQLAlchemy implementation for notification persistence."""
 
     def __init__(self, session: Session):
@@ -74,35 +77,45 @@ class NotificationRepository(NotificationStore):
 
         return [map_notification_model_to_entity(m) for m in models]
 
-    def mark_as_sent(self, notification_id: str) -> None:
+    def mark_as_sent(self, notification_id: str) -> Notification:
+        """Mark a notification as sent and return the updated entity."""
         try:
             model = (
                 self.session.query(NotificationModel)
                 .filter(NotificationModel.id == notification_id)
                 .first()
             )
-            if model:
-                model.status = NotificationStatus.SENT.value
-                model.sent_at = datetime.now(UTC)
-                self.session.commit()
+            if model is None:
+                raise NotFoundError("notification not found")
+            model.status = NotificationStatus.SENT.value
+            model.sent_at = datetime.now(UTC)
+            self.session.commit()
+            self.session.refresh(model)
         except SQLAlchemyError as exc:
             self.session.rollback()
             raise DatabaseException("failed to mark notification as sent") from exc
 
-    def mark_as_read(self, notification_id: str) -> None:
+        return map_notification_model_to_entity(model)
+
+    def mark_as_read(self, notification_id: str) -> Notification:
+        """Mark a notification as read and return the updated entity."""
         try:
             model = (
                 self.session.query(NotificationModel)
                 .filter(NotificationModel.id == notification_id)
                 .first()
             )
-            if model:
-                model.status = NotificationStatus.READ.value
-                model.read_at = datetime.now(UTC)
-                self.session.commit()
+            if model is None:
+                raise NotFoundError("notification not found")
+            model.status = NotificationStatus.READ.value
+            model.read_at = datetime.now(UTC)
+            self.session.commit()
+            self.session.refresh(model)
         except SQLAlchemyError as exc:
             self.session.rollback()
             raise DatabaseException("failed to mark notification as read") from exc
+
+        return map_notification_model_to_entity(model)
 
     def get_by_id(self, notification_id: str) -> Notification | None:
         try:
@@ -117,3 +130,29 @@ class NotificationRepository(NotificationStore):
         if model is None:
             return None
         return map_notification_model_to_entity(model)
+
+    # NotificationDatasource implementation
+
+    def get_by_user(self, user_id: str) -> list[Notification]:
+        """Return all notifications for a user, ordered by created_at DESC."""
+        return self.find_by_user(user_id)
+
+    def get_notifications_by_user_and_status(
+        self, user_id: str, status: NotificationStatus | None = None
+    ) -> list[Notification]:
+        """Return notifications filtered by user and optionally by status."""
+        try:
+            query = self.session.query(NotificationModel).filter(
+                NotificationModel.user_id == user_id
+            )
+            if status is not None:
+                query = query.filter(NotificationModel.status == status.value)
+            models = query.order_by(NotificationModel.created_at.desc()).all()
+        except SQLAlchemyError as exc:
+            raise DatabaseException("failed to retrieve notifications") from exc
+
+        return [map_notification_model_to_entity(m) for m in models]
+
+    def create(self, notification: Notification) -> Notification:
+        """Persist a new notification and return the created entity."""
+        return self.save(notification)
