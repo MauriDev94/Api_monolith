@@ -3,9 +3,21 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
-from app.features.notifications.di.dependencies import get_notification_repository
-from app.features.notifications.infrastructure.repositories.notification_repository import (
-    NotificationRepository,
+from app.features.notifications.application.usecases.get_notifications_use_case import (
+    GetNotificationsUseCase,
+)
+from app.features.notifications.application.usecases.mark_notification_read_use_case import (
+    MarkNotificationReadUseCase,
+)
+from app.features.notifications.application.dto.get_notifications_params import (
+    GetNotificationsParams,
+)
+from app.features.notifications.application.dto.mark_notification_read_params import (
+    MarkNotificationReadParams,
+)
+from app.features.notifications.di.dependencies import (
+    get_get_notifications_use_case,
+    get_mark_notification_read_use_case,
 )
 from app.features.notifications.presentation.mappers.notification_mapper import (
     map_notification_entity_to_response,
@@ -34,11 +46,11 @@ v1_router = APIRouter(prefix="/notifications", tags=["v1 Notifications"])
 )
 def list_notifications(
     current_user: Annotated[User, Depends(get_authenticated_user)],
-    repository: Annotated[NotificationRepository, Depends(get_notification_repository)],
+    use_case: Annotated[GetNotificationsUseCase, Depends(get_get_notifications_use_case)],
 ):
     """List all notifications for the authenticated user."""
     user_id = _require_user_id(current_user)
-    notifications = repository.find_by_user(user_id)
+    notifications = use_case.execute(GetNotificationsParams(user_id=user_id))
 
     return GetNotificationsResponse(
         notifications=[map_notification_entity_to_response(n) for n in notifications]
@@ -53,19 +65,11 @@ def list_notifications(
 def mark_notification_as_read(
     notification_id: str,
     current_user: Annotated[User, Depends(get_authenticated_user)],
-    repository: Annotated[NotificationRepository, Depends(get_notification_repository)],
+    use_case: Annotated[MarkNotificationReadUseCase, Depends(get_mark_notification_read_use_case)],
 ):
     """Mark a notification as read."""
     user_id = _require_user_id(current_user)
 
-    notification = repository.get_by_id(notification_id)
-
-    if not notification:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
-
-    if notification.user_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-
-    repository.mark_as_read(notification_id)
+    use_case.execute(MarkNotificationReadParams(notification_id=notification_id, user_id=user_id))
 
     return MarkReadResponse(message="Notification marked as read")
