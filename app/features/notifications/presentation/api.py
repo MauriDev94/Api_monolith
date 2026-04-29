@@ -1,7 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 
+from app.core.router.router import get_versioned_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.notifications.application.usecases.get_notifications_use_case import (
     GetNotificationsUseCase,
@@ -36,7 +37,7 @@ def _require_user_id(current_user: User) -> str:
     return current_user.id
 
 
-v1_router = APIRouter(prefix="/notifications", tags=["v1 Notifications"])
+v1_router = get_versioned_router("v1")
 
 
 @v1_router.get(
