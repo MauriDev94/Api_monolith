@@ -16,6 +16,7 @@
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
 | 7. Refactor Notifications | 🟡 | 🚧 En progreso (7.1 completado) |
+| 8. OTP Password Reset | 🟢 | ✅ Completado (Fase 8)
 
 ---
 
@@ -394,9 +395,9 @@ SMTP_USE_TLS=true
 
 ## Fase 8: OTP Password Reset
 
-**Prioridad:** 🟡 Por definir
+**Prioridad:** ✅Completado
 
-**Estado:** ⏳ Pendiente
+**Estado:** ⏳ Pendiente (debug SMTP) → ✅ Completado (2026-04-30) con Resend
 
 ---
 
@@ -420,6 +421,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-04-30 | ✅ 8 completado: OTP Password Reset con Resend (#32 + #33) |
 | 2026-04-27 | ✅ 7.1 completado: auditoría por capas + matriz API + DoD + estrategia opción B |
 | 2026-04-27 | ✅ 6.3 completado (dependencias + hooks actualizados, PR #22 merged) |
 | 2026-04-27 | 🚧 7.1 iniciado con estrategia opción B (refactor + ajustes API versionados) |
