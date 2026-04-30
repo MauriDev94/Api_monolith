@@ -15,7 +15,7 @@
 | 4. Recordatorios (TODOs) | 🟢 | ✅ Completado |
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
-| 7. Refactor Notifications | 🟡 | 🚧 En progreso (7.1 completado) |
+| 7. Refactor Notifications | 🟢 | ✅ Completado (7.1 + 7.2 + 7.3) |
 | 8. OTP Password Reset | 🟢 | ✅ Completado (Fase 8)
 
 ---
@@ -376,19 +376,19 @@ SMTP_USE_TLS=true
 - `docs/PHASE7_1_NOTIFICATIONS_AUDIT.md`
 
 ### 7.2 — Refactor por capas
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-27, PRs #25-#28)
 
-- [ ] Domain: invariantes y claridad de estados/eventos de notificación
-- [ ] Application: casos de uso más explícitos y consistentes
-- [ ] Infrastructure: repositorio/mappers más robustos + errores homogéneos
-- [ ] Presentation: contratos API, validaciones y respuestas consistentes
-- [ ] DI: providers limpios y testeables
+- [x] Domain: invariantes y claridad de estados/eventos de notificación
+- [x] Application: casos de uso más explícitos y consistentes
+- [x] Infrastructure: repositorio/mappers más robustos + errores homogéneos
+- [x] Presentation: contratos API, validaciones y respuestas consistentes
+- [x] DI: providers limpios y testeables
 
 ### 7.3 — Calidad y cobertura del refactor
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (2026-04-29, PR #29)
 
-- [ ] Cobertura de tests de notifications >= 90% en casos críticos
-- [ ] Casos borde: ownership, idempotencia, race conditions y estados inválidos
+- [x] Cobertura de tests de notifications >= 90% en casos críticos
+- [x] Casos borde: ownership, idempotencia, race conditions y estados inválidos
 - [ ] Revisión final de observabilidad (logs con request_id y errores trazables)
 
 ---
