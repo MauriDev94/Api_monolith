@@ -392,6 +392,30 @@ SMTP_USE_TLS=true
 
 ---
 
+## Fase 8: OTP Password Reset
+
+**Prioridad:** 🟡 Por definir
+
+**Estado:** ⏳ Pendiente
+
+---
+
+## Fase 9: Email Notifications
+
+**Prioridad:** 🟡 Por definir
+
+**Estado:** ⏳ Pendiente
+
+---
+
+## Fase 10: Google SSO Login
+
+**Prioridad:** 🟡 Por definir
+
+**Estado:** ⏳ Pendiente
+
+---
+
 ## Changelog
 
 | Fecha | Cambio |
