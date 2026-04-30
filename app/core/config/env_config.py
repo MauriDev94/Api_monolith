@@ -16,6 +16,8 @@ class EnvConfig(BaseSettings):
     smtp_password: str | None = None
     smtp_sender_email: str | None = None
     smtp_use_tls: bool = True
+    resend_api_key: str | None = None
+    resend_sender_email: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

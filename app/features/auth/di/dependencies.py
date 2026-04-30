@@ -25,7 +25,7 @@ from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtp
 from app.features.auth.infrastructure.managers.jwt_token_manager import JwtTokenManager
 from app.features.auth.infrastructure.managers.password_manager_impl import PasswordManagerImpl
 from app.features.auth.infrastructure.providers.console_email_sender import ConsoleEmailSender
-from app.features.auth.infrastructure.providers.smtp_email_sender import SmtpEmailSender
+from app.features.auth.infrastructure.providers.resend_email_sender import ResendEmailSender
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.auth.infrastructure.repositories.otp_repository import OtpRepository
 from app.features.auth.infrastructure.repositories.token_revocation_repository import (
@@ -72,17 +72,13 @@ def get_otp_repository(
 def get_email_sender(
     env_config: Annotated[EnvConfig, Depends(get_env_config)],
 ) -> EmailSender:
-    """Provide SMTP email sender or fallback to console sender."""
-    if not env_config.smtp_host or not env_config.smtp_port or not env_config.smtp_sender_email:
-        return ConsoleEmailSender()
-    return SmtpEmailSender(
-        host=env_config.smtp_host,
-        port=env_config.smtp_port,
-        username=env_config.smtp_username or "",
-        password=env_config.smtp_password or "",
-        sender_email=env_config.smtp_sender_email,
-        use_tls=env_config.smtp_use_tls,
-    )
+    """Provide Resend email sender or fallback to console sender."""
+    if env_config.resend_api_key and env_config.resend_sender_email:
+        return ResendEmailSender(
+            api_key=env_config.resend_api_key,
+            sender_email=env_config.resend_sender_email,
+        )
+    return ConsoleEmailSender()
 
 
 def get_rate_limiter() -> RateLimiter:
