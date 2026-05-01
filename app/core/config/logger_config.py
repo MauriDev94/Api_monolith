@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from loguru import logger
 
@@ -10,6 +10,9 @@ def setup_logger():
     logs_dir.mkdir(parents=True, exist_ok=True)
 
     logger.remove()
+
+    # Guarantee request_id exists in extra for all logs (even outside request context)
+    logger.configure(patcher=lambda record: record["extra"].setdefault("request_id", "-"))
 
     # Human-friendly console logs for local development.
     logger.add(

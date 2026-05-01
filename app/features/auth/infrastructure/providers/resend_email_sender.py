@@ -1,4 +1,5 @@
 import httpx
+from loguru import logger
 
 from app.core.exceptions.exceptions import InternalServerError
 from app.features.auth.application.contracts.email_sender import EmailSender
@@ -58,8 +59,10 @@ class ResendEmailSender(EmailSender):
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
+            logger.error("Resend API error: {} {}", exc.response.status_code, exc.response.text)
             raise InternalServerError(
                 f"resend api error: {exc.response.status_code} {exc.response.text}"
             ) from exc
         except httpx.RequestError as exc:
+            logger.error("Resend connection error: {}", type(exc).__name__)
             raise InternalServerError("failed to connect to resend api") from exc
