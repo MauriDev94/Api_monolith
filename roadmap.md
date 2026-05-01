@@ -16,7 +16,8 @@
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
 | 7. Refactor Notifications | 🟢 | ✅ Completado (7.1 + 7.2 + 7.3) |
-| 8. OTP Password Reset | 🟢 | ✅ Completado (Fase 8)
+| 8. OTP Password Reset | 🟢 | ✅ Completado |
+| 9. Email Notifications | 🟡 | 🚧 En progreso |
 
 ---
 
@@ -401,11 +402,69 @@ SMTP_USE_TLS=true
 
 ---
 
-## Fase 9: Email Notifications
+## Fase 9: Email Notifications (Todo Reminders)
 
-**Prioridad:** 🟡 Por definir
+**Prioridad:** 🟡 Esta semana
 
+### 9.1 — Configuración de entorno
 **Estado:** ⏳ Pendiente
+
+- [ ] Agregar `internal_api_key` a `env_config.py`
+- [ ] Agregar `INTERNAL_API_KEY` a `.env.example`
+
+### 9.2 — Extender contrato EmailSender
+**Estado:** ⏳ Pendiente
+
+- [ ] Agregar método abstracto `send_reminder(to_email, todo_title, due_date)` a `EmailSender`
+- [ ] Actualizar `ResendEmailSender` con implementación
+- [ ] Actualizar `ConsoleEmailSender` con implementación
+- [ ] Actualizar `SmtpEmailSender` con implementación (backwards compat)
+- [ ] Actualizar `CaptureEmailSender` (tests E2E) con implementación no-op
+
+### 9.3 — Template HTML para reminders
+**Estado:** ⏳ Pendiente
+
+- [ ] Definir template consistente con estilo OTP
+- [ ] Agregar `REMINDER_HTML_TEMPLATE` en `ResendEmailSender`
+
+### 9.4 — Actualizar ProcessRemindersUseCase
+**Estado:** ⏳ Pendiente
+
+- [ ] Agregar `AuthDatasource` como dependencia
+- [ ] Agregar `EmailSender` como dependencia
+- [ ] Implementar flujo: crear notificación → enviar email → marcar SENT
+- [ ] Manejo de errores: dejar en PENDING para reintento
+- [ ] Loguear warnings cuando user no existe
+
+### 9.5 — Endpoint interno protegido
+**Estado:** ⏳ Pendiente
+
+- [ ] Crear/verificar `/internal/v1/reminders/process`
+- [ ] Proteger con `X-Internal-Token` header
+- [ ] Validar que retorna 401 sin token válido
+- [ ] Validar que retorna 200 con `{ processed, created, sent, failed }`
+
+### 9.6 — Actualizar DI dependencies
+**Estado:** ⏳ Pendiente
+
+- [ ] Agregar `get_process_reminders_use_case` provider
+- [ ] Verificar imports de `get_todo_repository`, `get_auth_repository`, `get_email_sender`
+
+### 9.7 — Tests unitarios
+**Estado:** ⏳ Pendiente
+
+- [ ] `test_should_send_email_and_mark_as_sent_when_todo_has_upcoming_due_date`
+- [ ] `test_should_leave_notification_pending_when_email_send_fails`
+- [ ] `test_should_skip_todo_when_user_not_found`
+- [ ] `test_should_return_correct_counts`
+- [ ] `test_should_return_empty_counts_when_no_todos_due`
+- [ ] `test_should_process_multiple_todos_independently`
+
+### 9.8 — Integración y validación
+**Estado:** ⏳ Pendiente
+
+- [ ] Suite completa pasa (sin regresiones)
+- [ ] Configurar cron-job.org con URL y header
 
 ---
 
