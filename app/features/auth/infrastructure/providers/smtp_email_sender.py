@@ -1,6 +1,7 @@
-import logging
 import smtplib
 from email.message import EmailMessage
+
+from loguru import logger
 
 from app.core.exceptions.exceptions import InternalServerError
 from app.features.auth.application.contracts.email_sender import EmailSender
@@ -40,5 +41,5 @@ class SmtpEmailSender(EmailSender):
                     client.login(self.username, self.password)
                 client.send_message(message)
         except (smtplib.SMTPException, OSError) as exc:
-            logging.error(f"SMTP error: {type(exc).__name__}: {exc}")
+            logger.error("SMTP error: {}", type(exc).__name__)
             raise InternalServerError("failed to send otp email") from exc
