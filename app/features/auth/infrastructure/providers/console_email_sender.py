@@ -6,3 +6,6 @@ class ConsoleEmailSender(EmailSender):
 
     def send_otp(self, to_email: str, code: str, purpose: str) -> None:
         print(f"[OTP] to={to_email} purpose={purpose} code={code}")
+
+    def send_reminder(self, to_email: str, todo_title: str, due_date: str) -> None:
+        print(f"[REMINDER] to={to_email} todo='{todo_title}' due={due_date}")
