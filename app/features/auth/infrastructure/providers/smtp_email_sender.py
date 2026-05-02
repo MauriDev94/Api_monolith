@@ -43,3 +43,6 @@ class SmtpEmailSender(EmailSender):
         except (smtplib.SMTPException, OSError) as exc:
             logger.error("SMTP error: {}", type(exc).__name__)
             raise InternalServerError("failed to send otp email") from exc
+
+    def send_reminder(self, to_email: str, todo_title: str, due_date: str) -> None:
+        logger.warning("SmtpEmailSender.send_reminder not implemented - use ResendEmailSender")
