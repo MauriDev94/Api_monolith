@@ -407,34 +407,34 @@ SMTP_USE_TLS=true
 **Prioridad:** 🟡 Esta semana
 
 ### 9.1 — Configuración de entorno
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (PR #35)
 
-- [ ] Agregar `internal_api_key` a `env_config.py`
-- [ ] Agregar `INTERNAL_API_KEY` a `.env.example`
+- [x] Agregar `internal_api_key` a `env_config.py`
+- [x] Agregar `INTERNAL_API_KEY` a `.env.example`
 
 ### 9.2 — Extender contrato EmailSender
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (PR #36)
 
-- [ ] Agregar método abstracto `send_reminder(to_email, todo_title, due_date)` a `EmailSender`
-- [ ] Actualizar `ResendEmailSender` con implementación
-- [ ] Actualizar `ConsoleEmailSender` con implementación
-- [ ] Actualizar `SmtpEmailSender` con implementación (backwards compat)
-- [ ] Actualizar `CaptureEmailSender` (tests E2E) con implementación no-op
+- [x] Agregar método abstracto `send_reminder(to_email, todo_title, due_date)` a `EmailSender`
+- [x] Actualizar `ResendEmailSender` con implementación
+- [x] Actualizar `ConsoleEmailSender` con implementación
+- [x] Actualizar `SmtpEmailSender` con implementación (backwards compat)
+- [x] Actualizar `CaptureEmailSender` (tests E2E) con implementación no-op
 
 ### 9.3 — Template HTML para reminders
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (en PR #36)
 
-- [ ] Definir template consistente con estilo OTP
-- [ ] Agregar `REMINDER_HTML_TEMPLATE` en `ResendEmailSender`
+- [x] Definir template consistente con estilo OTP
+- [x] Agregar `REMINDER_HTML_TEMPLATE` en `ResendEmailSender`
 
 ### 9.4 — Actualizar ProcessRemindersUseCase
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (PR #37)
 
-- [ ] Agregar `AuthDatasource` como dependencia
-- [ ] Agregar `EmailSender` como dependencia
-- [ ] Implementar flujo: crear notificación → enviar email → marcar SENT
-- [ ] Manejo de errores: dejar en PENDING para reintento
-- [ ] Loguear warnings cuando user no existe
+- [x] Agregar `AuthDatasource` como dependencia
+- [x] Agregar `EmailSender` como dependencia
+- [x] Implementar flujo: crear notificación → enviar email → marcar SENT
+- [x] Manejo de errores: dejar en PENDING para reintento
+- [x] Loguear warnings cuando user no existe
 
 ### 9.5 — Endpoint interno protegido
 **Estado:** ⏳ Pendiente

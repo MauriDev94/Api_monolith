@@ -1,37 +1,38 @@
 """Background job para enviar recordatorios de TODOs pendientes."""
 
 from datetime import UTC, datetime
-from uuid import uuid4
 
 from loguru import logger
 
+from app.features.auth.application.contracts.auth_datasource import AuthDatasource
+from app.features.auth.application.contracts.email_sender import EmailSender
 from app.features.notifications.application.contracts.notification_datasource import (
     NotificationDatasource,
 )
-from app.features.notifications.domain.entities.notification import (
-    Notification,
-    NotificationStatus,
-    NotificationType,
-)
+from app.features.notifications.domain.entities.notification import Notification
 from app.features.todos.application.contracts.todo_datasource import TodoDatasource
 
 
 class ProcessRemindersUseCase:
-    """Process pending reminders and create notifications."""
+    """Process pending reminders, send emails and create notifications."""
 
     def __init__(
         self,
         todo_datasource: TodoDatasource,
         notification_datasource: NotificationDatasource,
+        auth_datasource: AuthDatasource,
+        email_sender: EmailSender,
     ):
         self.todo_datasource = todo_datasource
         self.notification_datasource = notification_datasource
+        self.auth_datasource = auth_datasource
+        self.email_sender = email_sender
 
     def execute(self, days_ahead: int = 1) -> dict:
-        """Process pending reminders y crea notificaciones.
+        """Process pending reminders: crear notificaciones y enviar emails.
 
         Returns:
-            dict: {"processed": count, "created": count, "failed": count}
+            dict: {"processed": count, "created": count, "sent": count, "failed": count}
         """
         now = datetime.now(UTC)
         todos = self.todo_datasource.get_todos_with_upcoming_due_date(
@@ -40,29 +41,46 @@ class ProcessRemindersUseCase:
         )
 
         created = 0
+        sent = 0
         failed = 0
 
         for todo in todos:
             try:
-                notification = Notification(
-                    id=str(uuid4()),
+                # 1. Obtener usuario
+                user = self.auth_datasource.get_user_by_id(todo.user_id)
+                if user is None:
+                    logger.warning(f"User not found for todo {todo.id}, skipping")
+                    failed += 1
+                    continue
+
+                # 2. Crear notificación en PENDING
+                notification = Notification.create_for_todo_reminder(
                     user_id=todo.user_id,
-                    type=NotificationType.TODO_REMINDER,
-                    title="Recordatorio de Tarea",
-                    message=f"Tu tarea '{todo.title}' vence pronto",
-                    related_entity_id=todo.id,
-                    status=NotificationStatus.PENDING,
+                    todo_id=todo.id,
+                    todo_title=todo.title,
+                )
+                saved_notification = self.notification_datasource.create(notification)
+                created += 1
+
+                # 3. Enviar email
+                due_date_str = todo.due_date.strftime("%d/%m/%Y %H:%M") if todo.due_date else ""
+                self.email_sender.send_reminder(
+                    to_email=user.email.value,
+                    todo_title=todo.title,
+                    due_date=due_date_str,
                 )
 
-                self.notification_datasource.create(notification)
-                created += 1
-                logger.info(f"Reminder created for todo {todo.id}")
+                # 4. Marcar como SENT
+                self.notification_datasource.mark_as_sent(saved_notification.id)
+                sent += 1
+                logger.info(f"Reminder sent for todo {todo.id}")
 
             except Exception as e:
+                # Dejar en PENDING para reintento
                 failed += 1
-                logger.error(f"Failed to create reminder for todo {todo.id}: {e}")
+                logger.error(f"Failed to process reminder for todo {todo.id}: {e}")
 
-        return {"processed": len(todos), "created": created, "failed": failed}
+        return {"processed": len(todos), "created": created, "sent": sent, "failed": failed}
 
 
 def run_reminder_job() -> dict:
@@ -71,4 +89,4 @@ def run_reminder_job() -> dict:
         "run_reminder_job() requires manual DI setup. "
         "Use ProcessRemindersUseCase with proper data sources."
     )
-    return {"processed": 0, "created": 0, "failed": 0}
+    return {"processed": 0, "created": 0, "sent": 0, "failed": 0}
