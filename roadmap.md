@@ -437,12 +437,12 @@ SMTP_USE_TLS=true
 - [x] Loguear warnings cuando user no existe
 
 ### 9.5 — Endpoint interno protegido
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (PR #38)
 
-- [ ] Crear/verificar `/internal/v1/reminders/process`
-- [ ] Proteger con `X-Internal-Token` header
-- [ ] Validar que retorna 401 sin token válido
-- [ ] Validar que retorna 200 con `{ processed, created, sent, failed }`
+- [x] Crear `/internal/v1/reminders/process` endpoint
+- [x] Proteger con `X-Internal-Token` header
+- [x] Validar que retorna 401 sin token válido
+- [x] Validar que retorna 200 con `{ processed, created, sent, failed }`
 
 ### 9.6 — Actualizar DI dependencies
 **Estado:** ⏳ Pendiente
