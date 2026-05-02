@@ -18,6 +18,7 @@ class EnvConfig(BaseSettings):
     smtp_use_tls: bool = True
     resend_api_key: str | None = None
     resend_sender_email: str | None = None
+    internal_api_key: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
