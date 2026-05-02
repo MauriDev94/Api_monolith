@@ -54,7 +54,7 @@ app.add_middleware(
     allow_origins=settings.cors_allowed_origins,
     allow_credentials=settings.cors_allow_credentials,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "X-Internal-Token"],
 )
 
 # Security headers middleware
