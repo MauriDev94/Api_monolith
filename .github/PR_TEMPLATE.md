@@ -1,6 +1,6 @@
 # PR Creation — plantilla Unificada para Pull Requests
 
-**Versión:** 2.2 (actualizada 2026-05-02)
+**Versión:** 3.0 (actualizada 2026-05-02)
 **Proyecto:** Monolith
 
 ---
@@ -8,41 +8,37 @@
 ## Plantilla de PR
 
 ```markdown
-## Summary
-[Una línea: qué hace este PR y por qué]
+## 🧠 Descripción
+[Breve explicación del cambio]
 
-## Type of Change
+## 🔗 Issue relacionado
+[Closes #123 / N/A]
+
+## 🚀 Tipo de cambio
+- [ ] Bugfix
 - [ ] Feature
-- [ ] Fix
 - [ ] Refactor
-- [ ] Test
-- [ ] Docs
-- [ ] Chore
+- [ ] Breaking change
+- [ ] Documentation
 
-## Motivation
-[Contexto breve: por qué fue necesario este cambio]
-
-## Changes
-### [Nombre del cambio]
-- [ ] [Descripción del cambio] #número_ticket
-
-## Checklist
-- [ ] No hay secrets ni debug code
-
-## How to Test
+## 🧪 Cómo probar
 1. [Paso 1]
 2. [Paso 2]
 
-## Risks & Rollback
-**Risk:** Bajo / Medio / Alto
-**Rollback:** `git revert <commit>` / [instrucción específica]
+## 📸 Evidencia
+(Screenshots / logs)
+
+## ✅ Checklist
+- [ ] Código sigue las guías del proyecto
+- [ ] Tests agregados/actualizados
+- [ ] CI pasa correctamente
+- [ ] No hay secretos ni credenciales
+
+## ⚠️ Impacto / riesgos
+[Describir posibles efectos secundarios]
+
+## 📌 Notas adicionales
+[Contexto extra relevante]
 ```
-
----
-
-## Uso
-
-Copiar y usar en cada PR nuevo.
-Marcar TODOS los tipos de cambio que aplican con `[x]`, incluso si uno es el principal.
 
 ---
