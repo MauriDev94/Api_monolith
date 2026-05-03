@@ -25,6 +25,7 @@ from app.features.notifications.application.usecases.set_notification_as_sent_us
 from app.features.notifications.infrastructure.repositories.notification_repository import (
     NotificationRepository,
 )
+from app.features.todos.application.contracts.todo_datasource import TodoDatasource
 from app.features.todos.di.dependencies import get_todo_repository
 
 
@@ -70,7 +71,7 @@ def get_set_notification_as_sent_use_case(
 
 
 def get_process_reminders_use_case(
-    todo_datasource: Annotated[AuthDatasource, Depends(get_todo_repository)],
+    todo_datasource: Annotated[TodoDatasource, Depends(get_todo_repository)],
     notification_datasource: Annotated[
         NotificationDatasource, Depends(get_notification_datasource)
     ],
