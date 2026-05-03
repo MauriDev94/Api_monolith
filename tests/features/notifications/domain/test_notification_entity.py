@@ -250,11 +250,30 @@ def test_should_create_for_todo_reminder() -> None:
 
 
 # Tipo de test: Unit
+def test_should_allow_any_status_when_reconstructed_from_db() -> None:
+    """Valida que cuando id está setteado (simula DB), cualquier estado es válido."""
+    # Simula reconstruir entidad desde la DB con estado SENT
+    notification = Notification(
+        id="notif-1",  # id setteado = viene de DB
+        user_id="user-1",
+        type=NotificationType.TODO_REMINDER,
+        title="Test",
+        message="Test message",
+        related_entity_id="todo-1",
+        status=NotificationStatus.SENT,  # Estado de la DB
+    )
+    assert notification.status == NotificationStatus.SENT
+
+
 def test_should_raise_when_initial_status_is_invalid() -> None:
-    """Valida que lanza error para estado inicial invalido (SENT)."""
+    """Valida que lanza error para estado inicial invalido (SENT).
+
+    Nota: Solo aplica para nuevas entidades (id=None).
+    Cuando id está setteado, se considera que viene de la DB.
+    """
     with pytest.raises(ValueError, match="Invalid initial status"):
         Notification(
-            id="notif-1",
+            id=None,  # Nueva notificación
             user_id="user-1",
             type=NotificationType.SYSTEM,
             title="Test Title",
