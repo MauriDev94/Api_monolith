@@ -74,9 +74,20 @@ class Notification:
         self.message = self._require_text(self.message, "message")
 
     def _validate_initial_state(self) -> None:
-        """Validate initial state is valid."""
-        if self.status not in {NotificationStatus.PENDING, NotificationStatus.READ}:
-            raise ValueError(f"Invalid initial status: {self.status}. Must be PENDING or READ")
+        """Validate initial state is valid for new entities.
+
+        Note: Only validates when creating new entity (id is None).
+        When reconstructing from DB (id already set), status can be any valid value.
+        """
+        # Only validate initial state for new entities
+        # When id is set, entity is being reconstructed from DB and status is trusted
+        if self.id is None and self.status not in {
+            NotificationStatus.PENDING,
+            NotificationStatus.READ,
+        }:
+            raise ValueError(
+                f"Invalid initial status for new notification: {self.status}. Must be PENDING or READ"
+            )
 
     def _can_transition_to(self, new_status: NotificationStatus) -> bool:
         """Check if transition to new_status is valid."""
