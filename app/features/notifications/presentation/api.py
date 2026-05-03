@@ -84,7 +84,7 @@ def mark_notification_as_read(
 
 # Internal endpoint for cron-job.org (protected with X-Internal-Token)
 @v1_router.post(
-    "/internal/v1/reminders/process",
+    "/internal/reminders/process",
     status_code=status.HTTP_200_OK,
 )
 def process_reminders(
