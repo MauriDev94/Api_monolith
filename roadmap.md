@@ -445,10 +445,10 @@ SMTP_USE_TLS=true
 - [x] Validar que retorna 200 con `{ processed, created, sent, failed }`
 
 ### 9.6 — Actualizar DI dependencies
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (PR #40)
 
-- [ ] Agregar `get_process_reminders_use_case` provider
-- [ ] Verificar imports de `get_todo_repository`, `get_auth_repository`, `get_email_sender`
+- [x] Agregar `get_process_reminders_use_case` provider
+- [x] Verificar imports de `get_todo_repository`, `get_auth_repository`, `get_email_sender`
 
 ### 9.7 — Tests unitarios
 **Estado:** ⏳ Pendiente
