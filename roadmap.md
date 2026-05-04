@@ -541,12 +541,12 @@ SMTP_USE_TLS=true
 ---
 
 ### 10.7 — E2E tests
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] Flujo nuevo → crea usuario + retorna tokens
-- [ ] Segundo login mismo Google account → mismo `user_id`
-- [ ] Email con password existente → 409
-- [ ] Suite completa en verde
+- [x] Flujo nuevo → crea usuario + retorna tokens
+- [x] Segundo login mismo Google account → mismo `user_id`
+- [x] Email con password existente → 409
+- [x] Suite completa en verde (234 tests)
 
 ---
 
@@ -554,7 +554,10 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
-| 2026-05-05 | ✅ 10.1-10.5 completados: Domain, Migration, Contracts, Provider, Repository (#44-#46) |
+<<<<<<< HEAD
+| 2026-05-05 | ✅ 10.1-10.7 completados: E2E tests + birthdate nullable fix (#49) |
+=======
+>>>>>>> cacb81e (feat: add google_id column and nullable password_hash to User)
 | 2026-05-04 | 🚧 10 iniciada: Google SSO Login (propuesta + specs + design en docs/) |
 | 2026-04-30 | ✅ 8 completado: OTP Password Reset con Resend (#32 + #33) |
 | 2026-04-27 | ✅ 7.1 completado: auditoría por capas + matriz API + DoD + estrategia opción B |
