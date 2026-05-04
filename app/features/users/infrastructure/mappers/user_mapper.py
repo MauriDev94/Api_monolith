@@ -12,6 +12,8 @@ def map_user_model_to_entity(user_model: UserModel) -> User:
         email=Email(user_model.email),
         password_hash=user_model.password_hash,
         birthdate=user_model.birthdate,
+        google_id=user_model.google_id,
+        google_email_verified=user_model.google_email_verified,
         created_at=user_model.created_at,
         updated_at=user_model.updated_at,
     )
@@ -23,5 +25,7 @@ def map_user_entity_to_model(user_model: UserModel, user: User) -> UserModel:
     user_model.lastname = user.lastname
     user_model.email = user.email.value
     user_model.birthdate = user.birthdate
+    user_model.google_id = user.google_id
+    user_model.google_email_verified = user.google_email_verified
     user_model.updated_at = user.updated_at
     return user_model

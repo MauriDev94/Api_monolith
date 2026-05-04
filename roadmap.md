@@ -468,9 +468,81 @@ SMTP_USE_TLS=true
 
 ## Fase 10: Google SSO Login
 
-**Prioridad:** 🟡 Por definir
+**Prioridad:** 🟡 Alta
+**Estado:** 🚧 En progreso
+**Spec:** `docs/SDD_PROPOSAL_PHASE10_GOOGLE_SSO.md`
 
+---
+
+### 10.1 — Domain: User.password_hash nullable
 **Estado:** ⏳ Pendiente
+
+- [ ] `password_hash: str | None` en `User`
+- [ ] `__post_init__`: omitir validación cuando es `None`
+- [ ] `change_password_hash(new_hash: str) -> None`
+- [ ] `google_id: str | None` columna
+- [ ] Tests de dominio actualizados
+
+---
+
+### 10.2 — Migration: google_id + password_hash nullable
+**Estado:** ⏳ Pendiente
+
+- [ ] `ADD COLUMN google_id VARCHAR(255) UNIQUE NULLABLE`
+- [ ] `ALTER COLUMN password_hash DROP NOT NULL`
+- [ ] Alembic revision generada y revisada
+
+---
+
+### 10.3 — Application: contratos y DTOs
+**Estado:** ⏳ Pendiente
+
+- [ ] `OAuthProvider` (contrato)
+- [ ] `GoogleAuthDatasource` (contrato)
+- [ ] `GoogleUserInfo`, `GoogleTokenData` (DTOs)
+- [ ] `InitiateGoogleLoginUseCase`
+- [ ] `HandleGoogleCallbackUseCase`
+- [ ] `LinkGoogleAccountUseCase`
+
+---
+
+### 10.4 — Infrastructure: GoogleOAuthProviderImpl
+**Estado:** ⏳ Pendiente
+
+- [ ] `GoogleOAuthProviderImpl` con `httpx`
+- [ ] `StubGoogleOAuthProvider` para tests
+- [ ] Variables de entorno en `EnvConfig` y `.env.example`
+
+---
+
+### 10.5 — Infrastructure: GoogleAuthRepository
+**Estado:** ⏳ Pendiente
+
+- [ ] `create_google_user` con `password_hash=None`
+- [ ] `get_user_by_google_id`
+- [ ] `link_google_id`
+- [ ] Integration tests con `db_session`
+
+---
+
+### 10.6 — Presentation + DI
+**Estado:** ⏳ Pendiente
+
+- [ ] `GET /auth/v1/google` → redirect
+- [ ] `GET /auth/v1/google/callback` → tokens
+- [ ] `POST /auth/v1/link-google` → vincular cuenta
+- [ ] DI providers en `auth/di/dependencies.py`
+- [ ] Integration tests de presentación
+
+---
+
+### 10.7 — E2E tests
+**Estado:** ⏳ Pendiente
+
+- [ ] Flujo nuevo → crea usuario + retorna tokens
+- [ ] Segundo login mismo Google account → mismo `user_id`
+- [ ] Email con password existente → 409
+- [ ] Suite completa en verde
 
 ---
 
@@ -478,6 +550,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-05-04 | 🚧 10 iniciada: Google SSO Login (propuesta + specs + design en docs/) |
 | 2026-04-30 | ✅ 8 completado: OTP Password Reset con Resend (#32 + #33) |
 | 2026-04-27 | ✅ 7.1 completado: auditoría por capas + matriz API + DoD + estrategia opción B |
 | 2026-04-27 | ✅ 6.3 completado (dependencias + hooks actualizados, PR #22 merged) |
