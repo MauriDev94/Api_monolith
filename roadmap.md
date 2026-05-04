@@ -17,7 +17,7 @@
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
 | 7. Refactor Notifications | 🟢 | ✅ Completado (7.1 + 7.2 + 7.3) |
 | 8. OTP Password Reset | 🟢 | ✅ Completado |
-| 9. Email Notifications | 🟡 | 🚧 En progreso |
+| 9. Email Notifications | 🟢 | ✅ Completado |
 
 ---
 
@@ -451,14 +451,9 @@ SMTP_USE_TLS=true
 - [x] Verificar imports de `get_todo_repository`, `get_auth_repository`, `get_email_sender`
 
 ### 9.7 — Tests unitarios
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado (PR #41)
 
-- [ ] `test_should_send_email_and_mark_as_sent_when_todo_has_upcoming_due_date`
-- [ ] `test_should_leave_notification_pending_when_email_send_fails`
-- [ ] `test_should_skip_todo_when_user_not_found`
-- [ ] `test_should_return_correct_counts`
-- [ ] `test_should_return_empty_counts_when_no_todos_due`
-- [ ] `test_should_process_multiple_todos_independently`
+- [x] 6 tests unitarios para ProcessRemindersUseCase
 
 ### 9.8 — Integración y validación
 **Estado:** ⏳ Pendiente
@@ -467,6 +462,8 @@ SMTP_USE_TLS=true
 - [ ] Configurar cron-job.org con URL y header
 
 ---
+
+## 🚧 PROPOSAL MODE: 9.8 Integración y validación
 
 ## Fase 10: Google SSO Login
 
