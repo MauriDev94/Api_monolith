@@ -18,6 +18,7 @@
 | 7. Refactor Notifications | 🟢 | ✅ Completado (7.1 + 7.2 + 7.3) |
 | 8. OTP Password Reset | 🟢 | ✅ Completado |
 | 9. Email Notifications | 🟢 | ✅ Completado |
+| 10. Google SSO Login | 🟡 | 🚧 En progreso |
 
 ---
 
