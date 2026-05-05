@@ -13,7 +13,7 @@ class User:
     lastname: str
     email: Email
     password_hash: str | None
-    birthdate: date
+    birthdate: date | None
     google_id: str | None = None
     google_email_verified: bool = False
     created_at: datetime | None = None
@@ -41,7 +41,7 @@ class User:
         self.email = self._normalize_email(new_email)
         self._mark_as_updated()
 
-    def change_birthdate(self, new_birthdate: date) -> None:
+    def change_birthdate(self, new_birthdate: date | None) -> None:
         """Change user birthdate enforcing domain rules."""
         self._validate_birthdate(new_birthdate)
         self.birthdate = new_birthdate
@@ -78,6 +78,6 @@ class User:
         return Email(email)
 
     @staticmethod
-    def _validate_birthdate(birthdate: date) -> None:
-        if birthdate > date.today():
+    def _validate_birthdate(birthdate: date | None) -> None:
+        if birthdate is not None and birthdate > date.today():
             raise ValueError("birthdate cannot be in the future")
