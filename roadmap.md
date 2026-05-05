@@ -554,10 +554,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
-<<<<<<< HEAD
 | 2026-05-05 | ✅ 10.1-10.7 completados: E2E tests + birthdate nullable fix (#49) |
-=======
->>>>>>> cacb81e (feat: add google_id column and nullable password_hash to User)
 | 2026-05-04 | 🚧 10 iniciada: Google SSO Login (propuesta + specs + design en docs/) |
 | 2026-04-30 | ✅ 8 completado: OTP Password Reset con Resend (#32 + #33) |
 | 2026-04-27 | ✅ 7.1 completado: auditoría por capas + matriz API + DoD + estrategia opción B |
