@@ -39,7 +39,23 @@ async def startup_event():
     if app_env == "production":
         # Only run in production (not local dev)
         try:
-            # Run alembic migrations first
+            # Build DATABASE_URL if not set
+            database_url = os.getenv("DATABASE_URL")
+            if not database_url:
+                db_user = os.getenv("DB_USER", "")
+                db_password = os.getenv("DB_PASSWORD", "")
+                db_host = os.getenv("DB_HOST", "")
+                db_port = os.getenv("DB_PORT", "5432")
+                db_name = os.getenv("DB_NAME", "")
+                if db_host and db_name:
+                    pw = f":{db_password}@" if db_password else "@"
+                    database_url = (
+                        f"postgresql+psycopg2://{db_user}{pw}{db_host}:{db_port}/{db_name}"
+                    )
+                    os.environ["DATABASE_URL"] = database_url
+                    logger.info(f"Built DATABASE_URL from env vars (host={db_host})")
+
+            # Run alembic migrations
             import subprocess
 
             result = subprocess.run(
@@ -50,9 +66,9 @@ async def startup_event():
             if result.returncode == 0:
                 logger.info("Alembic migrations completed successfully")
             else:
-                logger.warning(f"Alembic migration output: {result.stdout}")
+                logger.warning(f"Alembic stdout: {result.stdout}")
                 if result.stderr:
-                    logger.warning(f"Alembic migration stderr: {result.stderr}")
+                    logger.warning(f"Alembic stderr: {result.stderr}")
 
             # Then ensure tables exist (belt and suspenders)
             from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
