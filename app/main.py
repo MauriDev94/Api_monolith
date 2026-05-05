@@ -5,9 +5,7 @@ from loguru import logger
 from pydantic_settings import BaseSettings
 from sqlalchemy import text
 
-from app.core.config.env_config import EnvConfig
 from app.core.config.logger_config import setup_logger
-from app.core.data.source.local.database import Database
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.middleware.request_context import attach_request_id_middleware
 from app.core.middleware.security_headers import attach_security_headers
@@ -41,19 +39,14 @@ async def startup_event():
     if app_env == "production":
         try:
             alembic_cfg = Config("alembic.ini")
+            # Marca b7c8d9e0f1a2 como la última migración ya aplicada
+            # sin correr ninguna migración anterior
+            command.stamp(alembic_cfg, "b7c8d9e0f1a2")
+            # Ahora corre solo las nuevas (fe8f9c0d1b3e y 1a2b3c4d5e6f)
             command.upgrade(alembic_cfg, "head")
             logger.info("Alembic migrations applied successfully")
         except Exception as e:
             logger.error(f"Failed to apply migrations: {e}")
-
-        try:
-            from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
-
-            db = Database(EnvConfig())  # type: ignore
-            SqlAlchemyBase.metadata.create_all(bind=db.engine)
-            logger.info("Database tables created successfully")
-        except Exception as e:
-            logger.error(f"Failed to create database tables: {e}")
 
 
 # CORS middleware
