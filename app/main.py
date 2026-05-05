@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -33,35 +35,34 @@ register_exception_handlers(app)
 @app.on_event("startup")
 async def startup_event():
     """Run migrations and create database tables on startup (for Render free tier)."""
-    import os
+    try:
+        from alembic import command
+        from alembic.config import Config
 
-    app_env = os.getenv("APP_ENV", "dev")
-    if app_env == "production":
-        # Only run in production (not local dev)
-        try:
-            # Run alembic migrations first
-            import subprocess
-
-            result = subprocess.run(
-                ["alembic", "upgrade", "head"],
-                capture_output=True,
-                text=True,
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            database_url = (
+                f"postgresql+psycopg2://{os.getenv('DB_USER', '')}"
+                f":{os.getenv('DB_PASSWORD', '')}"
+                f"@{os.getenv('DB_HOST', '')}"
+                f":{os.getenv('DB_PORT', '5432')}"
+                f"/{os.getenv('DB_NAME', '')}"
             )
-            if result.returncode == 0:
-                logger.info("Alembic migrations completed successfully")
-            else:
-                logger.warning(f"Alembic migration output: {result.stdout}")
-                if result.stderr:
-                    logger.warning(f"Alembic migration stderr: {result.stderr}")
+            os.environ["DATABASE_URL"] = database_url
+            logger.info("Built DATABASE_URL from env vars")
 
-            # Then ensure tables exist (belt and suspenders)
-            from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
+        alembic_cfg = Config("alembic.ini")
+        alembic_cfg.set_main_option("sqlalchemy.url", database_url)
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Alembic migrations completed successfully")
 
-            db = Database(EnvConfig())  # type: ignore
-            SqlAlchemyBase.metadata.create_all(bind=db.engine)
-            logger.info("Database tables created/verified successfully")
-        except Exception as e:
-            logger.error(f"Failed to run migrations or create tables: {e}")
+        from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
+
+        db = Database(EnvConfig())  # type: ignore
+        SqlAlchemyBase.metadata.create_all(bind=db.engine)
+        logger.info("Database tables created/verified successfully")
+    except Exception as e:
+        logger.error(f"Failed to run migrations or create tables: {e}")
 
 
 # CORS middleware
