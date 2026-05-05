@@ -5,6 +5,8 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, pool
 
+from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
+
 # load the .env file
 load_dotenv(".env")
 
@@ -21,9 +23,6 @@ if config.config_file_name is not None:
 database_url = os.getenv("DATABASE_URL")
 if not database_url:
     raise ValueError("DATABASE_URL is not set in the .env file")
-
-# import the base
-from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
 # add your model's MetaData object here
 # for 'autogenerate' support
