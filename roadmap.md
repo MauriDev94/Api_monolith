@@ -18,7 +18,7 @@
 | 7. Refactor Notifications | 🟢 | ✅ Completado (7.1 + 7.2 + 7.3) |
 | 8. OTP Password Reset | 🟢 | ✅ Completado |
 | 9. Email Notifications | 🟢 | ✅ Completado |
-| 10. Google SSO Login | 🟡 | 🚧 En progreso |
+| 10. Google SSO Login | 🟢 | ✅ Completado |
 
 ---
 
@@ -541,12 +541,32 @@ SMTP_USE_TLS=true
 ---
 
 ### 10.7 — E2E tests
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] Flujo nuevo → crea usuario + retorna tokens
-- [ ] Segundo login mismo Google account → mismo `user_id`
-- [ ] Email con password existente → 409
-- [ ] Suite completa en verde
+- [x] Flujo nuevo → crea usuario + retorna tokens
+- [x] Segundo login mismo Google account → mismo `user_id`
+- [x] Email con password existente → 409
+- [x] Suite completa en verde (234 tests)
+
+---
+
+## Notas de Deploy
+
+### Alembic en Startup (Free Tier)
+**Decisión consciente:** El `startup_event` en `app/main.py` ejecuta `alembic upgrade head` en cada deploy.
+
+**Trade-off:**
+- ✅ Garantiza que las migraciones se corren sin acceso shell
+- ✅ No necesita herramientas externas (como Render CLI)
+- ⚠️ Cada deploy corre alembic aunque no haya migraciones nuevas (overhead mínimo)
+- ⚠️ Si alembic falla silenciosamente, puede dejar la DB en estado inconsistente
+
+**Alternativas consideradas:**
+- Render CLI con shell (requiere pago o trabajo manual)
+- GitHub Actions workflow separado (complejidad adicional)
+- Stamp + manual sync (no escalable para free tier)
+
+**Para producción con acceso shell:** Remover el `alembic upgrade` del startup y usar deploy pipeline.
 
 ---
 
@@ -554,6 +574,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-05-05 | ✅ 10 completa: Google SSO Login funciona en producción (10.1-10.7) |
 | 2026-05-05 | ✅ 10.1-10.5 completados: Domain, Migration, Contracts, Provider, Repository (#44-#46) |
 | 2026-05-04 | 🚧 10 iniciada: Google SSO Login (propuesta + specs + design en docs/) |
 | 2026-04-30 | ✅ 8 completado: OTP Password Reset con Resend (#32 + #33) |
