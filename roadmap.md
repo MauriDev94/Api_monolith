@@ -529,13 +529,14 @@ SMTP_USE_TLS=true
 ---
 
 ### 10.6 — Presentation + DI
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] `GET /auth/v1/google` → redirect
-- [ ] `GET /auth/v1/google/callback` → tokens
-- [ ] `POST /auth/v1/link-google` → vincular cuenta
-- [ ] DI providers en `auth/di/dependencies.py`
-- [ ] Integration tests de presentación
+- [x] `GET /auth/v1/google` → redirect
+- [x] `GET /auth/v1/google/callback` → tokens
+- [x] `POST /auth/v1/link-google` → vincular cuenta
+- [x] DI providers en `auth/di/dependencies.py`
+- [x] Schemas: GoogleInitResponse, GoogleCallbackRequest, GoogleLinkAccountRequest
+- [x] Variables de entorno documentadas en `.env.example`
 
 ---
 

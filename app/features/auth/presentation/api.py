@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, status
+from fastapi import Depends, HTTPException, Query, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.exceptions.exceptions import InternalServerError
@@ -10,6 +10,18 @@ from app.features.auth.application.dto.refresh_token_params import RefreshTokenP
 from app.features.auth.application.usecases.change_password_with_otp_use_case import (
     ChangePasswordWithOtpUseCase,
 )
+from app.features.auth.application.usecases.handle_google_callback import (
+    HandleGoogleCallbackParams,
+    HandleGoogleCallbackUseCase,
+)
+from app.features.auth.application.usecases.initiate_google_login import (
+    InitiateGoogleLoginParams,
+    InitiateGoogleLoginUseCase,
+)
+from app.features.auth.application.usecases.link_google_account import (
+    LinkGoogleAccountParams,
+    LinkGoogleAccountUseCase,
+)
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
@@ -17,6 +29,9 @@ from app.features.auth.application.usecases.request_otp_use_case import RequestO
 from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.di.dependencies import (
     get_change_password_with_otp_use_case,
+    get_handle_google_callback_use_case,
+    get_initiate_google_login_use_case,
+    get_link_google_account_use_case,
     get_login_user_use_case,
     get_refresh_access_token_use_case,
     get_register_user_use_case,
@@ -44,6 +59,11 @@ from app.features.auth.presentation.schemas.auth_responses import (
     OtpResponse,
     RefreshTokenResponse,
     RegisterResponse,
+)
+from app.features.auth.presentation.schemas.google_auth_requests import (
+    GoogleInitResponse,
+    GoogleLinkAccountRequest,
+    GoogleLinkAccountResponse,
 )
 from app.features.auth.presentation.security_dependencies import (
     enforce_request_otp_rate_limit,
@@ -150,3 +170,67 @@ def change_password(
     params = map_change_password_request_to_params(request, current_user.id)
     change_password_use_case.execute(params)
     return OtpResponse(message="Password changed. Please login again")
+
+
+# === Google OAuth Endpoints ===
+
+
+@v1_router.get("/google", name="google_oauth_init")
+def initiate_google_login(
+    response: Response,
+    initiate_google_login_use_case: Annotated[
+        InitiateGoogleLoginUseCase,
+        Depends(get_initiate_google_login_use_case),
+    ],
+) -> GoogleInitResponse:
+    """Initiate Google OAuth flow by redirecting to Google's consent screen."""
+    result = initiate_google_login_use_case.execute(InitiateGoogleLoginParams())
+    # Redirect to Google
+    response.headers["Location"] = result.authorization_url
+    response.status_code = status.HTTP_302_FOUND
+    return GoogleInitResponse(authorization_url=result.authorization_url)
+
+
+@v1_router.get("/google/callback", name="google_oauth_callback")
+def handle_google_callback(
+    handle_google_callback_use_case: Annotated[
+        HandleGoogleCallbackUseCase,
+        Depends(get_handle_google_callback_use_case),
+    ],
+    code: str = Query(...),
+    state: str | None = Query(default=None),
+) -> LoginResponse:
+    """Handle Google OAuth callback, create/link user, and return tokens."""
+    result = handle_google_callback_use_case.execute(
+        HandleGoogleCallbackParams(code=code, state=state)
+    )
+    return map_token_pair_result_to_login_response(result)
+
+
+@v1_router.post("/link-google", name="link_google_account")
+def link_google_account(
+    link_google_account_use_case: Annotated[
+        LinkGoogleAccountUseCase,
+        Depends(get_link_google_account_use_case),
+    ],
+    current_user: Annotated[User, Depends(get_authenticated_user)],
+    request: GoogleLinkAccountRequest,
+) -> GoogleLinkAccountResponse:
+    """Link a Google account to the currently authenticated user."""
+    if current_user.id is None:
+        raise InternalServerError("user id is missing")
+
+    # Check if user already has a Google account linked
+    if current_user.google_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google account already linked to this user",
+        )
+
+    params = LinkGoogleAccountParams(
+        user_id=current_user.id,
+        google_id=request.google_id,
+        password=request.password,
+    )
+    result = link_google_account_use_case.execute(params)
+    return GoogleLinkAccountResponse(success=result.success, message=result.message)
