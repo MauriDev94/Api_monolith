@@ -1,44 +1,46 @@
-# PR Creation — plantilla Unificada para Pull Requests
+## Summary
+<!-- Una línea: qué hace este PR y por qué -->
 
-**Versión:** 3.0 (actualizada 2026-05-02)
-**Proyecto:** Monolith
+## Why
+<!-- Por qué es necesario este cambio? Qué problema resuelve o qué mejora aporta?
+     Ej: "El endpoint /v1/users exponía datos de todos los usuarios sin restricción de rol" -->
 
----
+## Type of Change
+- [ ] `feat` — feature nuevo
+- [ ] `fix` — bug fix
+- [ ] `refactor` — refactor sin cambio de comportamiento
+- [ ] `test` — tests
+- [ ] `chore` — dependencias, configs, mantenimiento
+- [ ] `docs` — documentación
 
-## Plantilla de PR
+## Changes
+<!-- Lista de cambios concretos por capa -->
+### Domain
+- [ ]
 
-```markdown
-## 🧠 Descripción
-[Breve explicación del cambio]
+### Application
+- [ ]
 
-## 🔗 Issue relacionado
-[Closes #123 / N/A]
+### Infrastructure
+- [ ]
 
-## 🚀 Tipo de cambio
-- [ ] Bugfix
-- [ ] Feature
-- [ ] Refactor
-- [ ] Breaking change
-- [ ] Documentation
+### Presentation
+- [ ]
 
-## 🧪 Cómo probar
-1. [Paso 1]
-2. [Paso 2]
+## How to Test
+1.
+2.
 
-## 📸 Evidencia
-(Screenshots / logs)
+## Checklist
+- [ ] Tests passing (`pytest`)
+- [ ] Coverage no baja del 80%
+- [ ] Pre-commit hooks en verde (ruff + black)
+- [ ] Sin imports no usados
+- [ ] Docstrings en clases y métodos públicos nuevos
 
-## ✅ Checklist
-- [ ] Código sigue las guías del proyecto
-- [ ] Tests agregados/actualizados
-- [ ] CI pasa correctamente
-- [ ] No hay secretos ni credenciales
+## Risks and Rollback
+**Riesgo:** Bajo / Medio / Alto
+**Rollback:**
 
-## ⚠️ Impacto / riesgos
-[Describir posibles efectos secundarios]
-
-## 📌 Notas adicionales
-[Contexto extra relevante]
-```
-
----
+## Related Issues
+<!-- Closes #XX -->
