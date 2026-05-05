@@ -32,12 +32,20 @@ register_exception_handlers(app)
 
 @app.on_event("startup")
 async def startup_event():
-    """Create database tables on startup if they don't exist (for Render free tier)."""
     import os
+
+    from alembic import command
+    from alembic.config import Config
 
     app_env = os.getenv("APP_ENV", "dev")
     if app_env == "production":
-        # Only run in production (not local dev)
+        try:
+            alembic_cfg = Config("alembic.ini")
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Alembic migrations applied successfully")
+        except Exception as e:
+            logger.error(f"Failed to apply migrations: {e}")
+
         try:
             from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
