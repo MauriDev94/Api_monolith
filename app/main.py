@@ -51,18 +51,73 @@ async def startup_event():
             os.environ["DATABASE_URL"] = database_url
             logger.info("Built DATABASE_URL from env vars")
 
+        # Try alembic first
         alembic_cfg = Config("alembic.ini")
         alembic_cfg.set_main_option("sqlalchemy.url", database_url)
         command.upgrade(alembic_cfg, "head")
         logger.info("Alembic migrations completed successfully")
 
+    except Exception as e:
+        logger.error(f"Alembic migration failed: {e}")
+        # Fallback: add columns directly with raw SQL
+        try:
+            from sqlalchemy import create_engine, text
+
+            engine = create_engine(database_url)
+            with engine.connect() as conn:
+                # Check if google_id exists
+                result = conn.execute(text("""
+                    SELECT column_name FROM information_schema.columns
+                    WHERE table_name = 'users' AND column_name = 'google_id'
+                """))
+                if not result.fetchone():
+                    logger.warning("google_id column missing - adding via raw SQL")
+                    conn.execute(text("""
+                        ALTER TABLE users ADD COLUMN google_id VARCHAR(255) UNIQUE;
+                    """))
+                    conn.commit()
+                    logger.info("Added google_id column via raw SQL")
+
+                # Check if google_email_verified exists
+                result = conn.execute(text("""
+                    SELECT column_name FROM information_schema.columns
+                    WHERE table_name = 'users' AND column_name = 'google_email_verified'
+                """))
+                if not result.fetchone():
+                    logger.warning("google_email_verified column missing - adding via raw SQL")
+                    conn.execute(text("""
+                        ALTER TABLE users ADD COLUMN google_email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+                    """))
+                    conn.commit()
+                    logger.info("Added google_email_verified column via raw SQL")
+
+                # Make password_hash nullable if needed
+                result = conn.execute(text("""
+                    SELECT is_nullable FROM information_schema.columns
+                    WHERE table_name = 'users' AND column_name = 'password_hash'
+                """))
+                row = result.fetchone()
+                if row and row[0] == "NO":
+                    logger.warning("password_hash NOT NULL - making nullable via raw SQL")
+                    conn.execute(text("""
+                        ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+                    """))
+                    conn.commit()
+                    logger.info("Made password_hash nullable via raw SQL")
+
+            logger.info("Raw SQL fallback migration completed")
+        except Exception as sql_e:
+            logger.error(f"Raw SQL fallback also failed: {sql_e}")
+
+    # Ensure tables exist (belt and suspenders)
+    try:
         from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
         db = Database(EnvConfig())  # type: ignore
         SqlAlchemyBase.metadata.create_all(bind=db.engine)
         logger.info("Database tables created/verified successfully")
     except Exception as e:
-        logger.error(f"Failed to run migrations or create tables: {e}")
+        logger.error(f"Failed to create tables: {e}")
 
 
 # CORS middleware
