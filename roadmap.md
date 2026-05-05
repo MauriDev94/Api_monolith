@@ -475,53 +475,56 @@ SMTP_USE_TLS=true
 ---
 
 ### 10.1 — Domain: User.password_hash nullable
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] `password_hash: str | None` en `User`
-- [ ] `__post_init__`: omitir validación cuando es `None`
-- [ ] `change_password_hash(new_hash: str) -> None`
-- [ ] `google_id: str | None` columna
-- [ ] Tests de dominio actualizados
+- [x] `password_hash: str | None` en `User`
+- [x] `__post_init__`: omitir validación cuando es `None`
+- [x] `change_password_hash(new_hash: str) -> None`
+- [x] `google_id: str | None` columna
+- [x] `birthdate` nullable para usuarios Google
+- [x] Tests de dominio actualizados
 
 ---
 
 ### 10.2 — Migration: google_id + password_hash nullable
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] `ADD COLUMN google_id VARCHAR(255) UNIQUE NULLABLE`
-- [ ] `ALTER COLUMN password_hash DROP NOT NULL`
-- [ ] Alembic revision generada y revisada
+- [x] `ADD COLUMN google_id VARCHAR(255) UNIQUE NULLABLE`
+- [x] `ALTER COLUMN password_hash DROP NOT NULL`
+- [x] Alembic revision: `fe8f9c0d1b3e_add_google_id_nullable_password.py`
+- [x] Alembic revision: `make_birthdate_nullable.py`
 
 ---
 
 ### 10.3 — Application: contratos y DTOs
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] `OAuthProvider` (contrato)
-- [ ] `GoogleAuthDatasource` (contrato)
-- [ ] `GoogleUserInfo`, `GoogleTokenData` (DTOs)
-- [ ] `InitiateGoogleLoginUseCase`
-- [ ] `HandleGoogleCallbackUseCase`
-- [ ] `LinkGoogleAccountUseCase`
+- [x] `OAuthProvider` (contrato)
+- [x] `GoogleAuthDatasource` (contrato)
+- [x] `GoogleUserInfo`, `GoogleTokenData` (DTOs)
+- [x] `InitiateGoogleLoginUseCase`
+- [x] `HandleGoogleCallbackUseCase`
+- [x] `LinkGoogleAccountUseCase`
 
 ---
 
 ### 10.4 — Infrastructure: GoogleOAuthProviderImpl
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] `GoogleOAuthProviderImpl` con `httpx`
-- [ ] `StubGoogleOAuthProvider` para tests
-- [ ] Variables de entorno en `EnvConfig` y `.env.example`
+- [x] `GoogleOAuthProviderImpl` con `httpx`
+- [x] `StubGoogleOAuthProvider` para tests
+- [x] Variables de entorno en `EnvConfig` y `.env.example`
 
 ---
 
 ### 10.5 — Infrastructure: GoogleAuthRepository
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Completado
 
-- [ ] `create_google_user` con `password_hash=None`
-- [ ] `get_user_by_google_id`
-- [ ] `link_google_id`
-- [ ] Integration tests con `db_session`
+- [x] `create_google_user` con `password_hash=None`
+- [x] `get_user_by_google_id`
+- [x] `get_user_by_id`
+- [x] `link_google_id`
+- [x] Integration tests con `db_session` (6 tests)
 
 ---
 
@@ -550,6 +553,7 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-05-05 | ✅ 10.1-10.5 completados: Domain, Migration, Contracts, Provider, Repository (#44-#46) |
 | 2026-05-04 | 🚧 10 iniciada: Google SSO Login (propuesta + specs + design en docs/) |
 | 2026-04-30 | ✅ 8 completado: OTP Password Reset con Resend (#32 + #33) |
 | 2026-04-27 | ✅ 7.1 completado: auditoría por capas + matriz API + DoD + estrategia opción B |
