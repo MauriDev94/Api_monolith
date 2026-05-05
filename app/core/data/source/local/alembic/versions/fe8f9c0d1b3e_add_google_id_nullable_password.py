@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "add_google_id_nullable_password"
-down_revision: str | None = "b7c8d9e0f1a2_hash_auth_otps_code"
+revision: str = "fe8f9c0d1b3e"
+down_revision: str | None = "b7c8d9e0f1a2"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
