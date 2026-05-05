@@ -19,6 +19,9 @@ class EnvConfig(BaseSettings):
     resend_api_key: str | None = None
     resend_sender_email: str | None = None
     internal_api_key: str | None = None
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    google_redirect_uri: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
