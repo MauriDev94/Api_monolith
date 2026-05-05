@@ -39,10 +39,6 @@ async def startup_event():
     if app_env == "production":
         try:
             alembic_cfg = Config("alembic.ini")
-            # Marca b7c8d9e0f1a2 como la última migración ya aplicada
-            # sin correr ninguna migración anterior
-            command.stamp(alembic_cfg, "b7c8d9e0f1a2")
-            # Ahora corre solo las nuevas (fe8f9c0d1b3e y 1a2b3c4d5e6f)
             command.upgrade(alembic_cfg, "head")
             logger.info("Alembic migrations applied successfully")
         except Exception as e:

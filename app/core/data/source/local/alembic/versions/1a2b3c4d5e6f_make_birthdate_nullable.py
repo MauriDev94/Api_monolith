@@ -8,6 +8,7 @@ Create Date: 2026-05-05
 
 from collections.abc import Sequence
 
+import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -18,9 +19,18 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    # Make birthdate nullable (Google users don't have birthdate)
-    op.alter_column("users", "birthdate", existing_type=op.postgresql.JSON(), nullable=True)
+    op.alter_column(
+        "users",
+        "birthdate",
+        existing_type=sa.Date(),
+        nullable=True,
+    )
 
 
 def downgrade() -> None:
-    op.alter_column("users", "birthdate", existing_type=op.postgresql.JSON(), nullable=False)
+    op.alter_column(
+        "users",
+        "birthdate",
+        existing_type=sa.Date(),
+        nullable=False,
+    )
