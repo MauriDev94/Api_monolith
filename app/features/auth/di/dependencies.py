@@ -17,6 +17,11 @@ from app.features.auth.application.usecases.change_password_with_otp_use_case im
     ChangePasswordWithOtpUseCase,
 )
 from app.features.auth.application.usecases.get_current_user_use_case import GetCurrentUser
+from app.features.auth.application.usecases.handle_google_callback import (
+    HandleGoogleCallbackUseCase,
+)
+from app.features.auth.application.usecases.initiate_google_login import InitiateGoogleLoginUseCase
+from app.features.auth.application.usecases.link_google_account import LinkGoogleAccountUseCase
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
@@ -25,8 +30,12 @@ from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtp
 from app.features.auth.infrastructure.managers.jwt_token_manager import JwtTokenManager
 from app.features.auth.infrastructure.managers.password_manager_impl import PasswordManagerImpl
 from app.features.auth.infrastructure.providers.console_email_sender import ConsoleEmailSender
+from app.features.auth.infrastructure.providers.google_oauth_provider import GoogleOAuthProviderImpl
 from app.features.auth.infrastructure.providers.resend_email_sender import ResendEmailSender
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
+from app.features.auth.infrastructure.repositories.google_auth_repository import (
+    GoogleAuthRepository,
+)
 from app.features.auth.infrastructure.repositories.otp_repository import OtpRepository
 from app.features.auth.infrastructure.repositories.token_revocation_repository import (
     TokenRevocationRepository,
@@ -160,4 +169,54 @@ def get_change_password_with_otp_use_case(
         otp_datasource=otp_datasource,
         password_manager=password_manager,
         token_revocation_store=token_revocation_store,
+    )
+
+
+# === Google OAuth Dependency Providers ===
+
+
+def get_google_oauth_provider(
+    env_config: Annotated[EnvConfig, Depends(get_env_config)],
+) -> GoogleOAuthProviderImpl:
+    """Provide Google OAuth provider implementation."""
+    return GoogleOAuthProviderImpl(config=env_config)
+
+
+def get_google_auth_repository(
+    db_session: Annotated[Session, Depends(get_db_session)],
+) -> GoogleAuthRepository:
+    """Provide Google auth datasource implementation backed by SQLAlchemy."""
+    return GoogleAuthRepository(session=db_session)
+
+
+def get_initiate_google_login_use_case(
+    oauth_provider: Annotated[GoogleOAuthProviderImpl, Depends(get_google_oauth_provider)],
+) -> InitiateGoogleLoginUseCase:
+    """Provide InitiateGoogleLoginUseCase use case."""
+    return InitiateGoogleLoginUseCase(oauth_provider=oauth_provider)
+
+
+def get_handle_google_callback_use_case(
+    oauth_provider: Annotated[GoogleOAuthProviderImpl, Depends(get_google_oauth_provider)],
+    google_auth_datasource: Annotated[GoogleAuthRepository, Depends(get_google_auth_repository)],
+    token_manager: Annotated[TokenManager, Depends(get_token_manager)],
+    token_revocation_store: Annotated[TokenRevocationStore, Depends(get_token_revocation_store)],
+) -> HandleGoogleCallbackUseCase:
+    """Provide HandleGoogleCallbackUseCase use case."""
+    return HandleGoogleCallbackUseCase(
+        oauth_provider=oauth_provider,
+        google_auth_datasource=google_auth_datasource,
+        token_manager=token_manager,
+        token_revocation_store=token_revocation_store,
+    )
+
+
+def get_link_google_account_use_case(
+    google_auth_datasource: Annotated[GoogleAuthRepository, Depends(get_google_auth_repository)],
+    password_manager: Annotated[PasswordManager, Depends(get_password_manager)],
+) -> LinkGoogleAccountUseCase:
+    """Provide LinkGoogleAccountUseCase use case."""
+    return LinkGoogleAccountUseCase(
+        google_auth_datasource=google_auth_datasource,
+        password_manager=password_manager,
     )
