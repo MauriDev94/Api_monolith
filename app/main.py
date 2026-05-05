@@ -32,20 +32,36 @@ register_exception_handlers(app)
 
 @app.on_event("startup")
 async def startup_event():
-    """Create database tables on startup if they don't exist (for Render free tier)."""
+    """Run migrations and create database tables on startup (for Render free tier)."""
     import os
 
     app_env = os.getenv("APP_ENV", "dev")
     if app_env == "production":
         # Only run in production (not local dev)
         try:
+            # Run alembic migrations first
+            import subprocess
+
+            result = subprocess.run(
+                ["alembic", "upgrade", "head"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                logger.info("Alembic migrations completed successfully")
+            else:
+                logger.warning(f"Alembic migration output: {result.stdout}")
+                if result.stderr:
+                    logger.warning(f"Alembic migration stderr: {result.stderr}")
+
+            # Then ensure tables exist (belt and suspenders)
             from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
             db = Database(EnvConfig())  # type: ignore
             SqlAlchemyBase.metadata.create_all(bind=db.engine)
-            logger.info("Database tables created successfully")
+            logger.info("Database tables created/verified successfully")
         except Exception as e:
-            logger.error(f"Failed to create database tables: {e}")
+            logger.error(f"Failed to run migrations or create tables: {e}")
 
 
 # CORS middleware
