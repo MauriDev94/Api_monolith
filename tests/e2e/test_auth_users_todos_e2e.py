@@ -344,11 +344,12 @@ def test_should_login_with_google_oauth_creates_new_user(db_session: Session) ->
     client = TestClient(app, raise_server_exceptions=False)
 
     try:
-        # Step 1: Initiate Google OAuth returns 302 redirect to Google
+        # Step 1: Initiate Google OAuth returns auth URL for client-side redirect
         init_response = client.get("/auth/v1/google", follow_redirects=False)
-        assert init_response.status_code == 302
-        location = init_response.headers.get("Location", "")
-        assert "accounts.google.com" in location
+        assert init_response.status_code == 200
+        init_data = init_response.json()
+        assert "authorization_url" in init_data
+        assert "accounts.google.com" in init_data["authorization_url"]
 
         # Step 2: Simulate callback with code (stub accepts any code)
         callback_response = client.get(
