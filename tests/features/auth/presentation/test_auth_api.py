@@ -5,7 +5,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.exceptions.error_handling import register_exception_handlers
-from app.core.exceptions.exceptions import NotFoundError, TooManyRequestsError, UnauthorizedError
+from app.core.exceptions.exceptions import (
+    ConflictError,
+    NotFoundError,
+    TooManyRequestsError,
+    UnauthorizedError,
+)
 from app.features.auth.application.constants import OTP_PURPOSE_PASSWORD_CHANGE
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
@@ -17,6 +22,7 @@ from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.di.dependencies import (
     get_change_password_with_otp_use_case,
     get_initiate_google_login_use_case,
+    get_link_google_account_use_case,
     get_login_user_use_case,
     get_rate_limiter,
     get_register_user_use_case,
@@ -284,3 +290,21 @@ def test_should_return_401_when_change_password_otp_is_invalid() -> None:
 
     assert response.status_code == 401
     assert response.json()["message"] == "Invalid otp code"
+
+
+# Tipo de test: Integration
+def test_should_return_409_when_link_google_is_already_linked() -> None:
+    client = create_test_client()
+    link_google_use_case = StubUseCase(
+        error=ConflictError("Google account already linked to this user")
+    )
+    client.app.dependency_overrides[get_link_google_account_use_case] = lambda: link_google_use_case
+    client.app.dependency_overrides[get_authenticated_user] = make_user
+
+    response = client.post(
+        "/auth/v1/link-google",
+        json={"google_id": "google-id-123", "password": "pass1234"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["message"] == "Google account already linked to this user"
