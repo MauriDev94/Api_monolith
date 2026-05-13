@@ -12,6 +12,7 @@ from app.features.auth.application.dto.verify_otp_params import VerifyOtpParams
 from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
 from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.domain.entities.otp_code import OtpCode
+from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
 
@@ -28,7 +29,7 @@ def make_user() -> User:
 
 
 def make_otp() -> OtpCode:
-    return OtpCode.create(user_id="user-1", purpose="login")
+    return OtpCode.create(user_id="user-1", purpose=OtpPurpose.PASSWORD_CHANGE)
 
 
 # Tipo de test: Unit
@@ -40,7 +41,7 @@ def test_should_raise_not_found_when_requesting_otp_for_missing_user() -> None:
     use_case = RequestOtpUseCase(auth_datasource, otp_datasource, email_sender)
 
     with pytest.raises(NotFoundError, match="user not found"):
-        use_case.execute(RequestOtpParams(user_id="missing", purpose="login"))
+        use_case.execute(RequestOtpParams(user_id="missing", purpose=OtpPurpose.PASSWORD_CHANGE))
 
     otp_datasource.invalidate_all.assert_not_called()
     otp_datasource.save.assert_not_called()
@@ -58,14 +59,14 @@ def test_should_invalidate_previous_otps_and_send_new_one() -> None:
     otp_datasource.save.return_value = otp
     use_case = RequestOtpUseCase(auth_datasource, otp_datasource, email_sender)
 
-    use_case.execute(RequestOtpParams(user_id="user-1", purpose="login"))
+    use_case.execute(RequestOtpParams(user_id="user-1", purpose=OtpPurpose.PASSWORD_CHANGE))
 
-    otp_datasource.invalidate_all.assert_called_once_with("user-1", "login")
+    otp_datasource.invalidate_all.assert_called_once_with("user-1", OtpPurpose.PASSWORD_CHANGE)
     otp_datasource.save.assert_called_once()
     email_sender.send_otp.assert_called_once_with(
         to_email="mauri@mail.com",
         code=otp.code,
-        purpose="login",
+        purpose=OtpPurpose.PASSWORD_CHANGE,
     )
 
 
@@ -76,7 +77,9 @@ def test_should_raise_unauthorized_when_otp_is_invalid() -> None:
     use_case = VerifyOtpUseCase(otp_datasource)
 
     with pytest.raises(UnauthorizedError, match="Invalid otp code"):
-        use_case.execute(VerifyOtpParams(user_id="user-1", code="123456", purpose="login"))
+        use_case.execute(
+            VerifyOtpParams(user_id="user-1", code="123456", purpose=OtpPurpose.PASSWORD_CHANGE)
+        )
 
     otp_datasource.save.assert_not_called()
 
@@ -88,7 +91,9 @@ def test_should_consume_and_persist_valid_otp() -> None:
     otp_datasource.find_valid.return_value = otp
     use_case = VerifyOtpUseCase(otp_datasource)
 
-    use_case.execute(VerifyOtpParams(user_id="user-1", code=otp.code, purpose="login"))
+    use_case.execute(
+        VerifyOtpParams(user_id="user-1", code=otp.code, purpose=OtpPurpose.PASSWORD_CHANGE)
+    )
 
     assert otp.used_at is not None
     otp_datasource.save.assert_called_once_with(otp)
