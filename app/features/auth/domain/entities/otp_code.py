@@ -1,6 +1,8 @@
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 import secrets
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+
+from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 
 
 @dataclass(slots=True)
@@ -19,7 +21,7 @@ class OtpCode:
         self._validate()
 
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def is_used(self) -> bool:
         return self.used_at is not None
@@ -33,13 +35,17 @@ class OtpCode:
             raise ValueError("otp has already been used")
         if self.is_expired():
             raise ValueError("otp has expired")
-        self.used_at = datetime.now(timezone.utc)
+        self.used_at = datetime.now(UTC)
 
     def _validate(self) -> None:
         if not self.user_id or not self.user_id.strip():
             raise ValueError("otp must be bound to a user")
         if not self.purpose or not self.purpose.strip():
             raise ValueError("otp must have a purpose")
+        try:
+            OtpPurpose(self.purpose)
+        except ValueError as exc:
+            raise ValueError(f"invalid otp purpose: '{self.purpose}'") from exc
         if not self.code or len(self.code) != 6 or not self.code.isdigit():
             raise ValueError("otp code must be exactly 6 digits")
         if self.expires_at.tzinfo is None:
@@ -48,7 +54,7 @@ class OtpCode:
     @classmethod
     def create(cls, user_id: str, purpose: str, expire_minutes: int = 10) -> "OtpCode":
         """Factory that generates a secure 6-digit OTP."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         code = f"{secrets.randbelow(1_000_000):06d}"
         return cls(
             id=None,
