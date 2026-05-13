@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Query, status
+from fastapi import Depends, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.exceptions.exceptions import InternalServerError
@@ -215,13 +215,6 @@ def link_google_account(
     """Link a Google account to the currently authenticated user."""
     if current_user.id is None:
         raise InternalServerError("user id is missing")
-
-    # Check if user already has a Google account linked
-    if current_user.google_id is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Google account already linked to this user",
-        )
 
     params = LinkGoogleAccountParams(
         user_id=current_user.id,

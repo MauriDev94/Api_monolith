@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions.exceptions import NotFoundError, UnauthorizedError
+from app.core.exceptions.exceptions import ConflictError, NotFoundError, UnauthorizedError
 from app.features.auth.application.contracts.google_auth_datasource import GoogleAuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.usecases.link_google_account import (
@@ -118,6 +118,34 @@ class TestLinkGoogleAccountUseCase:
             use_case.execute(params)
 
         assert "Invalid password" in str(exc_info.value)
+
+    def test_should_raise_conflict_when_user_already_has_google_linked(
+        self,
+        use_case: LinkGoogleAccountUseCase,
+        mock_google_auth_datasource: MagicMock,
+    ) -> None:
+        """Test that ConflictError is raised if user already has google_id."""
+        user = User(
+            id="user-123",
+            name="Test",
+            lastname="User",
+            email=Email("test@gmail.com"),
+            password_hash="$2b$12$hashedpassword",
+            birthdate=date(2000, 1, 1),
+            google_id="already-linked-google-id",
+        )
+        mock_google_auth_datasource.get_user_by_id.return_value = user
+
+        params = LinkGoogleAccountParams(
+            user_id="user-123",
+            google_id="new-google-id",
+            password="correct-password",
+        )
+
+        with pytest.raises(ConflictError) as exc_info:
+            use_case.execute(params)
+
+        assert "already linked" in str(exc_info.value)
 
     def test_should_raise_unauthorized_when_user_has_no_password(
         self,

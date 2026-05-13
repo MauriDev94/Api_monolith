@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.common.use_case import UseCase
-from app.core.exceptions.exceptions import NotFoundError, UnauthorizedError
+from app.core.exceptions.exceptions import ConflictError, NotFoundError, UnauthorizedError
 from app.features.auth.application.contracts.google_auth_datasource import GoogleAuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 
@@ -43,6 +43,9 @@ class LinkGoogleAccountUseCase(UseCase[LinkGoogleAccountParams, LinkGoogleAccoun
         user = self._google_auth_datasource.get_user_by_id(params.user_id)
         if user is None:
             raise NotFoundError("User not found")
+
+        if user.google_id is not None:
+            raise ConflictError("Google account already linked to this user")
 
         # Verify password
         if user.password_hash is None:
