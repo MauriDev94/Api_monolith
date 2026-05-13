@@ -73,11 +73,14 @@ class GoogleOAuthProviderImpl(OAuthProvider):
             response.raise_for_status()
             user_data = response.json()
 
-        # Parse name into first name and last name
+        # Prefer structured fields from Google and fallback to full name parsing
         full_name = user_data.get("name", "")
-        name_parts = full_name.split(" ", 1)
-        given_name = name_parts[0] if len(name_parts) > 0 else ""
-        family_name = name_parts[1] if len(name_parts) > 1 else ""
+        given_name = user_data.get("given_name") or (
+            full_name.split(" ", 1)[0] if full_name else ""
+        )
+        family_name = user_data.get("family_name") or (
+            full_name.split(" ", 1)[1] if " " in full_name else ""
+        )
 
         return GoogleUserInfo(
             google_id=user_data["sub"],
