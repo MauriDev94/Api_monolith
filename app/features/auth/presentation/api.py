@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Query, Response, status
+from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.exceptions.exceptions import InternalServerError
@@ -177,17 +177,13 @@ def change_password(
 
 @v1_router.get("/google", name="google_oauth_init")
 def initiate_google_login(
-    response: Response,
     initiate_google_login_use_case: Annotated[
         InitiateGoogleLoginUseCase,
         Depends(get_initiate_google_login_use_case),
     ],
 ) -> GoogleInitResponse:
-    """Initiate Google OAuth flow by redirecting to Google's consent screen."""
+    """Return Google OAuth authorization URL for client-side redirect."""
     result = initiate_google_login_use_case.execute(InitiateGoogleLoginParams())
-    # Redirect to Google
-    response.headers["Location"] = result.authorization_url
-    response.status_code = status.HTTP_302_FOUND
     return GoogleInitResponse(authorization_url=result.authorization_url)
 
 
