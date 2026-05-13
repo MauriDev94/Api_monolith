@@ -12,9 +12,11 @@ from app.features.auth.application.contracts.password_manager import PasswordMan
 from app.features.auth.application.contracts.rate_limiter import RateLimiter
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
+from app.features.auth.application.usecases.initiate_google_login import InitiateGoogleLoginResult
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.di.dependencies import (
     get_change_password_with_otp_use_case,
+    get_initiate_google_login_use_case,
     get_login_user_use_case,
     get_rate_limiter,
     get_register_user_use_case,
@@ -225,8 +227,8 @@ def test_should_return_429_when_request_otp_rate_limit_is_exceeded() -> None:
 def test_should_return_200_when_change_password_with_otp_is_valid() -> None:
     client = create_test_client()
     change_password_use_case = StubUseCase(result=None)
-    client.app.dependency_overrides[get_change_password_with_otp_use_case] = (
-        lambda: change_password_use_case
+    client.app.dependency_overrides[get_change_password_with_otp_use_case] = lambda: (
+        change_password_use_case
     )
     client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
     client.app.dependency_overrides[get_authenticated_user] = make_user
@@ -244,11 +246,33 @@ def test_should_return_200_when_change_password_with_otp_is_valid() -> None:
 
 
 # Tipo de test: Integration
+def test_should_return_200_with_authorization_url_when_initiating_google_login() -> None:
+    client = create_test_client()
+    initiate_google_use_case = StubUseCase(
+        result=InitiateGoogleLoginResult(
+            authorization_url="https://accounts.google.com/o/oauth2/v2/auth?state=abc",
+            state="abc",
+        )
+    )
+    client.app.dependency_overrides[get_initiate_google_login_use_case] = lambda: (
+        initiate_google_use_case
+    )
+
+    response = client.get("/auth/v1/google")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "authorization_url": "https://accounts.google.com/o/oauth2/v2/auth?state=abc"
+    }
+    assert response.headers.get("location") is None
+
+
+# Tipo de test: Integration
 def test_should_return_401_when_change_password_otp_is_invalid() -> None:
     client = create_test_client()
     change_password_use_case = StubUseCase(error=UnauthorizedError("Invalid otp code"))
-    client.app.dependency_overrides[get_change_password_with_otp_use_case] = (
-        lambda: change_password_use_case
+    client.app.dependency_overrides[get_change_password_with_otp_use_case] = lambda: (
+        change_password_use_case
     )
     client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
     client.app.dependency_overrides[get_authenticated_user] = make_user
