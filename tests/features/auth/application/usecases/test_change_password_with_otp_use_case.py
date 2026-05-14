@@ -4,7 +4,6 @@ from unittest.mock import Mock
 import pytest
 
 from app.core.exceptions.exceptions import NotFoundError, UnauthorizedError
-from app.features.auth.application.constants import OTP_PURPOSE_PASSWORD_CHANGE
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.otp_datasource import OtpDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
@@ -16,6 +15,7 @@ from app.features.auth.application.usecases.change_password_with_otp_use_case im
     ChangePasswordWithOtpUseCase,
 )
 from app.features.auth.domain.entities.otp_code import OtpCode
+from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
 
@@ -82,7 +82,7 @@ def test_should_raise_unauthorized_when_otp_is_invalid() -> None:
     otp_datasource.find_valid.assert_called_once_with(
         user_id="user-1",
         code="123456",
-        purpose=OTP_PURPOSE_PASSWORD_CHANGE,
+        purpose=OtpPurpose.PASSWORD_CHANGE,
     )
     password_manager.hash_password.assert_not_called()
     auth_datasource.update_password.assert_not_called()
@@ -96,7 +96,7 @@ def test_should_change_password_and_revoke_tokens_when_otp_is_valid() -> None:
     password_manager = Mock(spec=PasswordManager)
     token_revocation_store = Mock(spec=TokenRevocationStore)
     auth_datasource.get_user_by_id.return_value = make_user()
-    otp = OtpCode.create(user_id="user-1", purpose=OTP_PURPOSE_PASSWORD_CHANGE)
+    otp = OtpCode.create(user_id="user-1", purpose=OtpPurpose.PASSWORD_CHANGE)
     otp_datasource.find_valid.return_value = otp
     password_manager.hash_password.return_value = "hashed-new-password"
     use_case = ChangePasswordWithOtpUseCase(
@@ -127,7 +127,7 @@ def test_should_not_revoke_tokens_when_password_update_fails() -> None:
     auth_datasource.get_user_by_id.return_value = make_user()
     otp_datasource.find_valid.return_value = OtpCode.create(
         user_id="user-1",
-        purpose=OTP_PURPOSE_PASSWORD_CHANGE,
+        purpose=OtpPurpose.PASSWORD_CHANGE,
     )
     password_manager.hash_password.return_value = "hashed-new-password"
     auth_datasource.update_password.side_effect = RuntimeError("db write failed")

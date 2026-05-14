@@ -1,6 +1,5 @@
 from app.common.use_case import UseCase
 from app.core.exceptions.exceptions import NotFoundError, UnauthorizedError
-from app.features.auth.application.constants import OTP_PURPOSE_PASSWORD_CHANGE
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.otp_datasource import OtpDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
@@ -8,6 +7,7 @@ from app.features.auth.application.contracts.token_revocation_store import Token
 from app.features.auth.application.dto.change_password_with_otp_params import (
     ChangePasswordWithOtpParams,
 )
+from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 
 
 class ChangePasswordWithOtpUseCase(UseCase[ChangePasswordWithOtpParams, None]):
@@ -33,7 +33,7 @@ class ChangePasswordWithOtpUseCase(UseCase[ChangePasswordWithOtpParams, None]):
         otp = self.otp_datasource.find_valid(
             user_id=params.user_id,
             code=params.code,
-            purpose=OTP_PURPOSE_PASSWORD_CHANGE,
+            purpose=OtpPurpose.PASSWORD_CHANGE,
         )
         if otp is None:
             raise UnauthorizedError("Invalid otp code")

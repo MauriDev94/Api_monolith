@@ -11,7 +11,6 @@ from app.core.exceptions.exceptions import (
     TooManyRequestsError,
     UnauthorizedError,
 )
-from app.features.auth.application.constants import OTP_PURPOSE_PASSWORD_CHANGE
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.rate_limiter import RateLimiter
@@ -29,6 +28,7 @@ from app.features.auth.di.dependencies import (
     get_request_otp_use_case,
     get_verify_otp_use_case,
 )
+from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.auth.presentation.api import v1_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.domain.entities.user import User
@@ -155,7 +155,7 @@ def test_should_return_200_when_request_otp_is_valid() -> None:
     assert response.status_code == 200
     assert response.json() == {"message": "OTP sent"}
     assert request_otp_use_case.received.user_id == "user-1"
-    assert request_otp_use_case.received.purpose == OTP_PURPOSE_PASSWORD_CHANGE
+    assert request_otp_use_case.received.purpose == OtpPurpose.PASSWORD_CHANGE
 
 
 # Tipo de test: Integration
@@ -191,7 +191,7 @@ def test_should_return_200_when_verify_otp_is_valid() -> None:
     assert response.json() == {"message": "OTP verified"}
     assert verify_otp_use_case.received.user_id == "user-1"
     assert verify_otp_use_case.received.code == "123456"
-    assert verify_otp_use_case.received.purpose == OTP_PURPOSE_PASSWORD_CHANGE
+    assert verify_otp_use_case.received.purpose == OtpPurpose.PASSWORD_CHANGE
 
 
 # Tipo de test: Integration
