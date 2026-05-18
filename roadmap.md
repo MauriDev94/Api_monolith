@@ -1,6 +1,6 @@
 # Roadmap — Monolith API a MVP Profesional
 
-**Última actualización:** 2026-04-27
+**Última actualización:** 2026-05-17
 **Estado general:** ✅ En producción (Render)
 
 ---
@@ -17,7 +17,7 @@
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
 | 7. Refactor Notifications | 🟢 | ✅ Completado (7.1 + 7.2 + 7.3) |
 | 8. OTP Password Reset | 🟢 | ✅ Completado |
-| 9. Email Notifications | 🟢 | ✅ Completado |
+| 9. Email Notifications | 🟢 | ✅ Completado (9.8 pendiente) |
 | 10. Google SSO Login | 🟢 | ✅ Completado |
 
 ---
@@ -469,7 +469,7 @@ SMTP_USE_TLS=true
 ## Fase 10: Google SSO Login
 
 **Prioridad:** 🟡 Alta
-**Estado:** 🚧 En progreso
+**Estado:** ✅ Completado
 **Spec:** `docs/SDD_PROPOSAL_PHASE10_GOOGLE_SSO.md`
 
 ---
