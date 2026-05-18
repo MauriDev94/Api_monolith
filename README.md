@@ -1,360 +1,207 @@
-# Monolith API (FastAPI + Clean Architecture + DDD)
+# Monolith API
 
-[![CI](https://github.com/MauriDev94/Api_monolith/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/MauriDev94/Api_monolith/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-92%25-green)](https://github.com/MauriDev94/Api_monolith/actions)
-[![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
-[![Deploy](https://img.shields.io/badge/deploy-Render-purple)](https://api-monolith.onrender.com)
+A production-ready REST API built with **FastAPI**, **Clean Architecture**, and **Domain-Driven Design** — deployed on Render with PostgreSQL.
 
-API en producción: https://api-monolith.onrender.com
+[![Python](https://img.shields.io/badge/Python-3.12-blue)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-green)](https://fastapi.tiangolo.com/)
+[![Coverage](https://img.shields.io/badge/Coverage-92%25-brightgreen)]()
+[![Deploy](https://img.shields.io/badge/Deploy-Render-purple)](https://api-monolith.onrender.com)
 
-Proyecto backend modular en FastAPI orientado a portafolio profesional.
-
-Arquitectura por feature y por capas:
-
-- `domain`: entidades, value objects, reglas de negocio.
-- `application`: casos de uso, contratos (ports), DTOs.
-- `infrastructure`: repositorios SQLAlchemy, providers, implementaciones técnicas.
-- `presentation`: endpoints, schemas HTTP, mappers.
-- `di`: wiring de dependencias por feature.
+**Live API:** https://api-monolith.onrender.com/docs
 
 ---
 
-## Estado actual del proyecto
+## What this project demonstrates
 
-Features implementadas:
-
-- `Auth`
-  - `register`, `login`, `refresh`, `me`
-  - OTP por email para cambio de contraseña
-  - `change-password` con OTP (flujo recomendado)
-  - `verify-otp` marcado como **deprecated** (compatibilidad legacy)
-  - refresh token rotation + revocación
-  - rate limiting en endpoints sensibles de OTP
-- `Users`
-  - listar, detalle, actualizar, eliminar
-- `Todos`
-  - CRUD protegido por usuario autenticado
-  - Campo `due_date` con recordatorios
-- `Notifications`
-  - Listar notificaciones del usuario
-  - Marcar como leída
-  - Recordatorios automáticos de TODOs próximos
-
-Hardening de seguridad ya aplicado:
-
-- OTP ligado al usuario autenticado (no se recibe `user_id` por request).
-- OTP restringido a propósito `password_change`.
-- OTP almacenado hasheado en DB (`code_hash`), no en texto plano.
-- Excepciones globales mapeadas a HTTP (`401`, `404`, `409`, `422`, `429`, `500`).
+- Modular monolith organized by feature with strict layered architecture
+- Clean separation between domain logic, application use cases, and infrastructure
+- JWT authentication with refresh token rotation and revocation
+- Google OAuth2 SSO integration
+- OTP-based password reset via email (Resend)
+- Structured logging with request tracing (`X-Request-ID`)
+- Global exception handling with consistent HTTP responses
+- Test pyramid: unit → integration → E2E (92% coverage)
 
 ---
 
-## Requisitos
+## Tech Stack
 
-- Python 3.12+
-- PostgreSQL (local o Docker)
-- Docker (opcional, recomendado para entorno local rápido)
+| Layer | Technology |
+|---|---|
+| Framework | FastAPI |
+| ORM | SQLAlchemy 2.0 |
+| Migrations | Alembic |
+| Database | PostgreSQL |
+| Auth | JWT (PyJWT) + Google OAuth2 |
+| Password hashing | Argon2 |
+| Email | Resend API |
+| Logging | Loguru |
+| Testing | pytest + pytest-cov |
+| Linting | Ruff + Black |
+| Deploy | Render (Docker) |
 
 ---
 
-## Setup local
+## Architecture
 
-### 1) Crear entorno virtual
+This project follows **Clean Architecture** with **DDD tactical patterns**. Each feature is self-contained with the same internal structure:
 
-```bash
-python -m venv .venv
+```
+app/features/<feature>/
+├── domain/          # Entities, value objects, business rules
+├── application/     # Use cases, ports (contracts), DTOs
+├── infrastructure/  # Repositories, external providers
+├── presentation/    # FastAPI routers, schemas, mappers
+└── di/              # Dependency wiring
 ```
 
-PowerShell:
+**Dependency rule:** outer layers depend on inner layers, never the reverse. Domain has zero framework dependencies.
 
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
+For full architectural details, decisions, and diagrams → [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
-### 2) Instalar dependencias
+---
+
+## Features
+
+### Auth
+- `POST /auth/v1/register` — register with email/password
+- `POST /auth/v1/login` — login, returns access + refresh tokens
+- `POST /auth/v1/refresh` — rotate refresh token
+- `GET  /auth/v1/me` — current authenticated user
+- `POST /auth/v1/request-otp` — request OTP for password reset
+- `POST /auth/v1/change-password` — change password with OTP
+- `GET  /auth/v1/google` — initiate Google SSO
+- `GET  /auth/v1/google/callback` — complete Google SSO, returns tokens
+- `POST /auth/v1/link-google` — link Google account to existing user
+
+### Users
+- `GET    /v1/users` — list all users
+- `GET    /v1/users/{id}` — get user by id (self only)
+- `PUT    /v1/users/{id}` — update profile (self only)
+- `DELETE /v1/users/{id}` — delete account (self only)
+
+### Todos
+- `POST   /v1/todos` — create todo
+- `GET    /v1/todos` — list todos (scoped to authenticated user)
+- `GET    /v1/todos/{id}` — get todo by id (ownership enforced)
+- `PUT    /v1/todos/{id}` — update todo
+- `DELETE /v1/todos/{id}` — delete todo
+
+### Notifications
+- `GET   /v1/notifications` — list notifications for authenticated user
+- `PATCH /v1/notifications/{id}/read` — mark notification as read
+
+---
+
+## Key Design Decisions
+
+**Global exception handlers over try/except in endpoints** — business errors are raised in the domain/application layer and caught by registered handlers in `core/exceptions/error_handling.py`. Endpoints stay clean.
+
+**Ports and adapters per feature** — each feature defines its own contracts (`application/contracts/`) so infrastructure implementations are swappable without touching business logic.
+
+**Refresh token rotation with revocation** — every refresh issues a new token pair and revokes the previous JTI. Reuse of a revoked token revokes all active tokens for that user.
+
+**Email Value Object** — RFC-compliant regex validation in the domain, not in the transport layer. Normalization (lowercase, trim) happens at construction.
+
+**Google SSO returns JSON, not redirect** — `GET /auth/v1/google` returns `{ authorization_url }` so the frontend decides how to navigate, keeping the backend stateless.
+
+---
+
+## Running Locally
+
+**Requirements:** Python 3.12, Docker
 
 ```bash
+# Clone
+git clone https://github.com/MauriDev94/Api_monolith.git
+cd Api_monolith
+
+# Environment
+cp .env.example .env
+# Fill in DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, JWT_SECRET_KEY
+
+# Start DB
+docker compose -f docker-compose-dev.yaml up db -d
+
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### 3) Configurar `.env`
-
-Crear `.env` en raíz:
-
-```env
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=monolith
-DB_PORT=5438
-DB_HOST=localhost
-JWT_SECRET_KEY=super-secret-key
-
-# Opcional SMTP (OTP real por email)
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USERNAME=
-SMTP_PASSWORD=
-SMTP_SENDER_EMAIL=
-SMTP_USE_TLS=true
-```
-
-Si SMTP no está configurado, se usa sender de consola para desarrollo.
-
----
-
-## Base de datos
-
-Levantar PostgreSQL con Docker:
-
-```bash
-docker-compose -f docker-compose-dev.yaml --env-file .env up -d
-```
-
-Aplicar migraciones:
-
-```bash
+# Run migrations
 alembic upgrade head
-```
 
-Comandos útiles:
-
-```bash
-alembic current
-alembic history --verbose
-alembic downgrade -1
-```
-
----
-
-## Ejecutar la API
-
-```bash
+# Start API
 uvicorn app.main:app --reload
 ```
 
-- Health check local: `GET /health`
-- Health check producción: `GET https://api-monolith.onrender.com/health`
-- Swagger: `http://127.0.0.1:8000/docs`
+API available at `http://localhost:8000/docs`
 
 ---
 
-## Comandos de desarrollo
-
-### PowerShell (Windows)
-
-```powershell
-.\scripts\dev.ps1 up
-.\scripts\dev.ps1 logs
-.\scripts\dev.ps1 migrate
-.\scripts\dev.ps1 test
-.\scripts\dev.ps1 test-auth
-.\scripts\dev.ps1 lint
-.\scripts\dev.ps1 format
-.\scripts\dev.ps1 check-format
-.\scripts\dev.ps1 hooks-install
-.\scripts\dev.ps1 hooks-run
-.\scripts\dev.ps1 down
-```
-
-### Makefile (Linux/macOS)
+## Running Tests
 
 ```bash
-make up
-make logs
-make migrate
-make test
-make test-auth
-make lint
-make format
-make check-format
-make hooks-install
-make hooks-run
-make down
+# All tests
+pytest
+
+# With coverage report
+pytest --cov=app --cov-report=term-missing -q
+
+# By type
+pytest -m unit
+pytest -m integration
+pytest -m e2e
 ```
 
 ---
 
-## Hooks automáticos (pre-commit)
+## Environment Variables
 
-Este proyecto usa hooks de `pre-commit` para ejecutar validaciones antes de cada commit.
+```env
+DB_USER=
+DB_PASSWORD=
+DB_NAME=
+DB_PORT=5432
+DB_HOST=localhost
+JWT_SECRET_KEY=
 
-Incluye:
+# Email (Resend)
+RESEND_API_KEY=
+RESEND_SENDER_EMAIL=
 
-- `check-merge-conflict`
-- `end-of-file-fixer`
-- `trailing-whitespace`
-- `ruff --fix`
-- `black`
-
-Instalación local:
-
-```powershell
-.\scripts\dev.ps1 hooks-install
+# Google OAuth2
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/v1/google/callback
 ```
 
-Ejecución manual sobre todo el repo:
+See `.env.example` for full reference.
 
-```powershell
-.\scripts\dev.ps1 hooks-run
+---
+
+## Project Structure
+
 ```
-
-Después de instalar, cada `git commit` ejecutará los hooks automáticamente.
-
----
-
-## CI (GitHub Actions)
-
-Workflow activo:
-
-- `.github/workflows/tests.yml`
-- Se ejecuta en `push` y `pull_request` contra `main`.
-- Historial de ejecuciones: `Actions > CI` en GitHub.
-- Jobs:
-  - `quality`: `ruff` (gate inicial enfocado en errores críticos `E,F,B`) + `black --check .`
-  - `tests`: `pytest` + cobertura (`--cov=app`) con mínimo `70%` (actualmente `92%`)
-
-Secrets requeridos en el repositorio:
-
-- `CI_DB_PASSWORD`
-- `CI_JWT_SECRET_KEY`
-
-Notas:
-
-- El job de CI genera un `.env` efímero antes de `pytest -q`.
-- No se versionan credenciales reales en el repo.
-- Se publica `coverage.xml` como artifact del workflow.
-- La política de lint está en modo incremental para no bloquear por deuda histórica de estilo.
-
----
-
-## Contribución (flujo PR)
-
-Flujo recomendado:
-
-- Crear rama de trabajo (`feature/...`, `fix/...`).
-- Abrir Pull Request usando el template en `.github/pull_request_template.md`.
-- Validar checks obligatorios (`quality` y `tests`).
-- Mergear a `main` solo con CI en verde.
-
-Propiedad de código:
-
-- Definida en `.github/CODEOWNERS`.
-
----
-
-## Endpoints principales
-
-### Auth (`/auth/v1`)
-
-- `POST /auth/v1/register`
-- `POST /auth/v1/login`
-- `POST /auth/v1/refresh`
-- `GET /auth/v1/me`
-- `POST /auth/v1/request-otp`
-- `POST /auth/v1/change-password`  **(flujo recomendado)**
-- `POST /auth/v1/verify-otp`  **(deprecated)**
-
-### Users (`/v1`)
-
-- `GET /v1/users`
-- `GET /v1/users/{user_id}`
-- `PUT /v1/users/{user_id}`
-- `DELETE /v1/users/{user_id}`
-
-### Todos (`/v1/todos`)
-
-- `POST /v1/todos`
-- `GET /v1/todos`
-- `GET /v1/todos/{todo_id}`
-- `PUT /v1/todos/{todo_id}`
-- `DELETE /v1/todos/{todo_id}`
-
-### Notifications (`/notifications`)
-
-- `GET /notifications`
-- `PATCH /notifications/{notification_id}/read`
-
----
-
-## Flujo recomendado (password change con OTP)
-
-1. Login en `/auth/v1/login`.
-2. Solicitar OTP en `/auth/v1/request-otp` con bearer token.
-3. Cambiar password en `/auth/v1/change-password` con `code` + `new_password`.
-4. Re-login con la nueva contraseña.
-5. El OTP no se puede reutilizar.
-
----
-
-## Testing
-
-Markers:
-
-- `unit`
-- `integration`
-- `e2e`
-
-Ejecutar todo:
-
-```bash
-pytest -q
-```
-
-Ejecutar por tipo:
-
-```bash
-pytest -q -m unit
-pytest -q -m integration
-pytest -q -m e2e
-```
-
-Ejemplo smoke de auth OTP:
-
-```bash
-pytest -q tests/e2e/test_auth_users_todos_e2e.py::test_should_change_password_with_otp_and_reject_reused_code
-```
-
-Estado validado recientemente:
-
-- `165+` tests pasando (suite completa)
-- `92%` coverage
-
----
-
-## Logging y errores
-
-- Logging con `loguru`.
-- Middleware `request_id` para trazabilidad.
-- Manejo global de errores en `app/core/exceptions/error_handling.py`.
-
----
-
-## Estructura del proyecto
-
-```text
 app/
-├── core/
-├── common/
+├── main.py                   # Bootstrap, middleware, router registration
+├── common/                   # Shared use case base contracts
+├── core/                     # Cross-cutting: config, DB, exceptions, middleware
 └── features/
-    ├── auth/
-    ├── notifications/
-    ├── todos/
-    └── users/
+    ├── auth/                 # Authentication, JWT, OTP, Google SSO
+    ├── users/                # User profile management
+    ├── todos/                # Todo CRUD with ownership control
+    └── notifications/        # Reminder notifications
+
 tests/
-├── features/
-└── e2e/
+├── core/                     # Core exception handling tests
+├── features/                 # Unit + integration tests per feature
+└── e2e/                      # Full flow tests with real DB (SQLite in-memory)
 ```
 
 ---
 
-## Estado del proyecto
+## Author
 
-| Item | Estado |
-|------|--------|
-| CI con coverage | ✅ 92% |
-| CD a producción | ✅ Render auto-deploy |
-| Health check | ✅ /health |
-| Observabilidad | ✅ logs + slow queries |
-| API en producción | ✅ https://api-monolith.onrender.com |
+**Mauricio** — Python Backend Developer
+Building toward mid-level with a focus on clean architecture, DDD, and production-ready code.
 
-**MVP completo para portafolio profesional.**
+[GitHub](https://github.com/MauriDev94) · [API Docs](https://api-monolith.onrender.com/docs)

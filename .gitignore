@@ -7,6 +7,7 @@ logs
 .coverage
 AGENTS.md
 prd.md
+prdAuth.md
 *.pyc
 .github/*
 !.github/workflows/
