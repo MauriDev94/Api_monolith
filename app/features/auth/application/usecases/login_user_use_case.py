@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.common.use_case import UseCase
 from app.core.exceptions.exceptions import InternalServerError, UnauthorizedError
@@ -38,6 +38,10 @@ class LoginUser(UseCase[LoginUserParams, TokenPairResult]):
         if user is None:
             raise UnauthorizedError("Invalid email or password")
 
+        if user.password_hash is None:
+            # Google-only account — no password set, reject email/password login.
+            raise UnauthorizedError("Invalid email or password")
+
         is_valid_password = self.password_manager.verify_password(
             params.password,
             user.password_hash,
@@ -56,7 +60,7 @@ class LoginUser(UseCase[LoginUserParams, TokenPairResult]):
             claims={"jti": refresh_token_id.value},
         )
         payload = self.token_manager.decode_refresh_token(refresh_token)
-        expires_at = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        expires_at = datetime.fromtimestamp(payload["exp"], tz=UTC)
         self.token_revocation_store.store_active(
             jti=refresh_token_id.value,
             user_id=subject,

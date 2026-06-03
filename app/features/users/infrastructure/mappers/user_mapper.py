@@ -27,5 +27,5 @@ def map_user_entity_to_model(user_model: UserModel, user: User) -> UserModel:
     user_model.birthdate = user.birthdate
     user_model.google_id = user.google_id
     user_model.google_email_verified = user.google_email_verified
-    user_model.updated_at = user.updated_at
+    user_model.updated_at = user.updated_at  # type: ignore[assignment]
     return user_model

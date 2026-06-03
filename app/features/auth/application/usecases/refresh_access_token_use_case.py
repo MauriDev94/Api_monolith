@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.common.use_case import UseCase
 from app.core.exceptions.exceptions import UnauthorizedError
@@ -35,7 +35,7 @@ class RefreshAccessToken(UseCase[RefreshTokenParams, TokenPairResult]):
             claims={"jti": refresh_token_id.value},
         )
         new_payload = self.token_manager.decode_refresh_token(refresh_token)
-        expires_at = datetime.fromtimestamp(new_payload["exp"], tz=timezone.utc)
+        expires_at = datetime.fromtimestamp(new_payload["exp"], tz=UTC)
         self.token_revocation_store.store_active(
             jti=refresh_token_id.value,
             user_id=subject,

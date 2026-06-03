@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import hashlib
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -30,7 +30,7 @@ class OtpRepository(OtpDatasource):
             purpose=otp.purpose,
             expires_at=otp.expires_at,
             used_at=otp.used_at,
-            created_at=otp.created_at or datetime.now(timezone.utc),
+            created_at=otp.created_at or datetime.now(UTC),
         )
         try:
             self.session.add(model)
@@ -66,7 +66,7 @@ class OtpRepository(OtpDatasource):
         return self._to_entity(model, code_override=otp.code)
 
     def find_valid(self, user_id: str, code: str, purpose: str) -> OtpCode | None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         code_hash = self._hash_code(code)
         try:
             model = (
@@ -88,7 +88,7 @@ class OtpRepository(OtpDatasource):
         return self._to_entity(model, code_override=code)
 
     def invalidate_all(self, user_id: str, purpose: str) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         try:
             self.session.query(OtpModel).filter(
                 OtpModel.user_id == user_id,
@@ -105,12 +105,17 @@ class OtpRepository(OtpDatasource):
 
     @staticmethod
     def _to_entity(model: OtpModel, code_override: str | None = None) -> OtpCode:
+        expires_at = OtpRepository._ensure_aware(model.expires_at)
+        if expires_at is None:
+            raise ValueError(
+                f"OTP record {model.id!r} has no expires_at — data integrity violation"
+            )
         return OtpCode(
             id=model.id,
             user_id=model.user_id,
             code=code_override or "000000",
             purpose=model.purpose,
-            expires_at=OtpRepository._ensure_aware(model.expires_at),
+            expires_at=expires_at,
             used_at=OtpRepository._ensure_aware(model.used_at),
             created_at=OtpRepository._ensure_aware(model.created_at),
         )
@@ -120,7 +125,7 @@ class OtpRepository(OtpDatasource):
         if value is None:
             return None
         if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
+            return value.replace(tzinfo=UTC)
         return value
 
     @staticmethod
