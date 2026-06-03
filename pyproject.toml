@@ -10,3 +10,24 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 ignore = ["E501", "UP046"]
+
+[tool.ruff.lint.per-file-ignores]
+# Alembic env.py requires sys.path manipulation before app imports — E402 is expected.
+"app/core/data/source/local/alembic/env.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.12"
+explicit_package_bases = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Starlette's type stubs declare add_exception_handler with a narrow sync-only
+# signature. Async handlers are valid at runtime but mypy can't verify them.
+module = "app.core.exceptions.error_handling"
+disable_error_code = ["arg-type"]
+
+[[tool.mypy.overrides]]
+# Alembic's env.py is generated boilerplate; the create_engine call may receive
+# a DB URL from env vars that mypy sees as str | None.
+module = "app.core.data.source.local.alembic.env"
+ignore_errors = true

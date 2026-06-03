@@ -46,6 +46,11 @@ class ProcessRemindersUseCase:
 
         for todo in todos:
             try:
+                if todo.id is None:
+                    logger.warning("Skipping todo with missing id")
+                    failed += 1
+                    continue
+
                 # 1. Obtener usuario
                 user = self.auth_datasource.get_user_by_id(todo.user_id)
                 if user is None:
@@ -71,6 +76,8 @@ class ProcessRemindersUseCase:
                 )
 
                 # 4. Marcar como SENT
+                if saved_notification.id is None:
+                    raise ValueError("saved notification has no id")
                 self.notification_datasource.mark_as_sent(saved_notification.id)
                 sent += 1
                 logger.info(f"Reminder sent for todo {todo.id}")

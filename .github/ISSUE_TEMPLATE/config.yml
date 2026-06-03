@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentación de la API
+    url: https://api-monolith.onrender.com/docs
+    about: Referencia de endpoints (Swagger UI) antes de abrir un issue.

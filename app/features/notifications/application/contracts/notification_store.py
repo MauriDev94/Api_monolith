@@ -19,12 +19,12 @@ class NotificationStore(Protocol):
         """Get pending notifications that should be sent."""
         ...
 
-    def mark_as_sent(self, notification_id: str) -> None:
-        """Mark a notification as sent."""
+    def mark_as_sent(self, notification_id: str) -> Notification:
+        """Mark a notification as sent and return the updated entity."""
         ...
 
-    def mark_as_read(self, notification_id: str) -> None:
-        """Mark a notification as read."""
+    def mark_as_read(self, notification_id: str) -> Notification:
+        """Mark a notification as read and return the updated entity."""
         ...
 
     def get_by_id(self, notification_id: str) -> Notification | None:

@@ -10,7 +10,7 @@ class UserResponse(BaseModel):
     name: str
     lastname: str
     email: str
-    birthdate: date
+    birthdate: date | None
     created_at: datetime | None
     updated_at: datetime | None
 

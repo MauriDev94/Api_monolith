@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from threading import Lock
 
 from app.core.exceptions.exceptions import TooManyRequestsError
@@ -14,7 +14,7 @@ class InMemoryRateLimiter(RateLimiter):
         self._lock = Lock()
 
     def check_or_raise(self, key: str, limit: int, window_seconds: int) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cutoff = now - timedelta(seconds=window_seconds)
 
         with self._lock:
