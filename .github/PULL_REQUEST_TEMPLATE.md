@@ -32,9 +32,13 @@
 2.
 
 ## Checklist
-- [ ] Tests passing (`pytest`)
-- [ ] Coverage no baja del 80%
-- [ ] Pre-commit hooks en verde (ruff + black)
+- [ ] Tests pasan: `pytest -q`
+- [ ] Lint + format en verde: `ruff check . && black --check .`
+- [ ] Type checking en verde: `mypy app`
+- [ ] Sin migraciones huérfanas: `alembic check`
+- [ ] Coverage respeta el gate de CI (`--cov-fail-under`)
+- [ ] **DIP:** sin imports de SQLAlchemy en `application/` ni `presentation/`
+- [ ] **Presentación delgada:** sin lógica de negocio en los endpoints
 - [ ] Sin imports no usados
 - [ ] Docstrings en clases y métodos públicos nuevos
 
