@@ -4,7 +4,7 @@ A production-ready REST API built with **FastAPI**, **Clean Architecture**, and 
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.136-green)](https://fastapi.tiangolo.com/)
-[![Coverage](https://img.shields.io/badge/Coverage-92%25-brightgreen)]()
+[![Coverage](https://img.shields.io/badge/Coverage-86%25-brightgreen)]()
 [![Deploy](https://img.shields.io/badge/Deploy-Render-purple)](https://api-monolith.onrender.com)
 
 **Live API:** https://api-monolith.onrender.com/docs
