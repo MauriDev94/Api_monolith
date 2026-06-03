@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -22,14 +24,9 @@ class AppSettings(BaseSettings):
     cors_allow_credentials: bool = True
 
 
-settings = AppSettings()
-setup_logger()
-app = FastAPI()
-register_exception_handlers(app)
-
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Apply Alembic migrations on startup when running in production."""
     import os
 
     from alembic import command
@@ -43,6 +40,13 @@ async def startup_event():
             logger.info("Alembic migrations applied successfully")
         except Exception as e:
             logger.error(f"Failed to apply migrations: {e}")
+    yield
+
+
+settings = AppSettings()
+setup_logger()
+app = FastAPI(lifespan=lifespan)
+register_exception_handlers(app)
 
 
 # CORS middleware
