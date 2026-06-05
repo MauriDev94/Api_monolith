@@ -1,3 +1,4 @@
+import os
 import time
 from collections.abc import Generator
 
@@ -18,16 +19,27 @@ class Database:
     SLOW_QUERY_THRESHOLD = 1.0
 
     def __init__(self, config: EnvConfig):
-        """Initialize connection resources from environment configuration."""
-        url = URL.create(
-            drivername="postgresql+psycopg2",
-            username=config.db_user,
-            password=config.db_password,
-            host=config.db_host,
-            port=config.db_port,
-            database=config.db_name,
-        )
-        self.engine = create_engine(url, echo=False)
+        """Initialize connection resources from environment configuration.
+
+        Priority: DATABASE_URL env var (Render managed DB) > individual vars (local dev).
+        Render provides postgres:// — SQLAlchemy 2.0 requires postgresql://, fixed inline.
+        """
+        raw_url = os.getenv("DATABASE_URL")
+        if raw_url:
+            # Render delivers postgres:// — SQLAlchemy 2.0 requires postgresql://
+            if raw_url.startswith("postgres://"):
+                raw_url = raw_url.replace("postgres://", "postgresql://", 1)
+            self.engine = create_engine(raw_url, echo=False)
+        else:
+            url = URL.create(
+                drivername="postgresql+psycopg2",
+                username=config.db_user,
+                password=config.db_password,
+                host=config.db_host,
+                port=config.db_port,
+                database=config.db_name,
+            )
+            self.engine = create_engine(url, echo=False)
         self.session = sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
         self.SqlAlchemyBase = SqlAlchemyBase
 
