@@ -1,50 +1,34 @@
-## Summary
-<!-- Una línea: qué hace este PR y por qué -->
+## 📌 Issue relacionado
 
-## Why
-<!-- Por qué es necesario este cambio? Qué problema resuelve o qué mejora aporta?
-     Ej: "El endpoint /v1/users exponía datos de todos los usuarios sin restricción de rol" -->
+Closes #<!-- número del issue -->
 
-## Type of Change
-- [ ] `feat` — feature nuevo
-- [ ] `fix` — bug fix
-- [ ] `refactor` — refactor sin cambio de comportamiento
-- [ ] `test` — tests
-- [ ] `chore` — dependencias, configs, mantenimiento
-- [ ] `docs` — documentación
+## 🧠 Resumen
 
-## Changes
-<!-- Lista de cambios concretos por capa -->
-### Domain
-- [ ]
+_Qué hace este PR, en 2-3 líneas._
 
-### Application
-- [ ]
+## 📂 Archivos modificados
 
-### Infrastructure
-- [ ]
+| Archivo | Cambio |
+|---------|--------|
+| `path/to/file` | _Qué cambió y por qué_ |
 
-### Presentation
-- [ ]
+## ✅ Checklist
 
-## How to Test
-1.
-2.
-
-## Checklist
-- [ ] Tests pasan: `pytest -q`
-- [ ] Lint + format en verde: `ruff check . && black --check .`
-- [ ] Type checking en verde: `mypy app`
+- [ ] Lint + format pasan: `ruff check . && black --check .`
+- [ ] Type checking pasa: `mypy app`
+- [ ] Tests pasan: `pytest -q` → N passed, 0 failed
+- [ ] Sin lógica de negocio en endpoints (presentación delgada)
+- [ ] Sin imports de SQLAlchemy en `application/` ni `presentation/` (DIP)
+- [ ] Conventional commits
 - [ ] Sin migraciones huérfanas: `alembic check`
-- [ ] Coverage respeta el gate de CI (`--cov-fail-under`)
-- [ ] **DIP:** sin imports de SQLAlchemy en `application/` ni `presentation/`
-- [ ] **Presentación delgada:** sin lógica de negocio en los endpoints
-- [ ] Sin imports no usados
-- [ ] Docstrings en clases y métodos públicos nuevos
 
-## Risks and Rollback
-**Riesgo:** Bajo / Medio / Alto
-**Rollback:**
+## 🧪 Cómo probar
 
-## Related Issues
-<!-- Closes #XX -->
+```bash
+ruff check . && black --check . && mypy app
+pytest -q
+```
+
+## 📝 Notas técnicas
+
+<!-- Opcional — gotchas, decisiones de diseño no obvias, bugs encontrados -->
