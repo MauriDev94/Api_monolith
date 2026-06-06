@@ -17,10 +17,21 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# get the DB_URL from the .env file
+# Priority: DATABASE_URL (Render managed DB) > individual vars (local dev)
 database_url = os.getenv("DATABASE_URL")
 if not database_url:
-    raise ValueError("DATABASE_URL is not set in the .env file")
+    # Fallback: build from individual vars for local development
+    from app.core.config.env_config import EnvConfig
+
+    _cfg = EnvConfig()
+    database_url = (
+        f"postgresql+psycopg2://{_cfg.db_user}:{_cfg.db_password}"
+        f"@{_cfg.db_host}:{_cfg.db_port}/{_cfg.db_name}"
+    )
+
+# Render delivers postgres:// — SQLAlchemy 2.0 requires postgresql://
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 # import the base
 from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
