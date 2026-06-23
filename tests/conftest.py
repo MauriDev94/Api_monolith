@@ -6,6 +6,10 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+# Desactiva el rate limiting por defecto en la suite: el TestClient comparte IP y
+# acumularía estado entre tests. Los tests de rate limiting inyectan un limiter real.
+os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
+
 
 @pytest.fixture(scope="session")
 def _postgres_engine() -> Generator[Engine, None, None]:

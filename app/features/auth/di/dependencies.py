@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 
 from fastapi import Depends
@@ -40,9 +41,13 @@ from app.features.auth.infrastructure.repositories.otp_repository import OtpRepo
 from app.features.auth.infrastructure.repositories.token_revocation_repository import (
     TokenRevocationRepository,
 )
-from app.features.auth.infrastructure.security.in_memory_rate_limiter import InMemoryRateLimiter
+from app.features.auth.infrastructure.security.in_memory_rate_limiter import (
+    InMemoryRateLimiter,
+    NoOpRateLimiter,
+)
 
 _rate_limiter = InMemoryRateLimiter()
+_noop_rate_limiter = NoOpRateLimiter()
 
 
 def get_auth_repository(
@@ -91,7 +96,13 @@ def get_email_sender(
 
 
 def get_rate_limiter() -> RateLimiter:
-    """Provide shared in-memory rate limiter instance."""
+    """Provide the shared rate limiter, or a no-op when rate limiting is disabled.
+
+    RATE_LIMIT_ENABLED=false (p.ej. en tests) devuelve un limiter no-op para evitar
+    acumulación de estado entre tests; los tests de rate limiting inyectan uno real.
+    """
+    if os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "false":
+        return _noop_rate_limiter
     return _rate_limiter
 
 

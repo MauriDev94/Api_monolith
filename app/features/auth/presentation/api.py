@@ -66,6 +66,9 @@ from app.features.auth.presentation.schemas.google_auth_requests import (
     GoogleLinkAccountResponse,
 )
 from app.features.auth.presentation.security_dependencies import (
+    enforce_login_rate_limit,
+    enforce_refresh_rate_limit,
+    enforce_register_rate_limit,
     enforce_request_otp_rate_limit,
     enforce_verify_otp_rate_limit,
     get_authenticated_user,
@@ -78,6 +81,7 @@ v1_router = get_versioned_router("v1")
 @v1_router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 def register_user(
     request: RegisterRequest,
+    _rate_limit: Annotated[None, Depends(enforce_register_rate_limit)],
     register_user_use_case: Annotated[RegisterUser, Depends(get_register_user_use_case)],
 ) -> RegisterResponse:
     """Create a user account using validated request payload."""
@@ -88,6 +92,7 @@ def register_user(
 @v1_router.post("/login", response_model=LoginResponse)
 def login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    _rate_limit: Annotated[None, Depends(enforce_login_rate_limit)],
     login_user_use_case: Annotated[LoginUser, Depends(get_login_user_use_case)],
 ) -> LoginResponse:
     """Authenticate credentials and return access/refresh tokens."""
@@ -100,6 +105,7 @@ def login_user(
 @v1_router.post("/refresh", response_model=RefreshTokenResponse)
 def refresh_access_token(
     request: RefreshTokenRequest,
+    _rate_limit: Annotated[None, Depends(enforce_refresh_rate_limit)],
     refresh_access_token_use_case: Annotated[
         RefreshAccessToken,
         Depends(get_refresh_access_token_use_case),

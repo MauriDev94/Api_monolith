@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 
 from app.core.exceptions.exceptions import InternalServerError
@@ -46,3 +46,33 @@ def enforce_verify_otp_rate_limit(
         limit=5,
         window_seconds=600,
     )
+
+
+def _client_ip(request: Request) -> str:
+    """IP del cliente. Con uvicorn --proxy-headers, request.client.host ya refleja
+    la IP real (X-Forwarded-For) detrás del proxy de Render."""
+    return request.client.host if request.client else "unknown"
+
+
+def enforce_login_rate_limit(
+    request: Request,
+    rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+) -> None:
+    """Throttle login attempts por IP (anti fuerza bruta / credential stuffing)."""
+    rate_limiter.check_or_raise(key=f"login:{_client_ip(request)}", limit=10, window_seconds=60)
+
+
+def enforce_register_rate_limit(
+    request: Request,
+    rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+) -> None:
+    """Throttle account creation por IP (anti spam de cuentas)."""
+    rate_limiter.check_or_raise(key=f"register:{_client_ip(request)}", limit=5, window_seconds=60)
+
+
+def enforce_refresh_rate_limit(
+    request: Request,
+    rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+) -> None:
+    """Throttle token refresh por IP."""
+    rate_limiter.check_or_raise(key=f"refresh:{_client_ip(request)}", limit=30, window_seconds=60)
