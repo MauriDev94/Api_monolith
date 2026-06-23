@@ -39,17 +39,17 @@ def test_should_convert_blank_description_to_none() -> None:
 # Tipo de test: Unit
 def test_should_raise_when_required_text_field_is_empty(field: str, value: str) -> None:
     """Valida que lanza error cuando un campo de texto requerido esta vacio."""
-    kwargs = {
-        "id": "todo-1",
-        "user_id": "user-1",
-        "title": "Buy milk",
-        "description": None,
-        "is_completed": False,
-    }
-    kwargs[field] = value
+    fields: dict[str, str] = {"user_id": "user-1", "title": "Buy milk"}
+    fields[field] = value
 
     with pytest.raises(ValueError, match=f"{field} cannot be empty"):
-        Todo(**kwargs)
+        Todo(
+            id="todo-1",
+            user_id=fields["user_id"],
+            title=fields["title"],
+            description=None,
+            is_completed=False,
+        )
 
 
 # Tipo de test: Unit
@@ -125,19 +125,22 @@ def test_should_accept_due_date_as_none() -> None:
 
 
 # Tipo de test: Unit
-def test_should_raise_when_due_date_is_in_past() -> None:
-    """Valida que lanza error cuando due_date es en el pasado."""
+def test_should_accept_past_due_date_on_reconstruction() -> None:
+    """Rehidratar un todo ya vencido (con id) NO debe lanzar: la regla 'no en el
+    pasado' es de creación, no un invariante permanente. Antes esto rompía GET /todos."""
     past_date = datetime.now(UTC) - timedelta(days=1)
 
-    with pytest.raises(ValueError, match="due_date cannot be in the past"):
-        Todo(
-            id="todo-1",
-            user_id="user-1",
-            title="Buy milk",
-            description=None,
-            is_completed=False,
-            due_date=past_date,
-        )
+    todo = Todo(
+        id="todo-1",
+        user_id="user-1",
+        title="Buy milk",
+        description=None,
+        is_completed=False,
+        due_date=past_date,
+    )
+
+    assert todo.due_date is not None
+    assert todo.due_date.tzinfo is not None
 
 
 # Tipo de test: Unit
@@ -173,6 +176,22 @@ def test_should_set_due_date_with_validation() -> None:
     todo.set_due_date(future_date)
 
     assert todo.due_date == future_date
+
+
+# Tipo de test: Unit
+def test_should_raise_when_setting_past_due_date() -> None:
+    """set_due_date rechaza fechas en el pasado (mutación explícita del usuario)."""
+    todo = Todo(
+        id="todo-1",
+        user_id="user-1",
+        title="Buy milk",
+        description=None,
+        is_completed=False,
+    )
+
+    past_date = datetime.now(UTC) - timedelta(days=1)
+    with pytest.raises(ValueError, match="due_date cannot be in the past"):
+        todo.set_due_date(past_date)
 
 
 # Tipo de test: Unit
