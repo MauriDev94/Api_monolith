@@ -36,10 +36,20 @@ if database_url.startswith("postgres://"):
 # import the base
 from app.core.data.source.local.sql_alchemy_base import SqlAlchemyBase
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Importar TODOS los modelos para que se registren en SqlAlchemyBase.metadata.
+# Sin esto, target_metadata queda vacío y autogenerate/`alembic check` no detectan
+# drift (la causa de fondo del bug O1: due_date en el modelo sin migración).
+from app.features.auth.infrastructure.models.otp_model import OtpModel  # noqa: E402, F401
+from app.features.auth.infrastructure.models.refresh_token_model import (  # noqa: E402, F401
+    RefreshTokenModel,
+)
+from app.features.notifications.infrastructure.models.notification_model import (  # noqa: E402, F401
+    NotificationModel,
+)
+from app.features.todos.infrastructure.models.todo_model import TodoModel  # noqa: E402, F401
+from app.features.users.infrastructure.models.user_model import UserModel  # noqa: E402, F401
+
+# add your model's MetaData object here for 'autogenerate' support
 target_metadata = SqlAlchemyBase.metadata
 
 # other values from the config, defined by the needs of env.py,

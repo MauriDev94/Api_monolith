@@ -205,6 +205,25 @@ def test_should_return_new_access_token_when_refresh_is_valid() -> None:
 
 
 # Tipo de test: Unit
+def test_should_revoke_all_and_reject_when_refresh_token_is_reused() -> None:
+    """Detección de reuso: presentar un refresh token ya revocado revoca TODAS las
+    sesiones del usuario (asume robo) y rechaza con 401. Rama crítica de seguridad."""
+    token_manager = Mock(spec=TokenManager)
+    token_revocation_store = Mock(spec=TokenRevocationStore)
+    token_manager.decode_refresh_token.return_value = {"sub": "user-1", "jti": "jti-1"}
+    token_revocation_store.is_revoked.return_value = True
+    use_case = RefreshAccessToken(token_manager, token_revocation_store)
+
+    with pytest.raises(UnauthorizedError):
+        use_case.execute(RefreshTokenParams(refresh_token="reused-token"))
+
+    token_revocation_store.is_revoked.assert_called_once_with("jti-1")
+    token_revocation_store.revoke_all_for_user.assert_called_once_with("user-1")
+    token_manager.create_access_token.assert_not_called()
+    token_revocation_store.store_active.assert_not_called()
+
+
+# Tipo de test: Unit
 def test_should_raise_invalid_credentials_when_access_token_subject_is_missing() -> None:
     """Valida que lanza invalido credenciales cuando acceso token subject es faltante."""
     datasource = Mock(spec=AuthDatasource)
