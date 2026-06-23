@@ -1,5 +1,5 @@
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 
 from app.features.auth.application.contracts.password_manager import PasswordManager
 
@@ -15,8 +15,12 @@ class PasswordManagerImpl(PasswordManager):
         return self._hasher.hash(raw_password)
 
     def verify_password(self, raw_password: str, password_hash: str) -> bool:
-        """Verify a plain password against its stored hash."""
+        """Verify a plain password against its stored hash.
+
+        Cualquier fallo de verificación (mismatch) o un hash malformado en la BD
+        se traduce en un fallo de autenticación limpio (False), nunca en un 500.
+        """
         try:
             return self._hasher.verify(password_hash, raw_password)
-        except VerifyMismatchError:
+        except (VerifyMismatchError, VerificationError, InvalidHashError):
             return False
