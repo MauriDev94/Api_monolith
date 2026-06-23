@@ -19,24 +19,29 @@ class Todo:
         self.user_id = self._require_text(self.user_id, "user_id")
         self.title = self._require_text(self.title, "title")
         self.description = self._normalize_description(self.description)
-        self.due_date = self._validate_due_date(self.due_date)
+        self.due_date = self._normalize_due_date(self.due_date)
 
-    def _validate_due_date(self, due_date: datetime | None) -> datetime | None:
-        """Validate due_date: must be timezone-aware and not in the past."""
+    @staticmethod
+    def _normalize_due_date(due_date: datetime | None) -> datetime | None:
+        """Garantiza que due_date sea timezone-aware.
+
+        NO rechaza fechas pasadas: una entidad reconstruida desde la BD (p.ej. un
+        todo ya vencido) siempre debe poder existir. La regla "no en el pasado" es
+        de CREACIÓN, no un invariante permanente; se valida en el borde de entrada
+        (schema del request) y en `set_due_date`.
+        """
         if due_date is None:
             return None
-        # Ensure timezone-aware
         if due_date.tzinfo is None:
-            due_date = due_date.replace(tzinfo=UTC)
-        # Check not in the past (allow current time)
-        now = datetime.now(UTC)
-        if due_date < now:
-            raise ValueError("due_date cannot be in the past")
+            return due_date.replace(tzinfo=UTC)
         return due_date
 
     def set_due_date(self, due_date: datetime | None) -> None:
-        """Set due_date with validation."""
-        self.due_date = self._validate_due_date(due_date)
+        """Cambia el due_date rechazando fechas en el pasado (acción explícita)."""
+        normalized = self._normalize_due_date(due_date)
+        if normalized is not None and normalized < datetime.now(UTC):
+            raise ValueError("due_date cannot be in the past")
+        self.due_date = normalized
         self._mark_as_updated()
 
     def remove_due_date(self) -> None:

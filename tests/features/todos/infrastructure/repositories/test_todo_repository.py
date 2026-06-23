@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -107,9 +107,8 @@ def test_should_delete_todo(db_session: Session) -> None:
         CreateTodoParams(user_id=user_id, title="Study", description=None)
     )
 
-    result = repository.delete_todo(created.id or "")
+    repository.delete_todo(created.id or "")
 
-    assert result is None
     assert repository.get_todo_by_id(created.id or "") is None
 
 
@@ -119,7 +118,24 @@ def test_should_return_none_when_getting_or_deleting_missing_todo(db_session: Se
     repository = TodoRepository(session=db_session)
 
     missing_todo = repository.get_todo_by_id("missing-id")
-    result = repository.delete_todo("missing-id")
+    repository.delete_todo("missing-id")
 
     assert missing_todo is None
-    assert result is None
+
+
+# Tipo de test: Integration
+def test_should_create_and_read_todo_with_past_due_date(db_session: Session) -> None:
+    """Reproduce O1+A2: un todo con due_date vencido debe poder crearse y leerse
+    sin romper. Antes, la rehidratación lanzaba ValueError → 500 en GET /todos."""
+    repository = TodoRepository(session=db_session)
+    user_id = _seed_user(db_session)
+    past_due = datetime.now(UTC) - timedelta(days=1)
+
+    created = repository.create_todo(
+        CreateTodoParams(user_id=user_id, title="Overdue", description=None, due_date=past_due)
+    )
+
+    fetched = repository.get_todo_by_id(created.id or "")
+
+    assert fetched is not None
+    assert fetched.due_date is not None
