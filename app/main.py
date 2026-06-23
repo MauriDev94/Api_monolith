@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from loguru import logger
 from pydantic_settings import BaseSettings
 from sqlalchemy import text
@@ -40,6 +41,10 @@ async def lifespan(app: FastAPI):
             logger.info("Alembic migrations applied successfully")
         except Exception as e:
             logger.error(f"Failed to apply migrations: {e}")
+            # Fail-fast: no servir tráfico contra un esquema roto/desactualizado.
+            # En Render free no hay shell ni migración manual → el startup es el único
+            # camino; dejar morir el proceso para que la plataforma reintente/avise.
+            raise
     yield
 
 
@@ -137,15 +142,24 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    """Deep health check with database connectivity."""
+    """Readiness check: responde 503 si la DB no responde. Liveness puro es `/`."""
     from app.core.providers.db import get_db_session
 
-    db_status = "healthy"
+    db_healthy = True
+    db_gen = None
     try:
         db_gen = get_db_session()
         db_session = next(db_gen)
         db_session.execute(text("SELECT 1"))
     except Exception:
-        db_status = "unhealthy"
+        db_healthy = False
+    finally:
+        if db_gen is not None:
+            db_gen.close()
 
-    return {"status": "healthy", "database": db_status}
+    if not db_healthy:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "unhealthy", "database": "unhealthy"},
+        )
+    return {"status": "healthy", "database": "healthy"}
