@@ -31,6 +31,22 @@ class Database:
                 raw_url = raw_url.replace("postgres://", "postgresql://", 1)
             self.engine = create_engine(raw_url, echo=False)
         else:
+            missing = [
+                name
+                for name, value in (
+                    ("db_user", config.db_user),
+                    ("db_password", config.db_password),
+                    ("db_name", config.db_name),
+                    ("db_port", config.db_port),
+                    ("db_host", config.db_host),
+                )
+                if value is None
+            ]
+            if missing:
+                raise ValueError(
+                    "Database not configured: set DATABASE_URL, or the missing vars: "
+                    + ", ".join(missing)
+                )
             url = URL.create(
                 drivername="postgresql+psycopg2",
                 username=config.db_user,
