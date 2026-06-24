@@ -1,9 +1,11 @@
+import os
+import secrets
 from typing import Annotated
 
-from fastapi import Depends, Query, status
+from fastapi import Cookie, Depends, Query, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.exceptions.exceptions import InternalServerError
+from app.core.exceptions.exceptions import InternalServerError, UnauthorizedError
 from app.core.router.router import get_versioned_router
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
@@ -180,32 +182,53 @@ def change_password(
 
 # === Google OAuth Endpoints ===
 
+_OAUTH_STATE_COOKIE = "oauth_state"
+# Secure solo en producción (HTTPS); en dev/test sobre HTTP la cookie debe poder viajar.
+_OAUTH_COOKIE_SECURE = os.getenv("APP_ENV", "dev") == "production"
+
 
 @v1_router.get("/google", name="google_oauth_init")
 def initiate_google_login(
+    response: Response,
     initiate_google_login_use_case: Annotated[
         InitiateGoogleLoginUseCase,
         Depends(get_initiate_google_login_use_case),
     ],
 ) -> GoogleInitResponse:
-    """Return Google OAuth authorization URL for client-side redirect."""
+    """Return Google OAuth authorization URL and bind the CSRF state to the browser."""
     result = initiate_google_login_use_case.execute(InitiateGoogleLoginParams())
+    # El state queda atado al navegador vía cookie httpOnly; en el callback se compara
+    # contra el `state` que devuelve Google. Sin esto, el callback es vulnerable a CSRF.
+    response.set_cookie(
+        key=_OAUTH_STATE_COOKIE,
+        value=result.state,
+        max_age=600,
+        httponly=True,
+        secure=_OAUTH_COOKIE_SECURE,
+        samesite="lax",
+    )
     return GoogleInitResponse(authorization_url=result.authorization_url)
 
 
 @v1_router.get("/google/callback", name="google_oauth_callback")
 def handle_google_callback(
+    response: Response,
     handle_google_callback_use_case: Annotated[
         HandleGoogleCallbackUseCase,
         Depends(get_handle_google_callback_use_case),
     ],
     code: str = Query(...),
     state: str | None = Query(default=None),
+    oauth_state: str | None = Cookie(default=None),
 ) -> LoginResponse:
-    """Handle Google OAuth callback, create/link user, and return tokens."""
+    """Handle Google OAuth callback, validate CSRF state, create/link user, return tokens."""
+    if not state or not oauth_state or not secrets.compare_digest(state, oauth_state):
+        raise UnauthorizedError("Invalid OAuth state")
+
     result = handle_google_callback_use_case.execute(
         HandleGoogleCallbackParams(code=code, state=state)
     )
+    response.delete_cookie(_OAUTH_STATE_COOKIE)
     return map_token_pair_result_to_login_response(result)
 
 
