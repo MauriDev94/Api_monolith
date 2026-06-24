@@ -471,9 +471,10 @@ def test_should_reject_google_callback_with_invalid_state(db_session: Session) -
 
     try:
         client.get("/auth/v1/google")  # liga un oauth_state en la cookie
+        # State no-ASCII forjado: antes reventaba en 500 (compare_digest con str); ahora 401.
         response = client.get(
             "/auth/v1/google/callback",
-            params={"code": "whatever", "state": "forged-state-not-matching-cookie"},
+            params={"code": "whatever", "state": "forged-stäte-ñ-no-coincide"},
         )
         assert response.status_code == 401
     finally:

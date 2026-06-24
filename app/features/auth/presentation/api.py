@@ -222,7 +222,13 @@ def handle_google_callback(
     oauth_state: str | None = Cookie(default=None),
 ) -> LoginResponse:
     """Handle Google OAuth callback, validate CSRF state, create/link user, return tokens."""
-    if not state or not oauth_state or not secrets.compare_digest(state, oauth_state):
+    # Comparar en bytes: secrets.compare_digest con str exige ASCII y lanzaría
+    # TypeError (→500) ante un `state` no-ASCII controlado por el atacante.
+    if (
+        not state
+        or not oauth_state
+        or not secrets.compare_digest(state.encode("utf-8"), oauth_state.encode("utf-8"))
+    ):
         raise UnauthorizedError("Invalid OAuth state")
 
     result = handle_google_callback_use_case.execute(
