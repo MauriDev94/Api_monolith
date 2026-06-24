@@ -3,7 +3,7 @@ from uuid import uuid4
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions.exceptions import DatabaseException, ResourceNotFoundException
+from app.core.exceptions.exceptions import DatabaseError, NotFoundError
 from app.features.todos.application.contracts.todo_datasource import TodoDatasource
 from app.features.todos.application.dto.create_todo_params import CreateTodoParams
 from app.features.todos.domain.entities.todo import Todo
@@ -36,7 +36,7 @@ class TodoRepository(TodoDatasource):
             self.session.refresh(todo_model)
         except SQLAlchemyError as exc:
             self.session.rollback()
-            raise DatabaseException("failed to create todo") from exc
+            raise DatabaseError("failed to create todo") from exc
 
         return map_todo_model_to_entity(todo_model)
 
@@ -44,7 +44,7 @@ class TodoRepository(TodoDatasource):
         try:
             todos_model = self.session.query(TodoModel).filter(TodoModel.user_id == user_id).all()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve todos") from exc
+            raise DatabaseError("failed to retrieve todos") from exc
 
         return [map_todo_model_to_entity(todo_model) for todo_model in todos_model]
 
@@ -52,7 +52,7 @@ class TodoRepository(TodoDatasource):
         try:
             todo_model = self.session.query(TodoModel).filter(TodoModel.id == todo_id).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve todo by id") from exc
+            raise DatabaseError("failed to retrieve todo by id") from exc
 
         if todo_model is None:
             return None
@@ -60,15 +60,15 @@ class TodoRepository(TodoDatasource):
 
     def update_todo(self, todo: Todo) -> Todo:
         if todo.id is None:
-            raise ResourceNotFoundException("todo not found")
+            raise NotFoundError("todo not found")
 
         try:
             todo_model = self.session.query(TodoModel).filter(TodoModel.id == todo.id).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve todo for update") from exc
+            raise DatabaseError("failed to retrieve todo for update") from exc
 
         if todo_model is None:
-            raise ResourceNotFoundException("todo not found")
+            raise NotFoundError("todo not found")
 
         map_todo_entity_to_model(todo_model=todo_model, todo=todo)
 
@@ -77,7 +77,7 @@ class TodoRepository(TodoDatasource):
             self.session.refresh(todo_model)
         except SQLAlchemyError as exc:
             self.session.rollback()
-            raise DatabaseException("failed to update todo") from exc
+            raise DatabaseError("failed to update todo") from exc
 
         return map_todo_model_to_entity(todo_model)
 
@@ -85,7 +85,7 @@ class TodoRepository(TodoDatasource):
         try:
             todo_model = self.session.query(TodoModel).filter(TodoModel.id == todo_id).first()
         except SQLAlchemyError as exc:
-            raise DatabaseException("failed to retrieve todo for deletion") from exc
+            raise DatabaseError("failed to retrieve todo for deletion") from exc
 
         if todo_model is None:
             return None
@@ -95,6 +95,6 @@ class TodoRepository(TodoDatasource):
             self.session.commit()
         except SQLAlchemyError as exc:
             self.session.rollback()
-            raise DatabaseException("failed to delete todo") from exc
+            raise DatabaseError("failed to delete todo") from exc
 
         return None

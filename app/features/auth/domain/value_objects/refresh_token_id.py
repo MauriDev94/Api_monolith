@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import uuid4
 
+from app.common.domain_error import DomainError
+
 
 @dataclass(frozen=True, slots=True)
 class RefreshTokenId:
@@ -10,7 +12,7 @@ class RefreshTokenId:
 
     def __post_init__(self) -> None:
         if not self.value or not self.value.strip():
-            raise ValueError("refresh token id cannot be empty")
+            raise DomainError("refresh token id cannot be empty")
 
     @classmethod
     def generate(cls) -> "RefreshTokenId":

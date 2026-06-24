@@ -2,6 +2,7 @@ import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from app.common.domain_error import DomainError
 from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 
 
@@ -32,24 +33,24 @@ class OtpCode:
     def consume(self) -> None:
         """Mark OTP as used; raise when already used or expired."""
         if self.is_used():
-            raise ValueError("otp has already been used")
+            raise DomainError("otp has already been used")
         if self.is_expired():
-            raise ValueError("otp has expired")
+            raise DomainError("otp has expired")
         self.used_at = datetime.now(UTC)
 
     def _validate(self) -> None:
         if not self.user_id or not self.user_id.strip():
-            raise ValueError("otp must be bound to a user")
+            raise DomainError("otp must be bound to a user")
         if not self.purpose or not self.purpose.strip():
-            raise ValueError("otp must have a purpose")
+            raise DomainError("otp must have a purpose")
         try:
             OtpPurpose(self.purpose)
         except ValueError as exc:
-            raise ValueError(f"invalid otp purpose: '{self.purpose}'") from exc
+            raise DomainError(f"invalid otp purpose: '{self.purpose}'") from exc
         if not self.code or len(self.code) != 6 or not self.code.isdigit():
-            raise ValueError("otp code must be exactly 6 digits")
+            raise DomainError("otp code must be exactly 6 digits")
         if self.expires_at.tzinfo is None:
-            raise ValueError("otp expires_at must be timezone-aware")
+            raise DomainError("otp expires_at must be timezone-aware")
 
     @classmethod
     def create(cls, user_id: str, purpose: str, expire_minutes: int = 10) -> "OtpCode":

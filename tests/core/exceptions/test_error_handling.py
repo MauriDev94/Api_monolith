@@ -2,13 +2,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
 
+from app.common.domain_error import DomainError
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.exceptions.exceptions import (
-    DatabaseException,
-    InternalServerErrorException,
-    InvalidCredentialsException,
-    ResourceConflictException,
-    ResourceNotFoundException,
+    ConflictError,
+    DatabaseError,
+    InternalServerError,
+    NotFoundError,
+    UnauthorizedError,
 )
 
 
@@ -26,23 +27,23 @@ def create_test_client() -> TestClient:
 
     @app.get("/invalid-credentials")
     def invalid_credentials() -> None:
-        raise InvalidCredentialsException()
+        raise UnauthorizedError("Invalid email or password")
 
     @app.get("/resource-conflict")
     def resource_conflict() -> None:
-        raise ResourceConflictException("email already registered")
+        raise ConflictError("email already registered")
 
     @app.get("/resource-not-found")
     def resource_not_found() -> None:
-        raise ResourceNotFoundException("user not found")
+        raise NotFoundError("user not found")
 
     @app.get("/database-error")
     def database_error() -> None:
-        raise DatabaseException("db offline")
+        raise DatabaseError("db offline")
 
     @app.get("/internal-error")
     def internal_error() -> None:
-        raise InternalServerErrorException("unexpected")
+        raise InternalServerError("unexpected")
 
     @app.get("/http-404")
     def http_404() -> None:
@@ -55,6 +56,14 @@ def create_test_client() -> TestClient:
     @app.get("/generic-error")
     def generic_error() -> None:
         raise RuntimeError("boom")
+
+    @app.get("/domain-error")
+    def domain_error() -> None:
+        raise DomainError("title cannot be empty")
+
+    @app.get("/bare-value-error")
+    def bare_value_error() -> None:
+        raise ValueError("unexpected internal value error")
 
     return TestClient(app, raise_server_exceptions=False)
 
@@ -154,6 +163,29 @@ def test_should_return_500_for_unhandled_exceptions() -> None:
     client = create_test_client()
 
     response = client.get("/generic-error")
+
+    assert response.status_code == 500
+    assert response.json()["message"] == "Internal server error"
+
+
+# Tipo de test: Integration
+def test_should_return_400_for_domain_error() -> None:
+    """T4: una violación de invariante de dominio (DomainError) se mapea a 400."""
+    client = create_test_client()
+
+    response = client.get("/domain-error")
+
+    assert response.status_code == 400
+    assert response.json()["message"] == "title cannot be empty"
+
+
+# Tipo de test: Integration
+def test_should_return_500_for_bare_value_error_not_400() -> None:
+    """T4: un ValueError pelado (no esperado, normalmente un bug) cae a 500, no se
+    disfraza de 400 como antes."""
+    client = create_test_client()
+
+    response = client.get("/bare-value-error")
 
     assert response.status_code == 500
     assert response.json()["message"] == "Internal server error"

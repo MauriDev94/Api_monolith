@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, status
 
-from app.core.exceptions.exceptions import InternalServerErrorException
+from app.core.exceptions.exceptions import InternalServerError
 from app.core.router.router import get_versioned_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.todos.application.usecases.create_todo_use_case import CreateTodo
@@ -44,7 +44,7 @@ v1_router = get_versioned_router("v1")
 def _require_user_id(current_user: User) -> str:
     """Guarantee a non-empty authenticated user id for ownership checks."""
     if current_user.id is None:
-        raise InternalServerErrorException("authenticated user id is missing")
+        raise InternalServerError("authenticated user id is missing")
     return current_user.id
 
 

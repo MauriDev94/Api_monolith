@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.core.exceptions.exceptions import ResourceNotFoundException
+from app.core.exceptions.exceptions import NotFoundError
 from app.features.todos.application.contracts.todo_datasource import TodoDatasource
 from app.features.todos.application.dto.create_todo_params import CreateTodoParams
 from app.features.todos.application.dto.delete_todo_params import DeleteTodoParams
@@ -63,7 +63,7 @@ def test_should_raise_not_found_when_get_todo_by_id_returns_none() -> None:
     datasource.get_todo_by_id.return_value = None
     use_case = GetTodoById(todo_datasource=datasource)
 
-    with pytest.raises(ResourceNotFoundException, match="todo not found"):
+    with pytest.raises(NotFoundError, match="todo not found"):
         use_case.execute(GetTodoByIdParams(todo_id="missing", user_id="user-1"))
 
 
@@ -74,7 +74,7 @@ def test_should_raise_not_found_when_get_todo_by_id_user_is_not_owner() -> None:
     datasource.get_todo_by_id.return_value = make_todo(user_id="other-user")
     use_case = GetTodoById(todo_datasource=datasource)
 
-    with pytest.raises(ResourceNotFoundException, match="todo not found"):
+    with pytest.raises(NotFoundError, match="todo not found"):
         use_case.execute(GetTodoByIdParams(todo_id="todo-1", user_id="user-1"))
 
 
@@ -106,7 +106,7 @@ def test_should_raise_not_found_when_update_target_does_not_exist() -> None:
         is_completed=True,
     )
 
-    with pytest.raises(ResourceNotFoundException, match="todo not found"):
+    with pytest.raises(NotFoundError, match="todo not found"):
         use_case.execute(params)
 
 
@@ -124,7 +124,7 @@ def test_should_raise_not_found_when_update_target_belongs_to_other_user() -> No
         is_completed=True,
     )
 
-    with pytest.raises(ResourceNotFoundException, match="todo not found"):
+    with pytest.raises(NotFoundError, match="todo not found"):
         use_case.execute(params)
 
 
@@ -191,7 +191,7 @@ def test_should_raise_not_found_when_delete_target_does_not_exist() -> None:
     datasource.get_todo_by_id.return_value = None
     use_case = DeleteTodo(todo_datasource=datasource)
 
-    with pytest.raises(ResourceNotFoundException, match="todo not found"):
+    with pytest.raises(NotFoundError, match="todo not found"):
         use_case.execute(DeleteTodoParams(todo_id="todo-1", user_id="user-1"))
 
 
@@ -202,7 +202,7 @@ def test_should_raise_not_found_when_delete_target_belongs_to_other_user() -> No
     datasource.get_todo_by_id.return_value = make_todo(user_id="other-user")
     use_case = DeleteTodo(todo_datasource=datasource)
 
-    with pytest.raises(ResourceNotFoundException, match="todo not found"):
+    with pytest.raises(NotFoundError, match="todo not found"):
         use_case.execute(DeleteTodoParams(todo_id="todo-1", user_id="user-1"))
 
 
@@ -213,7 +213,6 @@ def test_should_delegate_delete_when_todo_belongs_to_user() -> None:
     datasource.get_todo_by_id.return_value = make_todo(user_id="user-1")
     use_case = DeleteTodo(todo_datasource=datasource)
 
-    result = use_case.execute(DeleteTodoParams(todo_id="todo-1", user_id="user-1"))
+    use_case.execute(DeleteTodoParams(todo_id="todo-1", user_id="user-1"))
 
     datasource.delete_todo.assert_called_once_with("todo-1")
-    assert result is None

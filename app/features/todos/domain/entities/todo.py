@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from app.common.domain_error import DomainError
+
 
 @dataclass(slots=True)
 class Todo:
@@ -40,7 +42,7 @@ class Todo:
         """Cambia el due_date rechazando fechas en el pasado (acción explícita)."""
         normalized = self._normalize_due_date(due_date)
         if normalized is not None and normalized < datetime.now(UTC):
-            raise ValueError("due_date cannot be in the past")
+            raise DomainError("due_date cannot be in the past")
         self.due_date = normalized
         self._mark_as_updated()
 
@@ -76,7 +78,7 @@ class Todo:
     def _require_text(value: str, field_name: str) -> str:
         normalized = value.strip()
         if not normalized:
-            raise ValueError(f"{field_name} cannot be empty")
+            raise DomainError(f"{field_name} cannot be empty")
         return normalized
 
     @staticmethod

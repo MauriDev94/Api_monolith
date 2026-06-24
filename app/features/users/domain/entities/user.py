@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 
+from app.common.domain_error import DomainError
 from app.features.users.domain.value_objects.email import Email
 
 
@@ -50,7 +51,7 @@ class User:
     def change_password_hash(self, new_hash: str) -> None:
         """Set or change the password hash for this user."""
         if not new_hash or not new_hash.strip():
-            raise ValueError("password_hash cannot be empty")
+            raise DomainError("password_hash cannot be empty")
         self.password_hash = new_hash
         self._mark_as_updated()
 
@@ -59,7 +60,7 @@ class User:
         if self.password_hash is not None:
             self.password_hash = self.password_hash.strip()
             if not self.password_hash:
-                raise ValueError("password_hash cannot be empty")
+                raise DomainError("password_hash cannot be empty")
 
     def _mark_as_updated(self) -> None:
         self.updated_at = datetime.now(UTC)
@@ -68,7 +69,7 @@ class User:
     def _require_text(value: str, field_name: str) -> str:
         normalized = value.strip()
         if not normalized:
-            raise ValueError(f"{field_name} cannot be empty")
+            raise DomainError(f"{field_name} cannot be empty")
         return normalized
 
     @staticmethod
@@ -80,4 +81,4 @@ class User:
     @staticmethod
     def _validate_birthdate(birthdate: date | None) -> None:
         if birthdate is not None and birthdate > date.today():
-            raise ValueError("birthdate cannot be in the future")
+            raise DomainError("birthdate cannot be in the future")
