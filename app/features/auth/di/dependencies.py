@@ -78,9 +78,10 @@ def get_token_revocation_store(
 
 def get_otp_repository(
     db_session: Annotated[Session, Depends(get_db_session)],
+    env_config: Annotated[EnvConfig, Depends(get_env_config)],
 ) -> OtpDatasource:
     """Provide OTP datasource implementation backed by SQLAlchemy."""
-    return OtpRepository(session=db_session)
+    return OtpRepository(session=db_session, secret_key=env_config.jwt_secret_key)
 
 
 def get_email_sender(

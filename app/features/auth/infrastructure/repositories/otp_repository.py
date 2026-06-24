@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -14,8 +15,9 @@ from app.features.auth.infrastructure.models.otp_model import OtpModel
 class OtpRepository(OtpDatasource):
     """SQLAlchemy implementation for OTP persistence operations."""
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, secret_key: str):
         self.session = session
+        self._secret_key = secret_key
 
     def save(self, otp: OtpCode) -> OtpCode:
         if otp.id is None:
@@ -128,6 +130,12 @@ class OtpRepository(OtpDatasource):
             return value.replace(tzinfo=UTC)
         return value
 
-    @staticmethod
-    def _hash_code(code: str) -> str:
-        return hashlib.sha256(code.encode("utf-8")).hexdigest()
+    def _hash_code(self, code: str) -> str:
+        """HMAC-SHA256 keyeado por un secreto de servidor.
+
+        Sin el secreto no se puede precomputar el espacio de 6 dígitos (rainbow table),
+        a diferencia de un SHA-256 pelado, aunque se filtre la BD.
+        """
+        return hmac.new(
+            self._secret_key.encode("utf-8"), code.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
