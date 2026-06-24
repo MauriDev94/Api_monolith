@@ -11,13 +11,12 @@ from alembic.config import Config
 from sqlalchemy.engine import Engine
 
 # Drift pre-existente (acumulado porque `alembic check` nunca funcionó: env.py no
-# importaba los modelos, ya corregido). Pendiente de reconciliar en la Fase 4:
-#   - tabla `notifications` sin migración (la feature se elimina en Fase 4)
+# importaba los modelos, ya corregido). Pendiente de reconciliar en la Fase 4b:
 #   - FKs de `auth_otps`/`auth_refresh_tokens` declaradas en migración pero no en el modelo
 #   - `users.google_id`: constraint único en la migración vs índice único en el modelo
 # Al cerrar esos puntos, este xfail (strict) fallará y debe quitarse → gate duro permanente.
 _PENDING_DRIFT_REASON = (
-    "Reconciliación de esquema pendiente (notifications + FKs otp/refresh + google_id) — Fase 4"
+    "Reconciliación de esquema pendiente (FKs otp/refresh + google_id) — Fase 4b"
 )
 
 

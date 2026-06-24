@@ -43,9 +43,6 @@ from app.features.auth.infrastructure.models.otp_model import OtpModel  # noqa: 
 from app.features.auth.infrastructure.models.refresh_token_model import (  # noqa: E402, F401
     RefreshTokenModel,
 )
-from app.features.notifications.infrastructure.models.notification_model import (  # noqa: E402, F401
-    NotificationModel,
-)
 from app.features.todos.infrastructure.models.todo_model import TodoModel  # noqa: E402, F401
 from app.features.users.infrastructure.models.user_model import UserModel  # noqa: E402, F401
 
