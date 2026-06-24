@@ -351,10 +351,10 @@ def test_should_login_with_google_oauth_creates_new_user(db_session: Session) ->
         assert "authorization_url" in init_data
         assert "accounts.google.com" in init_data["authorization_url"]
 
-        # Step 2: Simulate callback with code (stub accepts any code)
+        # Step 2: callback con el state ligado a la cookie (validación CSRF)
         callback_response = client.get(
             "/auth/v1/google/callback",
-            params={"code": "test-auth-code-123", "state": "test-state"},
+            params={"code": "test-auth-code-123", "state": client.cookies["oauth_state"]},
         )
         assert callback_response.status_code == 200
         callback_data = callback_response.json()
@@ -391,18 +391,20 @@ def test_should_login_with_google_returns_same_user_on_second_login(db_session: 
     client = TestClient(app, raise_server_exceptions=False)
 
     try:
-        # First login
+        # First login (cada flujo emite y liga su propio state)
+        client.get("/auth/v1/google")
         callback1_response = client.get(
             "/auth/v1/google/callback",
-            params={"code": "first-code", "state": "state1"},
+            params={"code": "first-code", "state": client.cookies["oauth_state"]},
         )
         assert callback1_response.status_code == 200
         user1_data = callback1_response.json()
 
         # Second login - should return same user
+        client.get("/auth/v1/google")
         callback2_response = client.get(
             "/auth/v1/google/callback",
-            params={"code": "second-code", "state": "state2"},
+            params={"code": "second-code", "state": client.cookies["oauth_state"]},
         )
         assert callback2_response.status_code == 200
         user2_data = callback2_response.json()
@@ -450,11 +452,31 @@ def test_should_reject_google_login_when_email_has_password_account(db_session: 
         )
 
         # Now try to login with Google using the same email
+        client.get("/auth/v1/google")
         callback_response = client.get(
             "/auth/v1/google/callback",
-            params={"code": "conflict-code", "state": "conflict-state"},
+            params={"code": "conflict-code", "state": client.cookies["oauth_state"]},
         )
         assert callback_response.status_code == 409
+    finally:
+        app.dependency_overrides.clear()
+
+
+# Tipo de test: E2E
+def test_should_reject_google_callback_with_invalid_state(db_session: Session) -> None:
+    """S2: el callback rechaza (401) si el state no coincide con la cookie ligada al navegador."""
+    app.dependency_overrides[get_db_session] = _override_db_session(db_session)
+    app.dependency_overrides[get_google_oauth_provider] = lambda: StubGoogleOAuthProvider()
+    client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        client.get("/auth/v1/google")  # liga un oauth_state en la cookie
+        # State no-ASCII forjado: antes reventaba en 500 (compare_digest con str); ahora 401.
+        response = client.get(
+            "/auth/v1/google/callback",
+            params={"code": "whatever", "state": "forged-stäte-ñ-no-coincide"},
+        )
+        assert response.status_code == 401
     finally:
         app.dependency_overrides.clear()
 

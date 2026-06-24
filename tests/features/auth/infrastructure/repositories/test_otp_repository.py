@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -9,6 +10,8 @@ from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.auth.infrastructure.models.otp_model import OtpModel
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.auth.infrastructure.repositories.otp_repository import OtpRepository
+
+_TEST_SECRET = "test-secret-key"
 
 
 def _seed_user_id(session: Session) -> str:
@@ -28,7 +31,7 @@ def _seed_user_id(session: Session) -> str:
 
 # Tipo de test: Integration
 def test_should_create_and_return_persisted_otp(db_session: Session) -> None:
-    repository = OtpRepository(session=db_session)
+    repository = OtpRepository(session=db_session, secret_key=_TEST_SECRET)
     user_id = _seed_user_id(db_session)
     otp = OtpCode.create(user_id=user_id, purpose=OtpPurpose.PASSWORD_CHANGE)
 
@@ -40,12 +43,15 @@ def test_should_create_and_return_persisted_otp(db_session: Session) -> None:
     assert persisted.code == otp.code
     persisted_model = db_session.query(OtpModel).filter(OtpModel.id == persisted.id).first()
     assert persisted_model is not None
-    assert persisted_model.code_hash == hashlib.sha256(otp.code.encode("utf-8")).hexdigest()
+    expected_hash = hmac.new(
+        _TEST_SECRET.encode("utf-8"), otp.code.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    assert persisted_model.code_hash == expected_hash
 
 
 # Tipo de test: Integration
 def test_should_find_valid_otp_when_exists(db_session: Session) -> None:
-    repository = OtpRepository(session=db_session)
+    repository = OtpRepository(session=db_session, secret_key=_TEST_SECRET)
     user_id = _seed_user_id(db_session)
     persisted = repository.save(OtpCode.create(user_id=user_id, purpose=OtpPurpose.PASSWORD_CHANGE))
 
@@ -59,7 +65,7 @@ def test_should_find_valid_otp_when_exists(db_session: Session) -> None:
 
 # Tipo de test: Integration
 def test_should_not_find_otp_when_expired(db_session: Session) -> None:
-    repository = OtpRepository(session=db_session)
+    repository = OtpRepository(session=db_session, secret_key=_TEST_SECRET)
     user_id = _seed_user_id(db_session)
     expired = OtpCode(
         id=None,
@@ -80,7 +86,7 @@ def test_should_not_find_otp_when_expired(db_session: Session) -> None:
 
 # Tipo de test: Integration
 def test_should_invalidate_all_pending_otps_for_user_and_purpose(db_session: Session) -> None:
-    repository = OtpRepository(session=db_session)
+    repository = OtpRepository(session=db_session, secret_key=_TEST_SECRET)
     user_id = _seed_user_id(db_session)
     first = repository.save(OtpCode.create(user_id=user_id, purpose=OtpPurpose.PASSWORD_CHANGE))
     second = repository.save(OtpCode.create(user_id=user_id, purpose=OtpPurpose.PASSWORD_CHANGE))
@@ -99,7 +105,7 @@ def test_should_invalidate_all_pending_otps_for_user_and_purpose(db_session: Ses
 
 # Tipo de test: Integration
 def test_should_update_used_otp_state(db_session: Session) -> None:
-    repository = OtpRepository(session=db_session)
+    repository = OtpRepository(session=db_session, secret_key=_TEST_SECRET)
     user_id = _seed_user_id(db_session)
     persisted = repository.save(OtpCode.create(user_id=user_id, purpose=OtpPurpose.PASSWORD_CHANGE))
 
