@@ -25,16 +25,17 @@ def _request_logger(request: Request):
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Normalize validation errors into a predictable API response."""
-    _request_logger(request).warning(f"Validation error: {exc.errors()}")
-    errors = []
-    for error in exc.errors():
-        errors.append(
-            {
-                "field": " -> ".join(str(loc) for loc in error["loc"]),
-                "message": error["msg"],
-                "type": error["type"],
-            }
-        )
+    errors = [
+        {
+            "field": " -> ".join(str(loc) for loc in error["loc"]),
+            "message": error["msg"],
+            "type": error["type"],
+        }
+        for error in exc.errors()
+    ]
+    # No loguear exc.errors() crudo: incluye la clave 'input' con el valor enviado,
+    # lo que filtra datos sensibles (p.ej. passwords) en texto plano a los logs (OWASP A09).
+    _request_logger(request).warning(f"Validation error: {errors}")
 
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -91,7 +92,10 @@ async def database_exception_handler(request: Request, exc: DatabaseError):
     _request_logger(request).error(f"DatabaseException: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"message": "Database error occurred", "detail": str(exc)},
+        content={
+            "message": "Database error occurred",
+            "detail": "An unexpected error occurred. Please try again later.",
+        },
     )
 
 
@@ -103,7 +107,10 @@ async def internal_server_error_exception_handler(
     _request_logger(request).error(f"InternalServerErrorException: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"message": "Internal server error", "detail": str(exc)},
+        content={
+            "message": "Internal server error",
+            "detail": "An unexpected error occurred. Please try again later.",
+        },
     )
 
 

@@ -40,3 +40,17 @@ def test_lifespan_fails_fast_when_migration_fails(monkeypatch: pytest.MonkeyPatc
 
     with pytest.raises(RuntimeError, match="migration boom"):
         asyncio.run(run_lifespan())
+
+
+# Tipo de test: Integration
+def test_security_headers_present_on_api_responses() -> None:
+    """S7: HSTS + CSP + nosniff presentes en respuestas de API."""
+    client = TestClient(app, raise_server_exceptions=False)
+
+    response = client.get("/")
+
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert "max-age=" in response.headers["Strict-Transport-Security"]
+    assert "default-src 'none'" in response.headers["Content-Security-Policy"]
+    assert "X-XSS-Protection" not in response.headers

@@ -19,3 +19,11 @@ def test_should_return_false_when_password_is_invalid() -> None:
     hashed_password = manager.hash_password("plain-password")
 
     assert manager.verify_password("wrong-password", hashed_password) is False
+
+
+# Tipo de test: Unit
+def test_should_return_false_for_malformed_hash() -> None:
+    """S8: un hash malformado en la BD debe dar fallo de auth limpio (False), no 500."""
+    manager = PasswordManagerImpl()
+
+    assert manager.verify_password("any-password", "not-a-valid-argon2-hash") is False

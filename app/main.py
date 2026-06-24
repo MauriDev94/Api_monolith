@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, status
@@ -10,6 +11,7 @@ from sqlalchemy import text
 
 from app.core.config.logger_config import setup_logger
 from app.core.exceptions.error_handling import register_exception_handlers
+from app.core.middleware.rate_limit_global import GlobalRateLimitMiddleware
 from app.core.middleware.request_context import attach_request_id_middleware
 from app.core.middleware.security_headers import attach_security_headers
 from app.features.auth.presentation.api import v1_router as auth_v1_router
@@ -28,8 +30,6 @@ class AppSettings(BaseSettings):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Apply Alembic migrations on startup when running in production."""
-    import os
-
     from alembic import command
     from alembic.config import Config
 
@@ -63,7 +63,15 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Internal-Token"],
 )
 
-# Security headers middleware
+# Global per-IP rate limiting. Se registra ANTES de los middlewares de headers/contexto
+# para que estos queden por FUERA: así un 429 del limiter igual sale con security headers
+# y request id (antes el 429 del limiter global se los saltaba). Gateado por env para que
+# la suite de tests (RATE_LIMIT_ENABLED=false) no acumule estado entre tests que comparten
+# la IP del TestClient.
+if os.getenv("RATE_LIMIT_ENABLED", "true").lower() != "false":
+    app.add_middleware(GlobalRateLimitMiddleware)
+
+# Security headers middleware (por fuera del rate limiter → aplica también a los 429)
 app.middleware("http")(attach_security_headers)
 
 # Request context middleware

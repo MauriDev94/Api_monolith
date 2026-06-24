@@ -23,3 +23,12 @@ class InMemoryRateLimiter(RateLimiter):
                 raise TooManyRequestsError("Too many requests, try again later")
             active_hits.append(now)
             self._hits[key] = active_hits
+
+
+class NoOpRateLimiter(RateLimiter):
+    """Limiter que no impone límites. Se usa cuando el rate limiting está desactivado
+    (RATE_LIMIT_ENABLED=false), p.ej. en la suite de tests para evitar acumulación
+    entre tests; los tests específicos de rate limiting inyectan un limiter real."""
+
+    def check_or_raise(self, key: str, limit: int, window_seconds: int) -> None:
+        return None

@@ -457,3 +457,30 @@ def test_should_reject_google_login_when_email_has_password_account(db_session: 
         assert callback_response.status_code == 409
     finally:
         app.dependency_overrides.clear()
+
+
+# Tipo de test: E2E
+def test_should_rate_limit_login_attempts(db_session: Session) -> None:
+    """S1: /login se limita por IP; tras 10 intentos, el 11 devuelve 429 (anti fuerza bruta)."""
+    app.dependency_overrides[get_db_session] = _override_db_session(db_session)
+    limiter = InMemoryRateLimiter()
+    app.dependency_overrides[get_rate_limiter] = lambda: limiter
+    client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        for _ in range(10):
+            response = client.post(
+                "/auth/v1/login",
+                data={"username": "nobody@mail.com", "password": "wrong-pass"},
+            )
+            assert response.status_code == 401
+
+        rate_limited = client.post(
+            "/auth/v1/login",
+            data={"username": "nobody@mail.com", "password": "wrong-pass"},
+        )
+        assert rate_limited.status_code == 429
+        # El 429 debe conservar los security headers (P2).
+        assert "Strict-Transport-Security" in rate_limited.headers
+    finally:
+        app.dependency_overrides.clear()
