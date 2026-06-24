@@ -4,27 +4,25 @@ from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.domain.entities.otp_code import OtpCode
 from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.auth.infrastructure.models.otp_model import OtpModel
-from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.auth.infrastructure.repositories.otp_repository import OtpRepository
+from app.features.users.infrastructure.repositories.user_provider_repository import (
+    UserProviderRepository,
+)
 
 _TEST_SECRET = "test-secret-key"
 
 
 def _seed_user_id(session: Session) -> str:
-    auth_repository = AuthRepository(session=session)
-    user = auth_repository.register_user(
-        params=RegisterUserParams(
-            name="Mauri",
-            lastname="Salinas",
-            email="mauri@mail.com",
-            password="plain1234",
-            birthdate=date(2000, 1, 1),
-        ),
+    provider = UserProviderRepository(session=session)
+    user = provider.create_user(
+        name="Mauri",
+        lastname="Salinas",
+        email="mauri@mail.com",
         password_hash="hashed-password",
+        birthdate=date(2000, 1, 1),
     )
     return user.id or ""
 

@@ -10,12 +10,15 @@ from app.features.auth.application.dto.create_google_user_params import CreateGo
 from app.features.auth.infrastructure.repositories.google_auth_repository import (
     GoogleAuthRepository,
 )
+from app.features.users.infrastructure.repositories.user_provider_repository import (
+    UserProviderRepository,
+)
 
 
 # Tipo de test: Integration
 def test_should_create_google_user_and_fetch_by_google_id(db_session: Session) -> None:
     """Valida que crear usuario Google y recuperarlo por google_id."""
-    repository = GoogleAuthRepository(session=db_session)
+    repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
     params = CreateGoogleUserParams(
         google_id="google-123",
         email="googleuser@gmail.com",
@@ -41,7 +44,7 @@ def test_should_create_google_user_and_fetch_by_google_id(db_session: Session) -
 # Tipo de test: Integration
 def test_should_create_google_user_with_google_email_verified_flag(db_session: Session) -> None:
     """Valida que se persiste el flag google_email_verified."""
-    repository = GoogleAuthRepository(session=db_session)
+    repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
     params = CreateGoogleUserParams(
         google_id="google-456",
         email="verified@gmail.com",
@@ -60,7 +63,7 @@ def test_should_create_google_user_with_google_email_verified_flag(db_session: S
 # Tipo de test: Integration
 def test_should_link_google_id_to_existing_user(db_session: Session) -> None:
     """Valida que link_google_id asocia google_id a un usuario existente."""
-    repository = GoogleAuthRepository(session=db_session)
+    repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
     params = CreateGoogleUserParams(
         google_id="google-temp",
         email="temp@gmail.com",
@@ -80,7 +83,7 @@ def test_should_link_google_id_to_existing_user(db_session: Session) -> None:
 # Tipo de test: Integration
 def test_should_return_none_when_user_not_found_by_google_id(db_session: Session) -> None:
     """Valida que retorna None cuando usuario no existe por google_id."""
-    repository = GoogleAuthRepository(session=db_session)
+    repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
 
     found = repository.get_user_by_google_id("non-existent-google-id")
 
@@ -90,7 +93,7 @@ def test_should_return_none_when_user_not_found_by_google_id(db_session: Session
 # Tipo de test: Integration
 def test_should_raise_conflict_when_google_id_already_registered(db_session: Session) -> None:
     """Valida que lanza ConflictError cuando google_id ya está registrado."""
-    repository = GoogleAuthRepository(session=db_session)
+    repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
     params = CreateGoogleUserParams(
         google_id="duplicate-google-id",
         email="first@gmail.com",
@@ -113,7 +116,7 @@ def test_should_raise_conflict_when_google_id_already_registered(db_session: Ses
 # Tipo de test: Integration
 def test_should_return_none_when_user_does_not_exist_by_id(db_session: Session) -> None:
     """Valida que retorna None cuando usuario no existe por id."""
-    repository = GoogleAuthRepository(session=db_session)
+    repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
 
     found = repository.get_user_by_id("non-existent-id")
 

@@ -2,25 +2,23 @@ from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.features.auth.application.dto.register_user_params import RegisterUserParams
-from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.auth.infrastructure.repositories.token_revocation_repository import (
     TokenRevocationRepository,
+)
+from app.features.users.infrastructure.repositories.user_provider_repository import (
+    UserProviderRepository,
 )
 
 
 def _seed_user(session: Session, email: str = "mauri@mail.com") -> str:
     """Crea un usuario real: auth_refresh_tokens.user_id tiene FK a users.id en Postgres."""
-    auth_repository = AuthRepository(session=session)
-    user = auth_repository.register_user(
-        params=RegisterUserParams(
-            name="Mauri",
-            lastname="Salinas",
-            email=email,
-            password="plain1234",
-            birthdate=date(2000, 1, 1),
-        ),
+    provider = UserProviderRepository(session=session)
+    user = provider.create_user(
+        name="Mauri",
+        lastname="Salinas",
+        email=email,
         password_hash="hashed-password",
+        birthdate=date(2000, 1, 1),
     )
     return user.id or ""
 

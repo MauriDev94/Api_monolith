@@ -4,10 +4,11 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.core.exceptions.exceptions import ConflictError, NotFoundError
-from app.features.auth.application.dto.register_user_params import RegisterUserParams
-from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
+from app.features.users.infrastructure.repositories.user_provider_repository import (
+    UserProviderRepository,
+)
 from app.features.users.infrastructure.repositories.user_repository import UserRepository
 
 
@@ -18,16 +19,13 @@ def _seed_user(
     lastname: str,
     email: str,
 ) -> str:
-    auth_repository = AuthRepository(session=session)
-    user = auth_repository.register_user(
-        params=RegisterUserParams(
-            name=name,
-            lastname=lastname,
-            email=email,
-            password="plain1234",
-            birthdate=date(2000, 1, 1),
-        ),
+    provider = UserProviderRepository(session=session)
+    user = provider.create_user(
+        name=name,
+        lastname=lastname,
+        email=email,
         password_hash="hashed-password",
+        birthdate=date(2000, 1, 1),
     )
     return user.id or ""
 
@@ -130,7 +128,6 @@ def test_should_delete_existing_user(db_session: Session) -> None:
     repository = UserRepository(session=db_session)
     user_id = _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
 
-    result = repository.delete(user_id)
+    repository.delete(user_id)
 
-    assert result is None
     assert repository.get_user_by_id(user_id) is None
