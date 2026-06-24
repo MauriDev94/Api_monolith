@@ -480,5 +480,7 @@ def test_should_rate_limit_login_attempts(db_session: Session) -> None:
             data={"username": "nobody@mail.com", "password": "wrong-pass"},
         )
         assert rate_limited.status_code == 429
+        # El 429 debe conservar los security headers (P2).
+        assert "Strict-Transport-Security" in rate_limited.headers
     finally:
         app.dependency_overrides.clear()

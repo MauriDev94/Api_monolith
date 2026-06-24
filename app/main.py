@@ -63,17 +63,19 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Internal-Token"],
 )
 
-# Security headers middleware
+# Global per-IP rate limiting. Se registra ANTES de los middlewares de headers/contexto
+# para que estos queden por FUERA: así un 429 del limiter igual sale con security headers
+# y request id (antes el 429 del limiter global se los saltaba). Gateado por env para que
+# la suite de tests (RATE_LIMIT_ENABLED=false) no acumule estado entre tests que comparten
+# la IP del TestClient.
+if os.getenv("RATE_LIMIT_ENABLED", "true").lower() != "false":
+    app.add_middleware(GlobalRateLimitMiddleware)
+
+# Security headers middleware (por fuera del rate limiter → aplica también a los 429)
 app.middleware("http")(attach_security_headers)
 
 # Request context middleware
 app.middleware("http")(attach_request_id_middleware)
-
-# Global per-IP rate limiting (defense-in-depth, outermost). Gateado por env para que
-# la suite de tests (RATE_LIMIT_ENABLED=false) no acumule estado entre tests que
-# comparten la misma IP del TestClient. Requiere uvicorn --proxy-headers en prod.
-if os.getenv("RATE_LIMIT_ENABLED", "true").lower() != "false":
-    app.add_middleware(GlobalRateLimitMiddleware)
 
 # Auth endpoints include register/login/refresh/me.
 app.include_router(auth_v1_router, tags=["v1 Auth"], prefix="/auth")

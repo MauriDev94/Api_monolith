@@ -2,6 +2,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from app.core.http_utils import get_client_ip
 from app.features.auth.infrastructure.security.in_memory_rate_limiter import InMemoryRateLimiter
 
 # Global rate limiter configuration
@@ -35,9 +36,8 @@ class GlobalRateLimitMiddleware(BaseHTTPMiddleware):
         if path in ["/", "/docs", "/openapi.json", "/health"]:
             return await call_next(request)
 
-        # Use client IP as the rate limit key
-        client_ip = request.client.host if request.client else "unknown"
-        key = f"global:{client_ip}"
+        # Client IP from the trusted edge (rightmost X-Forwarded-For), not spoofable.
+        key = f"global:{get_client_ip(request)}"
 
         try:
             self.rate_limiter.check_or_raise(key, self.rate_limit, self.window_seconds)

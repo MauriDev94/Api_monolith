@@ -1,9 +1,10 @@
 from typing import Annotated
 
 from fastapi import Depends, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from app.core.exceptions.exceptions import InternalServerError
+from app.core.http_utils import get_client_ip
 from app.features.auth.application.contracts.rate_limiter import RateLimiter
 from app.features.auth.application.usecases.get_current_user_use_case import GetCurrentUser
 from app.features.auth.di.dependencies import get_current_user_use_case, get_rate_limiter
@@ -48,18 +49,23 @@ def enforce_verify_otp_rate_limit(
     )
 
 
-def _client_ip(request: Request) -> str:
-    """IP del cliente. Con uvicorn --proxy-headers, request.client.host ya refleja
-    la IP real (X-Forwarded-For) detrás del proxy de Render."""
-    return request.client.host if request.client else "unknown"
-
-
 def enforce_login_rate_limit(
     request: Request,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
 ) -> None:
-    """Throttle login attempts por IP (anti fuerza bruta / credential stuffing)."""
-    rate_limiter.check_or_raise(key=f"login:{_client_ip(request)}", limit=10, window_seconds=60)
+    """Throttle login: por email (protege la cuenta, NO falsificable) y por IP.
+
+    Limitar por el email atacado es inmune al spoofing de IP — el atacante no puede
+    cambiar la cuenta objetivo que está intentando reventar. El límite por IP es
+    defensa en profundidad (best-effort) contra credential stuffing distribuido.
+    """
+    rate_limiter.check_or_raise(
+        key=f"login:email:{form_data.username.strip().lower()}", limit=10, window_seconds=300
+    )
+    rate_limiter.check_or_raise(
+        key=f"login:ip:{get_client_ip(request)}", limit=30, window_seconds=60
+    )
 
 
 def enforce_register_rate_limit(
@@ -67,7 +73,9 @@ def enforce_register_rate_limit(
     rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
 ) -> None:
     """Throttle account creation por IP (anti spam de cuentas)."""
-    rate_limiter.check_or_raise(key=f"register:{_client_ip(request)}", limit=5, window_seconds=60)
+    rate_limiter.check_or_raise(
+        key=f"register:{get_client_ip(request)}", limit=5, window_seconds=60
+    )
 
 
 def enforce_refresh_rate_limit(
@@ -75,4 +83,6 @@ def enforce_refresh_rate_limit(
     rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
 ) -> None:
     """Throttle token refresh por IP."""
-    rate_limiter.check_or_raise(key=f"refresh:{_client_ip(request)}", limit=30, window_seconds=60)
+    rate_limiter.check_or_raise(
+        key=f"refresh:{get_client_ip(request)}", limit=30, window_seconds=60
+    )
