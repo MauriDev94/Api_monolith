@@ -45,16 +45,18 @@ from app.features.auth.infrastructure.security.in_memory_rate_limiter import (
     InMemoryRateLimiter,
     NoOpRateLimiter,
 )
+from app.features.users.application.contracts.user_provider import UserProvider
+from app.features.users.di.dependencies import get_user_provider
 
 _rate_limiter = InMemoryRateLimiter()
 _noop_rate_limiter = NoOpRateLimiter()
 
 
 def get_auth_repository(
-    db_session: Annotated[Session, Depends(get_db_session)],
+    user_provider: Annotated[UserProvider, Depends(get_user_provider)],
 ) -> AuthDatasource:
-    """Provide auth datasource implementation backed by SQLAlchemy."""
-    return AuthRepository(session=db_session)
+    """Provide auth datasource backed by the users port (no direct UserModel access)."""
+    return AuthRepository(user_provider=user_provider)
 
 
 def get_password_manager() -> PasswordManager:
@@ -195,10 +197,10 @@ def get_google_oauth_provider(
 
 
 def get_google_auth_repository(
-    db_session: Annotated[Session, Depends(get_db_session)],
+    user_provider: Annotated[UserProvider, Depends(get_user_provider)],
 ) -> GoogleAuthRepository:
-    """Provide Google auth datasource implementation backed by SQLAlchemy."""
-    return GoogleAuthRepository(session=db_session)
+    """Provide Google auth datasource backed by the users port."""
+    return GoogleAuthRepository(user_provider=user_provider)
 
 
 def get_initiate_google_login_use_case(

@@ -2,23 +2,21 @@ from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.features.auth.application.dto.register_user_params import RegisterUserParams
-from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
 from app.features.todos.application.dto.create_todo_params import CreateTodoParams
 from app.features.todos.infrastructure.repositories.todo_repository import TodoRepository
+from app.features.users.infrastructure.repositories.user_provider_repository import (
+    UserProviderRepository,
+)
 
 
 def _seed_user(session: Session, email: str = "mauri@mail.com") -> str:
-    auth_repository = AuthRepository(session=session)
-    user = auth_repository.register_user(
-        params=RegisterUserParams(
-            name="Mauri",
-            lastname="Salinas",
-            email=email,
-            password="plain1234",
-            birthdate=date(2000, 1, 1),
-        ),
+    provider = UserProviderRepository(session=session)
+    user = provider.create_user(
+        name="Mauri",
+        lastname="Salinas",
+        email=email,
         password_hash="hashed-password",
+        birthdate=date(2000, 1, 1),
     )
     return user.id or ""
 
