@@ -20,7 +20,7 @@ gate `--cov-branch --cov-fail-under=82`, gate de no-drift (`alembic check`) acti
 | 4c | #84 | Puerto `UserProvider` (A1): `auth` desacoplado de la infra de `users` |
 | 4d | #86 | Excepciones de dominio (`DomainError`, T4) + quitar alias duplicados (T7) |
 | 5 (parcial) | #88 | **Body-size limit middleware** + connection pool (`pool_pre_ping`/`pool_recycle`, O5) + este doc |
-| 5 | #XX | **O4**: eliminado `GET /v1/users` (listado, PII leak) + paginación `limit`/`offset` en `GET /v1/todos` (`total`, `limit`, `offset` en la respuesta) |
+| 5 | #90 | **O4**: eliminado `GET /v1/users` (listado, PII leak) + paginación `limit`/`offset` en `GET /v1/todos` (`total`, `limit`, `offset` en la respuesta) |
 
 Cobertura ~86.9%. Bloques 1-3 de la auditoría: remediados. Bloque 4: casi completo.
 
