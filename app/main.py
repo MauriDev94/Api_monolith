@@ -11,6 +11,7 @@ from sqlalchemy import text
 
 from app.core.config.logger_config import setup_logger
 from app.core.exceptions.error_handling import register_exception_handlers
+from app.core.middleware.body_size_limit import BodySizeLimitMiddleware
 from app.core.middleware.rate_limit_global import GlobalRateLimitMiddleware
 from app.core.middleware.request_context import attach_request_id_middleware
 from app.core.middleware.security_headers import attach_security_headers
@@ -61,6 +62,10 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Authorization", "Content-Type", "X-Internal-Token"],
 )
+
+# Body-size limit: rechaza payloads excesivos (413) antes de parsearlos. Inner a los
+# middlewares de headers/contexto para que el 413 igual salga con security headers.
+app.add_middleware(BodySizeLimitMiddleware)
 
 # Global per-IP rate limiting. Se registra ANTES de los middlewares de headers/contexto
 # para que estos queden por FUERA: así un 429 del limiter igual sale con security headers
