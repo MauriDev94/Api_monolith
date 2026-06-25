@@ -29,7 +29,7 @@ class Database:
             # Render delivers postgres:// — SQLAlchemy 2.0 requires postgresql://
             if raw_url.startswith("postgres://"):
                 raw_url = raw_url.replace("postgres://", "postgresql://", 1)
-            self.engine = create_engine(raw_url, echo=False)
+            self.engine = create_engine(raw_url, echo=False, pool_pre_ping=True, pool_recycle=300)
         else:
             missing = [
                 name
@@ -55,7 +55,7 @@ class Database:
                 port=config.db_port,
                 database=config.db_name,
             )
-            self.engine = create_engine(url, echo=False)
+            self.engine = create_engine(url, echo=False, pool_pre_ping=True, pool_recycle=300)
         self.session = sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
         self.SqlAlchemyBase = SqlAlchemyBase
 
