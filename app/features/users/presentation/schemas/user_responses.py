@@ -25,9 +25,3 @@ class UpdateUserResponse(BaseModel):
     """Response schema for update user endpoint."""
 
     user: UserResponse
-
-
-class DeleteUserResponse(BaseModel):
-    """Response schema for delete user endpoint."""
-
-    message: str

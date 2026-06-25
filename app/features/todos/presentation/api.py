@@ -32,7 +32,6 @@ from app.features.todos.presentation.schemas.todo_requests import (
 )
 from app.features.todos.presentation.schemas.todo_responses import (
     CreateTodoResponse,
-    DeleteTodoResponse,
     GetTodoByIdResponse,
     GetTodosResponse,
     UpdateTodoResponse,
@@ -99,13 +98,12 @@ def update_todo(
     return UpdateTodoResponse(todo=map_todo_entity_to_response(todo))
 
 
-@v1_router.delete("/todos/{todo_id}", response_model=DeleteTodoResponse)
+@v1_router.delete("/todos/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_todo(
     todo_id: str,
     current_user: Annotated[User, Depends(get_authenticated_user)],
     delete_todo_use_case: Annotated[DeleteTodo, Depends(get_delete_todo_use_case)],
-) -> DeleteTodoResponse:
+) -> None:
     """Delete one todo owned by the authenticated user."""
     params = map_todo_id_to_delete_params(todo_id, _require_user_id(current_user))
     delete_todo_use_case.execute(params)
-    return DeleteTodoResponse(message="Todo deleted successfully")

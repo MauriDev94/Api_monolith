@@ -141,7 +141,8 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
         delete_todo_response = client.delete(
             f"/v1/todos/{todo_id}", headers=_auth_headers(new_access_token)
         )
-        assert delete_todo_response.status_code == 200
+        assert delete_todo_response.status_code == 204
+        assert delete_todo_response.content == b""
 
         get_deleted_response = client.get(
             f"/v1/todos/{todo_id}", headers=_auth_headers(new_access_token)

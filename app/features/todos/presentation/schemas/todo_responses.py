@@ -41,9 +41,3 @@ class UpdateTodoResponse(BaseModel):
     """Response schema for update todo endpoint."""
 
     todo: TodoResponse
-
-
-class DeleteTodoResponse(BaseModel):
-    """Response schema for delete todo endpoint."""
-
-    message: str
