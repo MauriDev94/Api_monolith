@@ -50,11 +50,60 @@ def test_should_return_todos_by_user_id(db_session: Session) -> None:
     repository.create_todo(CreateTodoParams(user_id=user_id, title="Task 1", description=None))
     repository.create_todo(CreateTodoParams(user_id=user_id, title="Task 2", description="desc"))
 
-    todos = repository.get_todos_by_user_id(user_id)
+    todos = repository.get_todos_by_user_id(user_id, limit=20, offset=0)
 
     assert len(todos) == 2
     titles = {todo.title for todo in todos}
     assert titles == {"Task 1", "Task 2"}
+
+
+# Tipo de test: Integration
+def test_should_return_first_page_when_limit_is_smaller_than_total(db_session: Session) -> None:
+    """Valida que la página 1 retorna solo `limit` elementos en orden estable."""
+    repository = TodoRepository(session=db_session)
+    user_id = _seed_user(db_session)
+    for index in range(3):
+        repository.create_todo(
+            CreateTodoParams(user_id=user_id, title=f"Task {index}", description=None)
+        )
+
+    page_one = repository.get_todos_by_user_id(user_id, limit=2, offset=0)
+
+    assert len(page_one) == 2
+    assert [todo.title for todo in page_one] == ["Task 0", "Task 1"]
+
+
+# Tipo de test: Integration
+def test_should_return_second_page_when_offset_is_applied(db_session: Session) -> None:
+    """Valida que el offset desplaza correctamente la ventana de paginación."""
+    repository = TodoRepository(session=db_session)
+    user_id = _seed_user(db_session)
+    for index in range(3):
+        repository.create_todo(
+            CreateTodoParams(user_id=user_id, title=f"Task {index}", description=None)
+        )
+
+    page_two = repository.get_todos_by_user_id(user_id, limit=2, offset=2)
+
+    assert len(page_two) == 1
+    assert page_two[0].title == "Task 2"
+
+
+# Tipo de test: Integration
+def test_should_count_todos_by_user_id(db_session: Session) -> None:
+    """Valida que count-todos retorna el total de tareas del owner, ignorando otros usuarios."""
+    repository = TodoRepository(session=db_session)
+    user_id = _seed_user(db_session)
+    other_user_id = _seed_user(db_session, email="otra@mail.com")
+    repository.create_todo(CreateTodoParams(user_id=user_id, title="Task 1", description=None))
+    repository.create_todo(CreateTodoParams(user_id=user_id, title="Task 2", description=None))
+    repository.create_todo(
+        CreateTodoParams(user_id=other_user_id, title="Other task", description=None)
+    )
+
+    total = repository.count_todos_by_user_id(user_id)
+
+    assert total == 2
 
 
 # Tipo de test: Integration

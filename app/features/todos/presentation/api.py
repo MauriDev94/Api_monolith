@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, status
+from fastapi import Depends, Query, status
 
 from app.core.exceptions.exceptions import InternalServerError
 from app.core.router.router import get_versioned_router
@@ -19,6 +19,7 @@ from app.features.todos.di.dependencies import (
 )
 from app.features.todos.presentation.mappers.todo_mapper import (
     map_create_todo_request_to_params,
+    map_get_todos_result_to_response,
     map_todo_entity_to_response,
     map_todo_id_to_delete_params,
     map_todo_id_to_get_params,
@@ -64,11 +65,13 @@ def create_todo(
 def get_todos(
     current_user: Annotated[User, Depends(get_authenticated_user)],
     get_todos_use_case: Annotated[GetTodos, Depends(get_get_todos_use_case)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> GetTodosResponse:
-    """List todos owned by the authenticated user."""
-    params = map_user_id_to_get_todos_params(_require_user_id(current_user))
-    todos = get_todos_use_case.execute(params)
-    return GetTodosResponse(todos=[map_todo_entity_to_response(todo) for todo in todos])
+    """List todos owned by the authenticated user, paginated."""
+    params = map_user_id_to_get_todos_params(_require_user_id(current_user), limit, offset)
+    result = get_todos_use_case.execute(params)
+    return map_get_todos_result_to_response(result)
 
 
 @v1_router.get("/todos/{todo_id}", response_model=GetTodoByIdResponse)

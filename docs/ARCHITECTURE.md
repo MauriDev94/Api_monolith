@@ -257,7 +257,6 @@ Estructura interna de `app/features/users`:
    - `dto/get_user_by_id_params.py`: parámetros tipados para consulta por id.
    - `dto/update_user_params.py`: parámetros tipados para actualización de perfil.
    - `dto/delete_user_params.py`: parámetros tipados para eliminación de usuario.
-   - `usecases/get_all_users_use_case.py`: listado de usuarios.
    - `usecases/get_user_by_id_use_case.py`: consulta de usuario por id.
    - `usecases/update_user_use_case.py`: actualización de datos de usuario.
    - `usecases/delete_user_use_case.py`: eliminación de usuario.
@@ -272,7 +271,7 @@ Estructura interna de `app/features/users`:
    - `repositories/user_repository.py`: implementación SQLAlchemy del `user_datasource`.
 
 4. **`presentation/`**
-   - `api.py`: endpoints `/v1/users` (listar, detalle, actualizar, eliminar).
+   - `api.py`: endpoints `/v1/users` (detalle, actualizar, eliminar).
    - `schemas/user_requests.py`: schemas de entrada para update.
    - `schemas/user_responses.py`: schemas de salida HTTP.
    - `mappers/user_mapper.py`: transformación schema ↔ DTO.

@@ -18,15 +18,6 @@ class UserRepository(UserDatasource):
     def __init__(self, session: Session):
         self.session = session
 
-    def get_all_users(self) -> list[User]:
-        """Return all persisted users."""
-        try:
-            users_model = self.session.query(UserModel).all()
-        except SQLAlchemyError as exc:
-            raise DatabaseError("failed to retrieve users") from exc
-
-        return [map_user_model_to_entity(user_model) for user_model in users_model]
-
     def get_user_by_id(self, user_id: str) -> User | None:
         """Return a user by id when found."""
         try:

@@ -105,10 +105,6 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
         assert me_response.status_code == 200
         assert me_response.json()["user"]["id"] == user_id
 
-        users_response = client.get("/v1/users", headers=_auth_headers(access_token))
-        assert users_response.status_code == 200
-        assert len(users_response.json()["users"]) == 1
-
         create_todo_response = client.post(
             "/v1/todos",
             headers=_auth_headers(access_token),

@@ -8,11 +8,6 @@ class UserDatasource(ABC):
     """Application port that defines persistence operations for users."""
 
     @abstractmethod
-    def get_all_users(self) -> list[User]:
-        """Return all users available in the data source."""
-        pass
-
-    @abstractmethod
     def get_user_by_id(self, user_id: str) -> User | None:
         """Return a user by id or None when it does not exist."""
         pass

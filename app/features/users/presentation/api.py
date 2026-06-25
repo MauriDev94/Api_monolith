@@ -7,12 +7,10 @@ from app.core.router.router import get_versioned_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.application.dto.delete_user_params import DeleteUserParams
 from app.features.users.application.usecases.delete_user_use_case import DeleteUserUseCase
-from app.features.users.application.usecases.get_all_users_use_case import GetAllUsersUseCase
 from app.features.users.application.usecases.get_user_by_id_use_case import GetUserByIdUseCase
 from app.features.users.application.usecases.update_user_use_case import UpdateUserUseCase
 from app.features.users.di.dependencies import (
     get_delete_user_use_case,
-    get_get_all_users_use_case,
     get_get_user_by_id_use_case,
     get_update_user_use_case,
 )
@@ -25,7 +23,6 @@ from app.features.users.presentation.mappers.user_mapper import (
 from app.features.users.presentation.schemas.user_requests import UpdateUserRequest
 from app.features.users.presentation.schemas.user_responses import (
     DeleteUserResponse,
-    GetAllUsersResponse,
     GetUserByIdResponse,
     UpdateUserResponse,
 )
@@ -45,16 +42,6 @@ def _ensure_self_access(path_user_id: str, current_user: User) -> None:
     if path_user_id != _require_user_id(current_user):
         # Keep not-found semantics to avoid user-id enumeration.
         raise NotFoundError("user not found")
-
-
-@v1_router.get("/users")
-def get_all_users(
-    _: Annotated[User, Depends(get_authenticated_user)],
-    get_all_users_use_case: Annotated[GetAllUsersUseCase, Depends(get_get_all_users_use_case)],
-) -> GetAllUsersResponse:
-    """List all users for authenticated clients."""
-    users = get_all_users_use_case.execute()
-    return GetAllUsersResponse(users=[map_user_entity_to_response(user) for user in users])
 
 
 @v1_router.get("/users/{user_id}")
