@@ -1,10 +1,11 @@
 from datetime import date
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.exceptions.error_handling import register_exception_handlers
-from app.core.exceptions.exceptions import ResourceNotFoundException
+from app.core.exceptions.exceptions import NotFoundError
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.todos.di.dependencies import (
     get_create_todo_use_case,
@@ -23,7 +24,7 @@ class StubUseCase:
     def __init__(self, result=None, exc: Exception | None = None):
         self.result = result
         self.exc = exc
-        self.received = None
+        self.received: Any = None
 
     def execute(self, params=None):
         self.received = params
@@ -121,7 +122,7 @@ def test_should_list_todos_for_authenticated_user() -> None:
 def test_should_return_404_when_get_todo_by_id_use_case_raises_not_found() -> None:
     """Valida que retorna 404 cuando obtener una tarea por id caso de uso lanza un error de no encontrado."""
     client = create_test_client()
-    get_by_id_use_case = StubUseCase(exc=ResourceNotFoundException("todo not found"))
+    get_by_id_use_case = StubUseCase(exc=NotFoundError("todo not found"))
     override_all_todo_use_cases(client, StubUseCase(result=None))
     client.app.dependency_overrides[get_get_todo_by_id_use_case] = lambda: get_by_id_use_case
     client.app.dependency_overrides[get_authenticated_user] = make_user

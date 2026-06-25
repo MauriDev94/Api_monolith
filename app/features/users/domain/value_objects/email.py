@@ -1,6 +1,8 @@
 import re
 from dataclasses import dataclass
 
+from app.common.domain_error import DomainError
+
 
 @dataclass(frozen=True, slots=True)
 class Email:
@@ -21,39 +23,39 @@ class Email:
 
     def _validate(self, email: str) -> None:
         if not email or len(email) > self._MAX_EMAIL_LENGTH:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if email.count("@") != 1:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         local_part, domain_part = email.split("@")
         if not local_part or not domain_part:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if len(local_part) > self._MAX_LOCAL_PART_LENGTH:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if local_part.startswith(".") or local_part.endswith(".") or ".." in local_part:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if not self._LOCAL_PART_PATTERN.fullmatch(local_part):
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if domain_part.startswith(".") or domain_part.endswith(".") or ".." in domain_part:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         labels = domain_part.split(".")
         if len(labels) < 2:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if any(len(label) > 63 for label in labels):
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if any(not self._DOMAIN_LABEL_PATTERN.fullmatch(label) for label in labels):
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
         if len(labels[-1]) < 2:
-            raise ValueError("invalid email format")
+            raise DomainError("invalid email format")
 
     def __str__(self) -> str:
         return self.value

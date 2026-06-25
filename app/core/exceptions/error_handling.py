@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
 
+from app.common.domain_error import DomainError
 from app.core.exceptions.exceptions import (
     ConflictError,
     DatabaseError,
@@ -43,9 +44,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def value_error_exception_handler(request: Request, exc: ValueError):
-    """Normalize domain validation errors into a consistent 400 response."""
-    _request_logger(request).warning(f"ValueError: {exc}")
+async def domain_error_exception_handler(request: Request, exc: DomainError):
+    """Map domain invariant violations to 400.
+
+    Solo DomainError (que el dominio lanza explícitamente) se trata como error del
+    cliente. Un ValueError "pelado" (no esperado, normalmente un bug) NO se maneja aquí:
+    cae al handler genérico → 500, en vez de disfrazarse de 400.
+    """
+    _request_logger(request).warning(f"DomainError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"message": str(exc) or "Validation error"},
@@ -89,7 +95,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 async def database_exception_handler(request: Request, exc: DatabaseError):
     """Handle persistence failures using a dedicated response envelope."""
-    _request_logger(request).error(f"DatabaseException: {exc}")
+    _request_logger(request).error(f"DatabaseError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -104,7 +110,7 @@ async def internal_server_error_exception_handler(
     exc: InternalServerError,
 ):
     """Handle known internal failures raised by the application layer."""
-    _request_logger(request).error(f"InternalServerErrorException: {exc}")
+    _request_logger(request).error(f"InternalServerError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -134,7 +140,7 @@ async def forbidden_exception_handler(request: Request, exc: ForbiddenError):
 
 async def resource_conflict_exception_handler(request: Request, exc: ConflictError):
     """Return a conflict response when resource uniqueness is violated."""
-    _request_logger(request).warning(f"ResourceConflictException: {exc}")
+    _request_logger(request).warning(f"ConflictError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"message": str(exc) or "Resource already exists"},
@@ -143,7 +149,7 @@ async def resource_conflict_exception_handler(request: Request, exc: ConflictErr
 
 async def resource_not_found_exception_handler(request: Request, exc: NotFoundError):
     """Return a not-found response for missing resources."""
-    _request_logger(request).warning(f"ResourceNotFoundException: {exc}")
+    _request_logger(request).warning(f"NotFoundError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content={"message": str(exc) or "Resource not found"},
@@ -175,7 +181,7 @@ def register_exception_handlers(app: FastAPI):
     """Register all global exception handlers in priority order."""
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(ValidationError, validation_error_exception_handler)
-    app.add_exception_handler(ValueError, value_error_exception_handler)
+    app.add_exception_handler(DomainError, domain_error_exception_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(DatabaseError, database_exception_handler)
     app.add_exception_handler(InternalServerError, internal_server_error_exception_handler)
