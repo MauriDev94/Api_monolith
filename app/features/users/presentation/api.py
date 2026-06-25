@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, status
 
 from app.core.exceptions.exceptions import InternalServerError, NotFoundError
 from app.core.router.router import get_versioned_router
@@ -22,7 +22,6 @@ from app.features.users.presentation.mappers.user_mapper import (
 )
 from app.features.users.presentation.schemas.user_requests import UpdateUserRequest
 from app.features.users.presentation.schemas.user_responses import (
-    DeleteUserResponse,
     GetUserByIdResponse,
     UpdateUserResponse,
 )
@@ -71,13 +70,12 @@ def update_user(
     return UpdateUserResponse(user=map_user_entity_to_response(user))
 
 
-@v1_router.delete("/users/{user_id}")
+@v1_router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     user_id: str,
     current_user: Annotated[User, Depends(get_authenticated_user)],
     delete_user_use_case: Annotated[DeleteUserUseCase, Depends(get_delete_user_use_case)],
-) -> DeleteUserResponse:
+) -> None:
     """Delete an existing user."""
     _ensure_self_access(path_user_id=user_id, current_user=current_user)
     delete_user_use_case.execute(DeleteUserParams(user_id=user_id))
-    return DeleteUserResponse(message="User deleted successfully")
