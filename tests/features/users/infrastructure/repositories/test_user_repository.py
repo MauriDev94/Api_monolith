@@ -31,20 +31,6 @@ def _seed_user(
 
 
 # Tipo de test: Integration
-def test_should_return_all_users(db_session: Session) -> None:
-    """Valida que el repositorio retorna todos los usuarios persistidos."""
-    repository = UserRepository(session=db_session)
-    _seed_user(db_session, name="Mauri", lastname="Salinas", email="mauri@mail.com")
-    _seed_user(db_session, name="Ana", lastname="Lopez", email="ana@mail.com")
-
-    users = repository.get_all_users()
-
-    assert len(users) == 2
-    emails = {user.email.value for user in users}
-    assert emails == {"mauri@mail.com", "ana@mail.com"}
-
-
-# Tipo de test: Integration
 def test_should_get_user_by_id(db_session: Session) -> None:
     """Valida que el repositorio obtiene un usuario por id."""
     repository = UserRepository(session=db_session)

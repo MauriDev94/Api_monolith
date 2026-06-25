@@ -8,6 +8,7 @@ from app.features.todos.application.dto.create_todo_params import CreateTodoPara
 from app.features.todos.application.dto.delete_todo_params import DeleteTodoParams
 from app.features.todos.application.dto.get_todo_by_id_params import GetTodoByIdParams
 from app.features.todos.application.dto.get_todos_params import GetTodosParams
+from app.features.todos.application.dto.get_todos_result import GetTodosResult
 from app.features.todos.application.dto.update_todo_params import UpdateTodoParams
 from app.features.todos.application.usecases.create_todo_use_case import CreateTodo
 from app.features.todos.application.usecases.delete_todo_use_case import DeleteTodo
@@ -43,17 +44,19 @@ def test_should_delegate_create_todo_to_datasource() -> None:
 
 
 # Tipo de test: Unit
-def test_should_delegate_get_todos_by_user_id_to_datasource() -> None:
-    """Valida que get-todos delega al datasource por user_id."""
+def test_should_delegate_get_todos_by_user_id_to_datasource_with_pagination() -> None:
+    """Valida que get-todos delega al datasource por user_id con limit/offset y empaqueta el total."""
     datasource = Mock(spec=TodoDatasource)
     expected_todos = [make_todo()]
     datasource.get_todos_by_user_id.return_value = expected_todos
+    datasource.count_todos_by_user_id.return_value = 1
     use_case = GetTodos(todo_datasource=datasource)
 
-    result = use_case.execute(GetTodosParams(user_id="user-1"))
+    result = use_case.execute(GetTodosParams(user_id="user-1", limit=20, offset=0))
 
-    datasource.get_todos_by_user_id.assert_called_once_with("user-1")
-    assert result == expected_todos
+    datasource.get_todos_by_user_id.assert_called_once_with("user-1", 20, 0)
+    datasource.count_todos_by_user_id.assert_called_once_with("user-1")
+    assert result == GetTodosResult(todos=expected_todos, total=1, limit=20, offset=0)
 
 
 # Tipo de test: Unit

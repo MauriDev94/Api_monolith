@@ -2,13 +2,14 @@ from app.features.todos.application.dto.create_todo_params import CreateTodoPara
 from app.features.todos.application.dto.delete_todo_params import DeleteTodoParams
 from app.features.todos.application.dto.get_todo_by_id_params import GetTodoByIdParams
 from app.features.todos.application.dto.get_todos_params import GetTodosParams
+from app.features.todos.application.dto.get_todos_result import GetTodosResult
 from app.features.todos.application.dto.update_todo_params import UpdateTodoParams
 from app.features.todos.domain.entities.todo import Todo
 from app.features.todos.presentation.schemas.todo_requests import (
     CreateTodoRequest,
     UpdateTodoRequest,
 )
-from app.features.todos.presentation.schemas.todo_responses import TodoResponse
+from app.features.todos.presentation.schemas.todo_responses import GetTodosResponse, TodoResponse
 
 
 def map_create_todo_request_to_params(user_id: str, request: CreateTodoRequest) -> CreateTodoParams:
@@ -40,9 +41,19 @@ def map_todo_id_to_get_params(todo_id: str, user_id: str) -> GetTodoByIdParams:
     return GetTodoByIdParams(todo_id=todo_id, user_id=user_id)
 
 
-def map_user_id_to_get_todos_params(user_id: str) -> GetTodosParams:
-    """Map authenticated user id to list DTO."""
-    return GetTodosParams(user_id=user_id)
+def map_user_id_to_get_todos_params(user_id: str, limit: int, offset: int) -> GetTodosParams:
+    """Map authenticated user id and pagination query params to list DTO."""
+    return GetTodosParams(user_id=user_id, limit=limit, offset=offset)
+
+
+def map_get_todos_result_to_response(result: GetTodosResult) -> GetTodosResponse:
+    """Map paginated use-case result to HTTP response schema."""
+    return GetTodosResponse(
+        todos=[map_todo_entity_to_response(todo) for todo in result.todos],
+        total=result.total,
+        limit=result.limit,
+        offset=result.offset,
+    )
 
 
 def map_todo_id_to_delete_params(todo_id: str, user_id: str) -> DeleteTodoParams:

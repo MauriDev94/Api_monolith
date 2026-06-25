@@ -1,12 +1,14 @@
 from datetime import date
 from typing import Any
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.exceptions.exceptions import NotFoundError
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
+from app.features.todos.application.dto.get_todos_result import GetTodosResult
 from app.features.todos.di.dependencies import (
     get_create_todo_use_case,
     get_delete_todo_use_case,
@@ -103,10 +105,12 @@ def test_should_create_todo_when_authenticated() -> None:
 
 
 # Tipo de test: Integration
-def test_should_list_todos_for_authenticated_user() -> None:
-    """Valida que listar tareas para autenticado usuario."""
+def test_should_list_todos_for_authenticated_user_with_default_pagination() -> None:
+    """Valida que listar tareas usa limit=20/offset=0 por defecto y retorna metadata."""
     client = create_test_client()
-    list_use_case = StubUseCase(result=[make_todo()])
+    list_use_case = StubUseCase(
+        result=GetTodosResult(todos=[make_todo()], total=1, limit=20, offset=0)
+    )
     override_all_todo_use_cases(client, StubUseCase(result=None))
     client.app.dependency_overrides[get_get_todos_use_case] = lambda: list_use_case
     client.app.dependency_overrides[get_authenticated_user] = make_user
@@ -114,8 +118,52 @@ def test_should_list_todos_for_authenticated_user() -> None:
     response = client.get("/v1/todos")
 
     assert response.status_code == 200
-    assert len(response.json()["todos"]) == 1
+    body = response.json()
+    assert len(body["todos"]) == 1
+    assert body["total"] == 1
+    assert body["limit"] == 20
+    assert body["offset"] == 0
     assert list_use_case.received.user_id == "user-1"
+    assert list_use_case.received.limit == 20
+    assert list_use_case.received.offset == 0
+
+
+# Tipo de test: Integration
+def test_should_list_todos_with_custom_limit_and_offset() -> None:
+    """Valida que limit/offset pasados por query se propagan al caso de uso."""
+    client = create_test_client()
+    list_use_case = StubUseCase(
+        result=GetTodosResult(todos=[make_todo()], total=5, limit=2, offset=2)
+    )
+    override_all_todo_use_cases(client, StubUseCase(result=None))
+    client.app.dependency_overrides[get_get_todos_use_case] = lambda: list_use_case
+    client.app.dependency_overrides[get_authenticated_user] = make_user
+
+    response = client.get("/v1/todos?limit=2&offset=2")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 5
+    assert body["limit"] == 2
+    assert body["offset"] == 2
+    assert list_use_case.received.limit == 2
+    assert list_use_case.received.offset == 2
+
+
+# Tipo de test: Integration
+@pytest.mark.parametrize("query", ["limit=0", "limit=101", "offset=-1"])
+def test_should_return_400_when_pagination_params_are_out_of_range(query: str) -> None:
+    """Valida que limit/offset fuera de rango retornan 400 (validación de transporte).
+
+    FastAPI emite 422 para violaciones de `Query(...)`, pero el handler global de
+    `RequestValidationError` del repo las normaliza a 400 (ver error_handling.py)."""
+    client = create_test_client()
+    override_all_todo_use_cases(client, StubUseCase(result=None))
+    client.app.dependency_overrides[get_authenticated_user] = make_user
+
+    response = client.get(f"/v1/todos?{query}")
+
+    assert response.status_code == 400
 
 
 # Tipo de test: Integration

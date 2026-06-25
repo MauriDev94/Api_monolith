@@ -12,7 +12,11 @@ class TodoDatasource(ABC):
         pass
 
     @abstractmethod
-    def get_todos_by_user_id(self, user_id: str) -> list[Todo]:
+    def get_todos_by_user_id(self, user_id: str, limit: int, offset: int) -> list[Todo]:
+        pass
+
+    @abstractmethod
+    def count_todos_by_user_id(self, user_id: str) -> int:
         pass
 
     @abstractmethod

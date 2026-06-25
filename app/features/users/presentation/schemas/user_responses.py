@@ -15,12 +15,6 @@ class UserResponse(BaseModel):
     updated_at: datetime | None
 
 
-class GetAllUsersResponse(BaseModel):
-    """Response schema for users list endpoint."""
-
-    users: list[UserResponse]
-
-
 class GetUserByIdResponse(BaseModel):
     """Response schema for get user by id endpoint."""
 

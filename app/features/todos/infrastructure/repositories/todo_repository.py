@@ -40,13 +40,26 @@ class TodoRepository(TodoDatasource):
 
         return map_todo_model_to_entity(todo_model)
 
-    def get_todos_by_user_id(self, user_id: str) -> list[Todo]:
+    def get_todos_by_user_id(self, user_id: str, limit: int, offset: int) -> list[Todo]:
         try:
-            todos_model = self.session.query(TodoModel).filter(TodoModel.user_id == user_id).all()
+            todos_model = (
+                self.session.query(TodoModel)
+                .filter(TodoModel.user_id == user_id)
+                .order_by(TodoModel.created_at, TodoModel.id)
+                .limit(limit)
+                .offset(offset)
+                .all()
+            )
         except SQLAlchemyError as exc:
             raise DatabaseError("failed to retrieve todos") from exc
 
         return [map_todo_model_to_entity(todo_model) for todo_model in todos_model]
+
+    def count_todos_by_user_id(self, user_id: str) -> int:
+        try:
+            return self.session.query(TodoModel).filter(TodoModel.user_id == user_id).count()
+        except SQLAlchemyError as exc:
+            raise DatabaseError("failed to count todos") from exc
 
     def get_todo_by_id(self, todo_id: str) -> Todo | None:
         try:

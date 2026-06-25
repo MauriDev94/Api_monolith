@@ -19,7 +19,8 @@ gate `--cov-branch --cov-fail-under=82`, gate de no-drift (`alembic check`) acti
 | 4b | #82 | Reconciliación de esquema (FKs, `google_id`, índice) + gate de no-drift |
 | 4c | #84 | Puerto `UserProvider` (A1): `auth` desacoplado de la infra de `users` |
 | 4d | #86 | Excepciones de dominio (`DomainError`, T4) + quitar alias duplicados (T7) |
-| 5 (parcial) | #87 | **Body-size limit middleware** + connection pool (`pool_pre_ping`/`pool_recycle`, O5) + este doc |
+| 5 (parcial) | #88 | **Body-size limit middleware** + connection pool (`pool_pre_ping`/`pool_recycle`, O5) + este doc |
+| 5 | #90 | **O4**: eliminado `GET /v1/users` (listado, PII leak) + paginación `limit`/`offset` en `GET /v1/todos` (`total`, `limit`, `offset` en la respuesta) |
 
 Cobertura ~86.9%. Bloques 1-3 de la auditoría: remediados. Bloque 4: casi completo.
 
@@ -27,7 +28,6 @@ Cobertura ~86.9%. Bloques 1-3 de la auditoría: remediados. Bloque 4: casi compl
 
 Pendiente para una ronda posterior (no bloquea producción):
 
-- **O4** — Paginación en listados (`get_todos`, `get_all_users`) y **restringir `GET /v1/users`** (hoy expone PII de todos los usuarios a cualquier autenticado). *El de mayor valor de los que quedan.*
 - **O7** — Versionado de API inconsistente (`/auth/v1` vs `/v1/users`). ⚠️ Cambiar URLs es disruptivo para el frontend desplegado; evaluar antes.
 - **O8** — `DELETE` devuelve 200+body → debería ser 204.
 - **O9** — El `Dockerfile` no lo usa Render (`runtime: python`); decidir si se mantiene para local o se elimina.

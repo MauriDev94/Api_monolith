@@ -6,3 +6,5 @@ class GetTodosParams:
     """Input DTO for listing todos by authenticated user."""
 
     user_id: str
+    limit: int
+    offset: int

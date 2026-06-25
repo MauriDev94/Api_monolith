@@ -26,6 +26,9 @@ class GetTodosResponse(BaseModel):
     """Response schema for list todos endpoint."""
 
     todos: list[TodoResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 class GetTodoByIdResponse(BaseModel):

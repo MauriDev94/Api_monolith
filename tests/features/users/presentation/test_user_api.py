@@ -7,7 +7,6 @@ from app.core.exceptions.error_handling import register_exception_handlers
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.di.dependencies import (
     get_delete_user_use_case,
-    get_get_all_users_use_case,
     get_get_user_by_id_use_case,
     get_update_user_use_case,
 )
@@ -46,7 +45,6 @@ def create_test_client() -> TestClient:
 
 def override_all_user_use_cases(client: TestClient, use_case: StubUseCase) -> None:
     app = client.app
-    app.dependency_overrides[get_get_all_users_use_case] = lambda: use_case
     app.dependency_overrides[get_get_user_by_id_use_case] = lambda: use_case
     app.dependency_overrides[get_update_user_use_case] = lambda: use_case
     app.dependency_overrides[get_delete_user_use_case] = lambda: use_case
@@ -125,3 +123,14 @@ def test_should_return_400_when_update_user_email_is_invalid() -> None:
     assert response.status_code == 400
     assert response.json()["message"] == "Validation error"
     assert use_case.received is None
+
+
+# Tipo de test: Integration
+def test_should_not_expose_list_all_users_endpoint() -> None:
+    """Valida que GET /v1/users (listado) fue removido (PII leak)."""
+    client = create_test_client()
+    client.app.dependency_overrides[get_authenticated_user] = lambda: make_user("user-1")
+
+    response = client.get("/v1/users")
+
+    assert response.status_code == 404

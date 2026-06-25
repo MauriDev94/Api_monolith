@@ -9,7 +9,6 @@ from app.features.users.application.dto.delete_user_params import DeleteUserPara
 from app.features.users.application.dto.get_user_by_id_params import GetUserByIdParams
 from app.features.users.application.dto.update_user_params import UpdateUserParams
 from app.features.users.application.usecases.delete_user_use_case import DeleteUserUseCase
-from app.features.users.application.usecases.get_all_users_use_case import GetAllUsersUseCase
 from app.features.users.application.usecases.get_user_by_id_use_case import GetUserByIdUseCase
 from app.features.users.application.usecases.update_user_use_case import UpdateUserUseCase
 from app.features.users.domain.entities.user import User
@@ -25,20 +24,6 @@ def make_user() -> User:
         password_hash="hashed-password",
         birthdate=date(2000, 1, 1),
     )
-
-
-# Tipo de test: Unit
-def test_should_delegate_get_all_users_to_datasource() -> None:
-    """Valida que el caso de uso delega el listado de usuarios al datasource."""
-    datasource = Mock(spec=UserDatasource)
-    expected_users = [make_user()]
-    datasource.get_all_users.return_value = expected_users
-    use_case = GetAllUsersUseCase(user_datasource=datasource)
-
-    result = use_case.execute()
-
-    datasource.get_all_users.assert_called_once_with()
-    assert result == expected_users
 
 
 # Tipo de test: Unit
@@ -170,7 +155,6 @@ def test_should_delegate_delete_user_to_datasource() -> None:
     datasource = Mock(spec=UserDatasource)
     use_case = DeleteUserUseCase(user_datasource=datasource)
 
-    result = use_case.execute(DeleteUserParams(user_id="user-1"))
+    use_case.execute(DeleteUserParams(user_id="user-1"))
 
     datasource.delete.assert_called_once_with("user-1")
-    assert result is None
