@@ -1,3 +1,4 @@
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -27,25 +28,55 @@ class AppSettings(BaseSettings):
     cors_allow_credentials: bool = True
 
 
+# Reintentos de migración al arranque, para tolerar una DB temporalmente inalcanzable.
+_MIGRATION_MAX_RETRIES = 5
+_MIGRATION_RETRY_DELAY_SECONDS = 2  # backoff lineal: 2, 4, 6, 8 s
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Apply Alembic migrations on startup when running in production."""
-    from alembic import command
-    from alembic.config import Config
-
     app_env = os.getenv("APP_ENV", "dev")
     if app_env == "production":
+        await _apply_migrations_on_startup()
+    yield
+
+
+async def _apply_migrations_on_startup() -> None:
+    """Aplica migraciones al arrancar, con resiliencia:
+
+    - DB inalcanzable (OperationalError: DNS/conexión) → reintenta con backoff. Cubre el
+      caso transitorio (la DB aún no está lista, un blip de red al bootear).
+    - Error de migración/esquema con la DB alcanzable → fail-fast: no arrancar sirviendo
+      contra un esquema roto o a medias.
+    - Si tras agotar los reintentos la DB sigue inalcanzable → arranca en modo DEGRADADO
+      (sin migrar) para que /health responda 503 y se pueda diagnosticar, en vez de
+      crash-loopear a ciegas (el proceso muriendo tapaba incluso /health).
+    """
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy.exc import OperationalError
+
+    alembic_cfg = Config("alembic.ini")
+    for attempt in range(1, _MIGRATION_MAX_RETRIES + 1):
         try:
-            alembic_cfg = Config("alembic.ini")
             command.upgrade(alembic_cfg, "head")
             logger.info("Alembic migrations applied successfully")
-        except Exception as e:
-            logger.error(f"Failed to apply migrations: {e}")
-            # Fail-fast: no servir tráfico contra un esquema roto/desactualizado.
-            # En Render free no hay shell ni migración manual → el startup es el único
-            # camino; dejar morir el proceso para que la plataforma reintente/avise.
+            return
+        except OperationalError as exc:
+            logger.warning(
+                f"DB unreachable on migration attempt {attempt}/{_MIGRATION_MAX_RETRIES}: {exc}"
+            )
+            if attempt < _MIGRATION_MAX_RETRIES:
+                await asyncio.sleep(_MIGRATION_RETRY_DELAY_SECONDS * attempt)
+        except Exception as exc:
+            logger.error(f"Migration failed (schema error) — aborting startup: {exc}")
             raise
-    yield
+
+    logger.error(
+        "DB still unreachable after retries — starting in DEGRADED mode; "
+        "/health will report unhealthy until the database is restored."
+    )
 
 
 settings = AppSettings()
