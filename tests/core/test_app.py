@@ -45,6 +45,28 @@ def test_lifespan_fails_fast_when_migration_fails(monkeypatch: pytest.MonkeyPatc
 
 
 # Tipo de test: Integration
+def test_lifespan_starts_degraded_when_db_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """DB inalcanzable (OperationalError): tras reintentar, arranca en modo degradado
+    (no re-lanza) para no crash-loopear y dejar /health accesible."""
+    from sqlalchemy.exc import OperationalError
+
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setattr(main_module, "_MIGRATION_RETRY_DELAY_SECONDS", 0)
+
+    def unreachable(*args: object, **kwargs: object) -> None:
+        raise OperationalError("stmt", None, Exception("could not translate host name"))
+
+    monkeypatch.setattr("alembic.command.upgrade", unreachable)
+
+    async def run_lifespan() -> None:
+        async with main_module.lifespan(app):
+            pass
+
+    # No debe lanzar: arranca degradado tras agotar los reintentos.
+    asyncio.run(run_lifespan())
+
+
+# Tipo de test: Integration
 def test_security_headers_present_on_api_responses() -> None:
     """S7: HSTS + CSP + nosniff presentes en respuestas de API."""
     client = TestClient(app, raise_server_exceptions=False)
