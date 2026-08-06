@@ -1,18 +1,25 @@
+# Blueprint DESCRIPTIVO del deploy en Render.
+#
+# IMPORTANTE: el servicio NO se sincroniza automáticamente desde este archivo.
+# Se administra desde el dashboard de Render (pestaña Environment). Este archivo
+# documenta la configuración real para que el deploy sea reproducible y auditable.
+#
+# Runtime real: Docker (el CMD del Dockerfile es lo que corre en producción).
+# Base de datos: Postgres EXTERNO en Neon (free tier, PG 16) — no un recurso de Render.
 services:
   - type: web
-    name: monolith-api
-    runtime: python
+    name: api-monolith
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: APP_ENV
         value: production
+      # Postgres externo (Neon). Usar el endpoint DIRECTO (sin `-pooler`) y con
+      # `?sslmode=require`. Se setea manualmente en el dashboard.
       - key: DATABASE_URL
-        fromDatabase:
-          name: monolith-db
-          property: connectionString
+        sync: false
       # Secrets — set manually in Render dashboard (Environment tab)
       - key: JWT_SECRET_KEY
         sync: false
@@ -26,9 +33,3 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI
         sync: false
-
-databases:
-  - name: monolith-db
-    plan: free
-    databaseName: monolith
-    user: monolith_user
