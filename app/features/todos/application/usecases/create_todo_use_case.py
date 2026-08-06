@@ -11,4 +11,10 @@ class CreateTodo(UseCase[CreateTodoParams, Todo]):
         self.todo_datasource = todo_datasource
 
     def execute(self, params: CreateTodoParams) -> Todo:
-        return self.todo_datasource.create_todo(params)
+        todo = Todo.create_new(
+            user_id=params.user_id,
+            title=params.title,
+            description=params.description,
+            due_date=params.due_date,
+        )
+        return self.todo_datasource.create_todo(todo)

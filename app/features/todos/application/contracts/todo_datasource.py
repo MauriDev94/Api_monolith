@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-from app.features.todos.application.dto.create_todo_params import CreateTodoParams
 from app.features.todos.domain.entities.todo import Todo
 
 
@@ -8,7 +7,8 @@ class TodoDatasource(ABC):
     """Application port for todo persistence operations."""
 
     @abstractmethod
-    def create_todo(self, params: CreateTodoParams) -> Todo:
+    def create_todo(self, todo: Todo) -> Todo:
+        """Persist a todo entity already validated by the domain."""
         pass
 
     @abstractmethod

@@ -1,30 +1,21 @@
-from datetime import UTC, datetime
+from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-
-def _reject_past_due_date(value: datetime | None) -> datetime | None:
-    """Regla de creación: el due_date provisto por el usuario no puede ser pasado."""
-    if value is not None:
-        aware = value if value.tzinfo is not None else value.replace(tzinfo=UTC)
-        if aware < datetime.now(UTC):
-            raise ValueError("due_date cannot be in the past")
-    return value
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateTodoRequest(BaseModel):
-    """Request schema for creating a todo."""
+    """Request schema for creating a todo.
+
+    Solo restricciones de transporte (tipos y tamaño del payload). La regla de
+    negocio "no se puede agendar en el pasado" vive en `Todo.create_new()`, para
+    que aplique venga la petición de donde venga y no solo por HTTP.
+    """
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
     title: str = Field(min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=2000)
     due_date: datetime | None = Field(default=None)
-
-    @field_validator("due_date")
-    @classmethod
-    def validate_due_date_not_past(cls, value: datetime | None) -> datetime | None:
-        return _reject_past_due_date(value)
 
 
 class UpdateTodoRequest(BaseModel):

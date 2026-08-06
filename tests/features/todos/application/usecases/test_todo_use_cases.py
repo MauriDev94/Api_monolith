@@ -30,18 +30,55 @@ def make_todo(*, user_id: str = "user-1", is_completed: bool = False) -> Todo:
 
 
 # Tipo de test: Unit
-def test_should_delegate_create_todo_to_datasource() -> None:
-    """Valida que create delega al datasource."""
+def test_should_build_domain_entity_before_delegating_create_to_datasource() -> None:
+    """Valida que create construye la entidad de dominio y le pasa esa entidad al datasource."""
     datasource = Mock(spec=TodoDatasource)
     expected_todo = make_todo()
     datasource.create_todo.return_value = expected_todo
     use_case = CreateTodo(todo_datasource=datasource)
-    params = CreateTodoParams(user_id="user-1", title="Buy milk", description="at supermarket")
+    params = CreateTodoParams(user_id="user-1", title="  Buy milk  ", description="at supermarket")
 
     result = use_case.execute(params)
 
-    datasource.create_todo.assert_called_once_with(params)
+    datasource.create_todo.assert_called_once()
+    entity = datasource.create_todo.call_args.args[0]
+    assert isinstance(entity, Todo)
+    assert entity.id is None
+    assert entity.user_id == "user-1"
+    assert entity.title == "Buy milk"
+    assert entity.is_completed is False
     assert result == expected_todo
+
+
+# Tipo de test: Unit
+def test_should_reject_past_due_date_before_touching_the_datasource_on_create() -> None:
+    """Valida que create falla en el dominio y NO llega a persistir cuando la fecha es pasada."""
+    datasource = Mock(spec=TodoDatasource)
+    use_case = CreateTodo(todo_datasource=datasource)
+    params = CreateTodoParams(
+        user_id="user-1",
+        title="Buy milk",
+        description=None,
+        due_date=datetime.now(UTC) - timedelta(days=1),
+    )
+
+    with pytest.raises(ValueError, match="due_date cannot be in the past"):
+        use_case.execute(params)
+
+    datasource.create_todo.assert_not_called()
+
+
+# Tipo de test: Unit
+def test_should_reject_empty_title_before_touching_the_datasource_on_create() -> None:
+    """Valida que un titulo vacio se rechaza en el dominio, sin escribir en la base."""
+    datasource = Mock(spec=TodoDatasource)
+    use_case = CreateTodo(todo_datasource=datasource)
+    params = CreateTodoParams(user_id="user-1", title="   ", description=None)
+
+    with pytest.raises(ValueError, match="title cannot be empty"):
+        use_case.execute(params)
+
+    datasource.create_todo.assert_not_called()
 
 
 # Tipo de test: Unit
