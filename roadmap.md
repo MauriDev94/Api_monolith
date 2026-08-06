@@ -1,7 +1,7 @@
 # Roadmap — Monolith API a MVP Profesional
 
-**Última actualización:** 2026-05-17
-**Estado general:** ✅ En producción (Render)
+**Última actualización:** 2026-07-04
+**Estado general:** ✅ En producción (Render) · remediación de production-readiness completada
 
 ---
 
@@ -11,14 +11,17 @@
 |------|-----------|--------|
 | 1. Correcciones Críticas | 🟢 | ✅ Completado |
 | 2. SDD + Observabilidad | 🟢 | ✅ Completado |
-| 3. Testing + Coverage | 🟢 | ✅ Completado (92% coverage) |
-| 4. Recordatorios (TODOs) | 🟢 | ✅ Completado |
+| 3. Testing + Coverage | 🟢 | ✅ Completado (92% line en su momento; hoy gate 82% branch) |
+| 4. Recordatorios (TODOs) | 🟢 | ⏸️ Feature `notifications` **eliminada** en Fase 11 (#80) |
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
-| 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL) |
-| 7. Refactor Notifications | 🟢 | ✅ Completado (7.1 + 7.2 + 7.3) |
-| 8. OTP Password Reset | 🟢 | ✅ Completado |
-| 9. Email Notifications | 🟢 | ✅ Completado (9.8 pendiente) |
-| 10. Google SSO Login | 🟢 | ✅ Completado |
+| 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL en Neon) |
+| 7. Refactor Notifications | 🟢 | ⏸️ Superado — la feature se **eliminó** después (#80) |
+| 8. OTP Password Reset | 🟢 | ✅ Completado (endurecido a HMAC en #78) |
+| 9. Email Notifications | 🟢 | ⏸️ Superado — ligado a `notifications`, **eliminada** (#80) |
+| 10. Google SSO Login | 🟢 | ✅ Completado (CSRF `state` validado en #78) |
+| **11. Remediación Production-Readiness** | 🟢 | ✅ **Completado (auditoría 4 bloques → PRs #66–#94)** |
+
+> **Nota:** las Fases 4/7/9 giraban en torno a la feature `notifications`, que fue **eliminada** durante la Fase 11 (dead code / YAGNI). Se conservan aquí como registro histórico; el diseño original vive en `docs/history/`.
 
 ---
 
@@ -300,7 +303,7 @@ SMTP_USE_TLS=true
 
 - [x] Elegir: **Render** (100% gratis sin CC)
 - [x] Healthcheck `/health` con DB ping
-- [x] PostgreSQL managed en Render (monolith_gl63)
+- [x] PostgreSQL managed — hoy en **Neon** (free tier, PG 16), no en Render: la Postgres free de Render se **auto-elimina a los ~30 días**, lo que tumbó producción el 2026-08-05. Neon suspende el compute por inactividad pero no borra la base. Se apunta vía `DATABASE_URL` (endpoint directo, `?sslmode=require`) sin cambios de código.
 - [x] Variables de entorno configuradas
 - [x] Auto-create tables en startup (workaround para free tier)
 
@@ -374,8 +377,8 @@ SMTP_USE_TLS=true
 - [x] Definir estrategia de compatibilidad **opción B**: refactor + ajustes API versionados
 
 **Artifacts 7.1:**
-- `docs/SDD_PROPOSAL_PHASE7_NOTIFICATIONS.md`
-- `docs/PHASE7_1_NOTIFICATIONS_AUDIT.md`
+- `docs/history/SDD_PROPOSAL_PHASE7_NOTIFICATIONS.md`
+- `docs/PHASE7_1_NOTIFICATIONS_AUDIT.md` (histórico)
 
 ### 7.2 — Refactor por capas
 **Estado:** ✅ Completado (2026-04-27, PRs #25-#28)
@@ -470,7 +473,7 @@ SMTP_USE_TLS=true
 
 **Prioridad:** 🟡 Alta
 **Estado:** ✅ Completado
-**Spec:** `docs/SDD_PROPOSAL_PHASE10_GOOGLE_SSO.md`
+**Spec:** `docs/history/SDD_PROPOSAL_PHASE10_GOOGLE_SSO.md`
 
 ---
 
@@ -550,6 +553,31 @@ SMTP_USE_TLS=true
 
 ---
 
+## Fase 11: Remediación Production-Readiness
+
+**Prioridad:** 🟢 Completado
+**Estado:** ✅ Completado (PRs #66–#94)
+**Fuente:** `docs/REMEDIATION_PROGRESS.md` · auditoría: `docs/history/AUDIT_PRODUCTION_READINESS.md`
+
+Auditoría formal de 4 bloques (arquitectura, seguridad, testing, operación) y remediación por fases (cada fase = 1 issue + 1 PR):
+
+- **#70 (Fase 1)** — Red de tests sobre **Postgres real** (testcontainers) + fix drift `due_date` (O1) + `--cov-branch`.
+- **#72 (Fase 2)** — Rehidratación de `Todo` sin lanzar (A2) · migración en startup **fail-fast** (O2, después matizado en #94) · `/health` → 503 (O3).
+- **#74 (Fase 3a)** — Rate limiting registrado + IP real desde `X-Forwarded-For` (S1/O12) · logs sanitizados (S4) · 500 sin `str(exc)` (S6) · HSTS/CSP (S7) · `InvalidHash` (S8).
+- **#78 (Fase 3b)** — CSRF OAuth `state` validado (S2) · OTP con HMAC-SHA256 (S5).
+- **#80 (Fase 4a)** — **Eliminada la feature `notifications`** (dead code / YAGNI).
+- **#82 (Fase 4b)** — Reconciliación de esquema (FKs, índices) + **gate de no-drift** (`alembic check`).
+- **#84 (Fase 4c)** — Puerto **`UserProvider`**: `auth` desacoplado de la infra de `users` (A1).
+- **#86 (Fase 4d)** — Excepciones de dominio (`DomainError`, T4) + quitar alias duplicados (T7).
+- **#88 (Fase 5)** — Body-size limit middleware + connection pool (`pool_pre_ping`/`pool_recycle`, O5).
+- **#90 (Fase 5)** — Eliminado `GET /v1/users` (fuga de PII, O4) + paginación en `GET /v1/todos`.
+- **#92 (Fase 5)** — `DELETE` devuelve **204 No Content** sin body en vez de `200` + `{"message": ...}` (O8).
+- **#94** — **Startup resiliente**: reintentos con backoff ante DB inalcanzable, fail-fast preservado ante errores de esquema, arranque en **modo degradado** (`/health` → 503) si la DB no vuelve, en vez de crash-loop. Además `docker-compose` sin auto-start.
+
+**Resultado:** los 4 bloques de la auditoría remediados; ~87% branch coverage.
+
+---
+
 ## Notas de Deploy
 
 ### Alembic en Startup (Free Tier)
@@ -559,7 +587,10 @@ SMTP_USE_TLS=true
 - ✅ Garantiza que las migraciones se corren sin acceso shell
 - ✅ No necesita herramientas externas (como Render CLI)
 - ⚠️ Cada deploy corre alembic aunque no haya migraciones nuevas (overhead mínimo)
-- ⚠️ Si alembic falla silenciosamente, puede dejar la DB en estado inconsistente
+- ✅ **Arranque resiliente** (#72 fail-fast, matizado en #94). El comportamiento hoy distingue dos fallas:
+  - **DB inalcanzable** (DNS/conexión, `OperationalError`) → reintentos con backoff lineal. Cubre el caso transitorio de la DB que aún no está lista.
+  - **Error de esquema/migración** con la DB alcanzable → **fail-fast**: no arrancar sirviendo contra un esquema roto o a medias.
+  - Si tras agotar reintentos la DB sigue caída → arranca en **modo degradado** y `/health` responde 503, en vez de crash-loopear. El proceso muriendo tapaba incluso `/health` y dejaba el incidente sin diagnóstico.
 
 **Alternativas consideradas:**
 - Render CLI con shell (requiere pago o trabajo manual)
@@ -574,6 +605,8 @@ SMTP_USE_TLS=true
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-07-04 | 📚 Docs ordenados: históricos a `docs/history/`; README/README_ES/ARCHITECTURE/roadmap al día |
+| 2026-06-24 | ✅ **Fase 11 completa: remediación production-readiness (PRs #66–#90)** — Postgres tests, rate limiting, CSRF, HMAC, UserProvider, `notifications` eliminada, paginación |
 | 2026-05-05 | ✅ 10 completa: Google SSO Login funciona en producción (10.1-10.7) |
 | 2026-05-05 | ✅ 10.1-10.5 completados: Domain, Migration, Contracts, Provider, Repository (#44-#46) |
 | 2026-05-04 | 🚧 10 iniciada: Google SSO Login (propuesta + specs + design en docs/) |

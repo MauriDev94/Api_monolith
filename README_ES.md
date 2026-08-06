@@ -1,10 +1,10 @@
 # Monolith API
 
-API REST lista para producción construida con **FastAPI**, **Clean Architecture** y **Domain-Driven Design** — desplegada en Render con PostgreSQL.
+API REST lista para producción construida con **FastAPI**, **Clean Architecture** y **Domain-Driven Design** — desplegada en Render con PostgreSQL (Neon).
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.136-green)](https://fastapi.tiangolo.com/)
-[![Coverage](https://img.shields.io/badge/Coverage-92%25-brightgreen)]()
+[![Coverage](https://img.shields.io/badge/Coverage-86%25-brightgreen)]()
 [![Deploy](https://img.shields.io/badge/Deploy-Render-purple)](https://api-monolith.onrender.com)
 
 **API en vivo:** https://api-monolith.onrender.com/docs
@@ -18,9 +18,12 @@ API REST lista para producción construida con **FastAPI**, **Clean Architecture
 - Autenticación JWT con rotación de refresh token y revocación
 - Integración Google OAuth2 SSO
 - Restablecimiento de contraseña basado en OTP por email (Resend)
+- Rate limiting por IP (proxy-aware) en endpoints de autenticación
+- Protección CSRF en OAuth2 vía cookie httpOnly firmada (`state`)
+- Puertos entre features (`UserProvider`) — auth desacoplado de la infraestructura de users
 - Logging estructurado con trazabilidad por request (`X-Request-ID`)
 - Manejo global de excepciones con respuestas HTTP consistentes
-- Pirámide de tests: unit → integración → E2E (92% coverage)
+- Pirámide de tests sobre **PostgreSQL real** (testcontainers) con migraciones Alembic — ~87% branch coverage
 
 ---
 
@@ -31,7 +34,7 @@ API REST lista para producción construida con **FastAPI**, **Clean Architecture
 | Framework | FastAPI |
 | ORM | SQLAlchemy 2.0 |
 | Migraciones | Alembic |
-| Base de datos | PostgreSQL |
+| Base de datos | PostgreSQL 16 (Neon) |
 | Auth | JWT (PyJWT) + Google OAuth2 |
 | Hashing de contraseñas | Argon2 |
 | Email | Resend API |
@@ -57,7 +60,7 @@ app/features/<feature>/
 
 **Regla de dependencia:** las capas externas dependen de las internas, nunca al revés. El dominio no tiene dependencias de frameworks.
 
-Para detalles arquitectónicos completos, decisiones y diagramas → [`ARCHITECTURE.md`](ARCHITECTURE.md)
+Para detalles arquitectónicos completos, decisiones y diagramas → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ---
 
@@ -75,21 +78,18 @@ Para detalles arquitectónicos completos, decisiones y diagramas → [`ARCHITECT
 - `POST /auth/v1/link-google` — vincular cuenta Google a usuario existente
 
 ### Users
-- `GET    /v1/users` — listar todos los usuarios
 - `GET    /v1/users/{id}` — obtener usuario por id (solo propio)
 - `PUT    /v1/users/{id}` — actualizar perfil (solo propio)
-- `DELETE /v1/users/{id}` — eliminar cuenta (solo propio)
+- `DELETE /v1/users/{id}` — eliminar cuenta (solo propio, `204 No Content`)
+
+> El endpoint de listar-todos-los-usuarios fue **eliminado** — exponía la PII de cada usuario (nombre, email, fecha de nacimiento) a cualquier autenticado.
 
 ### Todos
-- `POST   /v1/todos` — crear tarea
-- `GET    /v1/todos` — listar tareas (filtradas por usuario autenticado)
+- `POST   /v1/todos` — crear tarea (`201 Created`)
+- `GET    /v1/todos` — listar tareas (scope por usuario, paginado con `limit`/`offset`, retorna `total`)
 - `GET    /v1/todos/{id}` — obtener tarea por id (con control de ownership)
 - `PUT    /v1/todos/{id}` — actualizar tarea
-- `DELETE /v1/todos/{id}` — eliminar tarea
-
-### Notifications
-- `GET   /v1/notifications` — listar notificaciones del usuario autenticado
-- `PATCH /v1/notifications/{id}/read` — marcar notificación como leída
+- `DELETE /v1/todos/{id}` — eliminar tarea (`204 No Content`)
 
 ---
 
@@ -104,6 +104,16 @@ Para detalles arquitectónicos completos, decisiones y diagramas → [`ARCHITECT
 **Value Object Email** — validación por regex compatible con RFC en el dominio, no en la capa de transporte. La normalización (minúsculas, trim) ocurre en la construcción.
 
 **Google SSO retorna JSON, no redirect** — `GET /auth/v1/google` retorna `{ authorization_url }` para que el frontend decida cómo navegar, manteniendo el backend sin estado.
+
+**Protección CSRF en OAuth2** — el `state` se ata al navegador con una cookie httpOnly firmada al iniciar y se compara con `secrets.compare_digest` en el callback (rechaza si no coincide o falta).
+
+**Puertos entre features en vez de modelos compartidos** — `users` expone el contrato `UserProvider`; `auth` depende de ese puerto, no del modelo ORM de `users`. Las features evolucionan de forma independiente.
+
+**Excepciones de dominio mapeadas explícitamente** — el dominio lanza `DomainError` tipadas (→ `400`), mientras que un `ValueError` pelado inesperado cae a `500`, para que los bugs internos nunca se disfracen de error de validación del cliente.
+
+**OTP guardado como HMAC-SHA256** — el código de un solo uso se guarda con clave (secreto de servidor), no con un hash rápido pelado, anulando tablas precomputadas si se filtra la BD.
+
+**Tests sobre PostgreSQL real** — `testcontainers` levanta un Postgres efímero y aplica las migraciones Alembic reales; un gate `alembic check` en CI rompe el build ante drift modelo↔migración.
 
 ---
 
@@ -139,12 +149,14 @@ API disponible en `http://localhost:8000/docs`
 
 ## Ejecutar Tests
 
+> Los tests corren contra un **PostgreSQL efímero** vía `testcontainers` (migraciones Alembic reales, no SQLite). **Docker debe estar corriendo.**
+
 ```bash
-# Todos los tests
+# Todos los tests (gate de branch coverage: --cov-branch --cov-fail-under=82)
 pytest
 
 # Con reporte de cobertura
-pytest --cov=app --cov-report=term-missing -q
+pytest --cov=app --cov-branch --cov-report=term-missing -q
 
 # Por tipo
 pytest -m unit
@@ -186,15 +198,14 @@ app/
 ├── common/                   # Contratos base de casos de uso compartidos
 ├── core/                     # Transversal: config, DB, excepciones, middlewares
 └── features/
-    ├── auth/                 # Autenticación, JWT, OTP, Google SSO
-    ├── users/                # Gestión de perfil de usuario
-    ├── todos/                # CRUD de tareas con control de ownership
-    └── notifications/        # Notificaciones de recordatorios
+    ├── auth/                 # Autenticación, JWT, OTP, Google SSO, rate limiting
+    ├── users/                # Gestión de perfil de usuario + puerto UserProvider
+    └── todos/                # CRUD de tareas con control de ownership + paginación
 
 tests/
 ├── core/                     # Tests de manejo de excepciones del core
 ├── features/                 # Tests unitarios + de integración por feature
-└── e2e/                      # Tests de flujo completo con DB real (SQLite in-memory)
+└── e2e/                      # Tests de flujo completo contra PostgreSQL real (testcontainers)
 ```
 
 ---

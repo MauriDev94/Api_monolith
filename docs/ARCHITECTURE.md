@@ -23,7 +23,6 @@ app/
 │   └── router/
 └── features/
     ├── auth/
-    ├── notifications/
     ├── todos/
     └── users/
 
@@ -64,7 +63,8 @@ Regla de dependencia:
 - `auth`
 - `users`
 - `todos`
-- `notifications`
+
+> La feature `notifications` fue **eliminada** durante la remediación de production-readiness (PR #80): dead code / YAGNI (puertos gordos cruzando features, use case sin endpoint, N+1 en `process_reminders`). El registro de su diseño original queda en `docs/history/` (`PRD_FASE9_EMAIL_NOTIFICATIONS.md`, `SDD_PROPOSAL_PHASE7_NOTIFICATIONS.md`).
 
 > Este documento parte en alto nivel. En las siguientes iteraciones iremos profundizando **feature por feature** (casos de uso, entidades, contratos, decisiones específicas y edge cases).
 
@@ -148,23 +148,26 @@ flowchart TD
 Archivos principales:
 - `app/common/use_case.py`
 - `app/common/use_case_no_params.py`
+- `app/common/domain_error.py`
 
 Decisión actual:
 1. **Contrato base de casos de uso** con `UseCase[Input, Output]` y `UseCaseNoParams[Output]`.
+2. **`DomainError`** (base de invariantes de dominio, hereda de `ValueError`): el handler global la mapea a `400`, mientras que un `ValueError` pelado inesperado cae a `500` — separa "error del cliente" de "bug interno" (T4).
 
 Objetivo:
 - Estandarizar la capa de aplicación y mantener consistencia entre features.
 
-## 7) Hardening y mejoras priorizadas
+## 7) Hardening y remediación de production-readiness
 
-Se documentan de forma separada en:
-- `HARDENING_CHECKLIST.md`
+El proyecto pasó por una auditoría formal de 4 bloques (arquitectura, seguridad, testing, operación) y una remediación completa por fases (PRs #66–#94). El detalle se documenta en:
+- `docs/REMEDIATION_PROGRESS.md` — estado y PRs por fase (fuente viva).
+- `docs/history/AUDIT_PRODUCTION_READINESS.md` — la auditoría original (snapshot "antes").
 
-Cobertura actual del checklist:
-- hardening transversal de `app/core` (bootstrap, DB provider, middlewares, exception mapping),
-- endurecimiento de configuración,
-- robustez de logging por entorno,
-- mejoras de consistencia en contratos comunes.
+Hardening aplicado (resumen):
+- **Seguridad**: rate limiting global por IP registrado, derivando la IP real en `app/core/http_utils.py` desde el valor **más a la derecha** de `X-Forwarded-For`; CSRF de OAuth vía cookie httpOnly firmada + `secrets.compare_digest`; OTP con HMAC-SHA256; HSTS/CSP; sanitización de logs; `InvalidHash` → fallo de auth limpio.
+- **Operación**: migración en startup **resiliente** (reintentos con backoff ante DB inalcanzable, fail-fast ante errores de esquema, arranque degradado si la DB no vuelve); `/health` → 503 si la DB no responde; body-size limit middleware; connection pool (`pool_pre_ping`, `pool_recycle`); `DELETE` → 204; paginación en listados.
+- **Arquitectura**: puerto `UserProvider` (desacople auth↔users); excepciones de dominio (`DomainError`); eliminación de la feature `notifications`.
+- **Testing**: red de tests sobre **PostgreSQL real** (testcontainers) con migraciones Alembic; gate `--cov-branch --cov-fail-under=82`; gate de no-drift (`alembic check`).
 
 ## 8) Features (orden lógico por dependencia)
 
@@ -172,7 +175,7 @@ Cobertura actual del checklist:
 
 Rol arquitectónico:
 - Provee autenticación/autorización base (login, refresh, me, OTP/password change).
-- Es fundacional para proteger rutas de `users`, `todos` y `notifications`.
+- Es fundacional para proteger rutas de `users` y `todos`.
 
 Estructura interna de `app/features/auth`:
 
@@ -243,6 +246,10 @@ Decisiones de diseño de Auth:
 6. `GET /auth/v1/google` retorna `200` con URL en body (no `302 redirect`) — el frontend decide cómo navegar, no el backend (fix #58).
 7. Regla de negocio de `link-google` en el caso de uso, no en el endpoint — mantener la separación Clean Architecture incluso en endpoints "simples" (fix #59).
 8. Parseo estructurado de nombres Google (`given_name` + `family_name` vs un solo `name`) — el provider mapea campos separados, no un string plano (fix #57).
+9. **Rate limiting global por IP registrado**, con la IP del cliente derivada en `app/core/http_utils.py:get_client_ip` desde el valor **más a la derecha** de `X-Forwarded-For` — el que agrega el edge de confianza. Sin esto el throttle agrupaba a todos bajo la IP del proxy de Render (S1/O12, PR #74). Se **descartó** `uvicorn --proxy-headers --forwarded-allow-ips='*'` (el fix que proponía la auditoría) porque confía en el valor más a la izquierda, controlado por el cliente: bastaba rotar la cabecera para evadir el límite. El default es fail-closed (sobre-limita) en vez de fail-open.
+10. **CSRF de OAuth**: el `state` se ata al navegador vía cookie httpOnly firmada al iniciar y se compara con `secrets.compare_digest` en el callback (S2, PR #78).
+11. **OTP con HMAC-SHA256** (secreto de servidor) en vez de SHA-256 pelado — anula rainbow tables si se filtra la BD (S5, PR #78).
+12. **`verify_password` captura `InvalidHash`** → fallo de auth limpio en vez de 500 ante un hash malformado en BD (S8, PR #74).
 
 ### 8.2 Users
 
@@ -254,6 +261,7 @@ Estructura interna de `app/features/users`:
 
 1. **`application/`**
    - `contracts/user_datasource.py`: puerto de persistencia para operaciones de usuario.
+   - `contracts/user_provider.py`: puerto que `users` expone a otras features (p.ej. `auth`) para resolver/crear usuarios sin acoplarse al modelo ORM. Desacople de features (A1, PR #84).
    - `dto/get_user_by_id_params.py`: parámetros tipados para consulta por id.
    - `dto/update_user_params.py`: parámetros tipados para actualización de perfil.
    - `dto/delete_user_params.py`: parámetros tipados para eliminación de usuario.
@@ -269,9 +277,10 @@ Estructura interna de `app/features/users`:
    - `models/user_model.py`: modelo ORM de usuario con `password_hash` nullable y columna `google_id`.
    - `mappers/user_mapper.py`: mapeo ORM ↔ entidad de dominio.
    - `repositories/user_repository.py`: implementación SQLAlchemy del `user_datasource`.
+   - `repositories/user_provider_repository.py`: implementación del `user_provider` que consume `auth`.
 
 4. **`presentation/`**
-   - `api.py`: endpoints `/v1/users` (detalle, actualizar, eliminar).
+   - `api.py`: endpoints `/v1/users` (detalle propio, actualizar, eliminar → `204`). El listado `GET /v1/users` fue **eliminado** (exponía PII de todos los usuarios a cualquier autenticado — O4, PR #90).
    - `schemas/user_requests.py`: schemas de entrada para update.
    - `schemas/user_responses.py`: schemas de salida HTTP.
    - `mappers/user_mapper.py`: transformación schema ↔ DTO.
@@ -283,6 +292,8 @@ Decisiones de diseño de Users:
 1. Encapsular validación de email en Value Object de dominio.
 2. Mantener CRUD de usuarios detrás de casos de uso (sin acceso directo desde presentation a repositorio).
 3. Separar mapper de infraestructura (persistencia) del mapper de presentación (HTTP).
+4. **Exponer un puerto `UserProvider`** para que `auth` resuelva usuarios sin importar el `UserModel` de `users` — restaura la autonomía entre features (A1, PR #84).
+5. **No exponer listados de PII**: `GET /v1/users` se eliminó; sin RBAC, un listado de todos los usuarios es una fuga (O4, PR #90).
 
 ### 8.3 Todos
 
@@ -314,7 +325,7 @@ Estructura interna de `app/features/todos`:
    - `repositories/todo_repository.py`: implementación SQLAlchemy del `todo_datasource`.
 
 4. **`presentation/`**
-   - `api.py`: endpoints `/v1/todos` (create, list, get, update, delete).
+   - `api.py`: endpoints `/v1/todos` (create → `201`, list **paginado** con `limit`/`offset`, get, update, delete → `204`).
    - `schemas/todo_requests.py`: schemas de entrada para create/update.
    - `schemas/todo_responses.py`: schemas de salida HTTP.
    - `mappers/todo_mapper.py`: transformación schema ↔ DTO.
@@ -326,46 +337,10 @@ Decisiones de diseño de Todos:
 1. Encapsular reglas de TODO en entidad de dominio y casos de uso.
 2. Forzar ownership en capa de aplicación para evitar acceso cruzado entre usuarios.
 3. Separar mapeo de persistencia y mapeo HTTP para mantener bordes claros.
+4. **Paginar el listado** (`limit`/`offset`, con `total` en la respuesta) — evita devolver toda la tabla (O4, PR #90).
+5. **Validar el invariante de fecha solo en creación**, no en rehidratación — leer un TODO ya vencido no debe lanzar (A2, PR #72).
 
-### 8.4 Notifications
-
-Rol arquitectónico:
-- Capa de comunicación y recordatorios sobre eventos de negocio (todos cercanos/vencidos).
-- Depende de estado de Todos + contexto de usuario.
-
-Estructura interna de `app/features/notifications`:
-
-1. **`application/`**
-   - `contracts/notification_datasource.py`: puerto para consulta/actualización de notificaciones del usuario.
-   - `contracts/notification_store.py`: contrato para persistencia/estado de recordatorios procesados.
-   - `dto/get_notifications_params.py`: parámetros para listado de notificaciones.
-   - `dto/mark_notification_read_params.py`: parámetros para marcar como leída.
-   - `dto/set_notification_as_sent_params.py`: parámetros para transición a estado enviada.
-   - `usecases/get_notifications_use_case.py`: obtiene notificaciones por usuario.
-   - `usecases/mark_notification_read_use_case.py`: marca notificación como leída.
-   - `usecases/process_reminders_use_case.py`: procesa recordatorios pendientes desde la lógica de negocio.
-   - `usecases/set_notification_as_sent_use_case.py`: confirma envío y persiste estado final.
-
-2. **`domain/`**
-   - `entities/notification.py`: entidad de dominio de notificación (estado, lectura, envío).
-
-3. **`infrastructure/`**
-   - `models/notification_model.py`: modelo ORM de notificación.
-   - `mappers/notification_mapper.py`: mapeo ORM ↔ entidad de dominio.
-   - `repositories/notification_repository.py`: implementación SQLAlchemy de contratos de notificaciones.
-
-4. **`presentation/`**
-   - `api.py`: endpoints de notificaciones (listar y marcar leída).
-   - `schemas/notification_schemas.py`: contratos HTTP de request/response.
-   - `mappers/notification_mapper.py`: transformación schema ↔ DTO.
-
-5. **`di/`**
-   - `dependencies.py`: wiring de repositorio y casos de uso del módulo.
-
-Decisiones de diseño de Notifications:
-1. Separar lectura de usuario y procesamiento de recordatorios en casos de uso distintos.
-2. Persistir estado de envío/lectura para trazabilidad e idempotencia funcional.
-3. Mantener contratos explícitos para facilitar cambio de estrategia de scheduler/store sin romper application.
+> **Nota:** existía una feature `notifications` (recordatorios de TODOs vencidos), eliminada en la remediación (PR #80). Su diseño original se conserva en `docs/history/`.
 
 ## 9) Matriz de cobertura por feature (happy path + edge cases + riesgos)
 
@@ -376,28 +351,26 @@ Decisiones de diseño de Notifications:
 | Auth | Alto | Medio-Alto | application, domain, infrastructure, presentation | Medio |
 | Users | Alto | Medio | application, domain, infrastructure, presentation | Medio |
 | Todos | Alto | Medio | application, domain, infrastructure, presentation | Medio |
-| Notifications | Medio-Alto | Medio-Bajo | application, domain (sin test directo visible en presentation/infra) | Medio-Alto |
 
-### 9.1 Evidencia rápida de tests por feature (archivos `.py`)
+> Todos los tests corren contra **PostgreSQL real** (testcontainers) con las migraciones Alembic aplicadas; gate `--cov-branch --cov-fail-under=82` + gate de no-drift (`alembic check`).
 
-- Auth: **16** archivos de test.
-- Users: **5** archivos de test.
-- Todos: **4** archivos de test.
-- Notifications: **5** archivos de test.
+### 9.1 Evidencia rápida de tests por feature
+
+- **Auth** es la feature más profunda, especialmente en casos de seguridad (rotación/reuso de refresh, OTP, OAuth/CSRF).
+- **Users** y **Todos** tienen cobertura balanceada por capa, con menor volumen total que Auth.
 
 ### 9.2 Lectura crítica (auditoría)
 
 1. **Auth** está más robusto y profundo que el resto, especialmente en casos de seguridad.
 2. **Users/Todos** tienen cobertura balanceada por capa, pero con menor volumen total que Auth.
-3. **Notifications** concentra mucho en application/domain; conviene reforzar tests de presentation/infra + escenarios de idempotencia/procesamiento.
-4. Hay oportunidad transversal de reforzar **core tests** (`main`, health/openapi/middlewares), fuera de features.
+3. Hay oportunidad transversal de reforzar **core tests** (`main`, health/openapi/middlewares), fuera de features.
 
 ## 10) Plan de expansión de este documento
 
 Próximas secciones (iterativas):
 1. Profundizar flujos críticos por feature con diagramas secuenciales.
 2. Cerrar checklist de hardening con estado (`TODO -> DONE`) por item.
-3. Agregar mapa de dependencias entre features (`Auth -> Users -> Todos -> Notifications`).
+3. Agregar mapa de dependencias entre features (`Auth -> Users -> Todos`).
 4. Incorporar decisiones ADR-lite (1 sección por decisión clave).
 
 ---
