@@ -11,9 +11,9 @@ from app.features.auth.application.contracts.google_auth_datasource import Googl
 from app.features.auth.application.contracts.oauth_provider import OAuthProvider
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
-from app.features.auth.application.dto.create_google_user_params import CreateGoogleUserParams
 from app.features.auth.application.dto.token_pair_result import TokenPairResult
 from app.features.auth.domain.value_objects.refresh_token_id import RefreshTokenId
+from app.features.users.domain.entities.user import User
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,14 +71,14 @@ class HandleGoogleCallbackUseCase(UseCase[HandleGoogleCallbackParams, TokenPairR
             return self._issue_tokens(user.id)
 
         # New user - create account
-        create_params = CreateGoogleUserParams(
+        new_account = User.create_from_google(
             google_id=user_info.google_id,
             email=user_info.email,
             name=user_info.name,
             lastname=user_info.lastname,
             google_email_verified=user_info.email_verified,
         )
-        new_user = self._google_auth_datasource.create_google_user(create_params)
+        new_user = self._google_auth_datasource.create_google_user(new_account)
         return self._issue_tokens(new_user.id)
 
     def _issue_tokens(self, user_id: str | None) -> TokenPairResult:

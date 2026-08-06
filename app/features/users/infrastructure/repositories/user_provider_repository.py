@@ -1,4 +1,3 @@
-from datetime import date
 from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -8,7 +7,10 @@ from app.core.exceptions.exceptions import ConflictError, DatabaseError
 from app.features.users.application.contracts.user_provider import UserProvider
 from app.features.users.domain.entities.user import User
 from app.features.users.domain.value_objects.email import Email
-from app.features.users.infrastructure.mappers.user_mapper import map_user_model_to_entity
+from app.features.users.infrastructure.mappers.user_mapper import (
+    map_new_user_entity_to_model,
+    map_user_model_to_entity,
+)
 from app.features.users.infrastructure.models.user_model import UserModel
 
 
@@ -48,22 +50,8 @@ class UserProviderRepository(UserProvider):
             raise DatabaseError("failed to retrieve user by google_id") from exc
         return map_user_model_to_entity(user_model) if user_model else None
 
-    def create_user(
-        self,
-        name: str,
-        lastname: str,
-        email: str,
-        password_hash: str,
-        birthdate: date | None,
-    ) -> User:
-        user_model = UserModel(
-            id=str(uuid4()),
-            name=name,
-            lastname=lastname,
-            email=Email(email).value,
-            password_hash=password_hash,
-            birthdate=birthdate,
-        )
+    def create_user(self, user: User) -> User:
+        user_model = map_new_user_entity_to_model(user, user_id=str(uuid4()))
         try:
             self.session.add(user_model)
             self.session.commit()
@@ -76,24 +64,8 @@ class UserProviderRepository(UserProvider):
             raise DatabaseError("failed to register user") from exc
         return map_user_model_to_entity(user_model)
 
-    def create_google_user(
-        self,
-        google_id: str,
-        email: str,
-        name: str,
-        lastname: str,
-        google_email_verified: bool,
-    ) -> User:
-        user_model = UserModel(
-            id=str(uuid4()),
-            name=name,
-            lastname=lastname,
-            email=Email(email).value,
-            password_hash=None,  # Google users don't have a password
-            birthdate=None,  # Google OAuth doesn't provide birthdate
-            google_id=google_id,
-            google_email_verified=google_email_verified,
-        )
+    def create_google_user(self, user: User) -> User:
+        user_model = map_new_user_entity_to_model(user, user_id=str(uuid4()))
         try:
             self.session.add(user_model)
             self.session.commit()

@@ -4,8 +4,8 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.core.exceptions.exceptions import ConflictError
-from app.features.auth.application.dto.register_user_params import RegisterUserParams
 from app.features.auth.infrastructure.repositories.auth_repository import AuthRepository
+from app.features.users.domain.entities.user import User
 from app.features.users.infrastructure.repositories.user_provider_repository import (
     UserProviderRepository,
 )
@@ -16,15 +16,15 @@ from app.features.users.infrastructure.repositories.user_provider_repository imp
 def test_should_register_user_and_fetch_by_email_and_id(db_session: Session) -> None:
     """Valida que registrar usuario y recuperar por email y id."""
     repository = AuthRepository(user_provider=UserProviderRepository(session=db_session))
-    params = RegisterUserParams(
+    new_account = User.create_new(
         name="Mauri",
         lastname="Salinas",
         email="mauri@mail.com",
-        password="plain1234",
         birthdate=date(2000, 1, 1),
+        password_hash="hashed-password",
     )
 
-    created_user = repository.register_user(params=params, password_hash="hashed-password")
+    created_user = repository.register_user(new_account)
     found_by_email = repository.get_user_by_email("mauri@mail.com")
     found_by_id = repository.get_user_by_id(created_user.id or "")
 
@@ -40,15 +40,15 @@ def test_should_register_user_and_fetch_by_email_and_id(db_session: Session) -> 
 def test_should_normalize_email_on_register_and_lookup(db_session: Session) -> None:
     """Valida que repositorio normaliza email al registrar y buscar."""
     repository = AuthRepository(user_provider=UserProviderRepository(session=db_session))
-    params = RegisterUserParams(
+    new_account = User.create_new(
         name="Mauri",
         lastname="Salinas",
         email="  MAURI@MAIL.COM  ",
-        password="plain1234",
         birthdate=date(2000, 1, 1),
+        password_hash="hashed-password",
     )
 
-    created_user = repository.register_user(params=params, password_hash="hashed-password")
+    created_user = repository.register_user(new_account)
     found_by_email = repository.get_user_by_email("  mauri@mail.com  ")
 
     assert created_user.email.value == "mauri@mail.com"
@@ -74,39 +74,39 @@ def test_should_return_none_when_user_does_not_exist(db_session: Session) -> Non
 def test_should_raise_conflict_when_registering_duplicate_email(db_session: Session) -> None:
     """Valida que lanza conflicto cuando registrar duplicado email."""
     repository = AuthRepository(user_provider=UserProviderRepository(session=db_session))
-    first_params = RegisterUserParams(
+    first_account = User.create_new(
         name="Mauri",
         lastname="Salinas",
         email="  MAURI@MAIL.COM  ",
-        password="plain1234",
         birthdate=date(2000, 1, 1),
+        password_hash="hashed-password",
     )
-    duplicate_params = RegisterUserParams(
+    duplicate_account = User.create_new(
         name="Mauri",
         lastname="Salinas",
         email="mauri@mail.com",
-        password="plain1234",
         birthdate=date(2000, 1, 1),
+        password_hash="hashed-password",
     )
 
-    repository.register_user(params=first_params, password_hash="hashed-password")
+    repository.register_user(first_account)
 
     with pytest.raises(ConflictError, match="email already registered"):
-        repository.register_user(params=duplicate_params, password_hash="another-hash")
+        repository.register_user(duplicate_account)
 
 
 # Tipo de test: Integration
 def test_should_update_password_hash_for_existing_user(db_session: Session) -> None:
     """Valida que update_password persiste el nuevo hash para un usuario existente."""
     repository = AuthRepository(user_provider=UserProviderRepository(session=db_session))
-    params = RegisterUserParams(
+    new_account = User.create_new(
         name="Mauri",
         lastname="Salinas",
         email="mauri@mail.com",
-        password="plain1234",
         birthdate=date(2000, 1, 1),
+        password_hash="hashed-password",
     )
-    created_user = repository.register_user(params=params, password_hash="old-hash")
+    created_user = repository.register_user(new_account)
 
     repository.update_password(user_id=created_user.id or "", password_hash="new-hash")
     updated_user = repository.get_user_by_id(created_user.id or "")

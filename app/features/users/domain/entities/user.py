@@ -27,6 +27,56 @@ class User:
         self._validate_password_hash()
         self._validate_birthdate(self.birthdate)
 
+    @classmethod
+    def create_new(
+        cls,
+        *,
+        name: str,
+        lastname: str,
+        email: Email | str,
+        password_hash: str,
+        birthdate: date | None,
+    ) -> "User":
+        """Factory de creación de una cuenta con contraseña.
+
+        Única puerta de entrada para un usuario nuevo: valida los invariantes antes
+        de que nadie intente persistir, en vez de descubrirlos al releer la fila.
+        """
+        return cls(
+            id=None,
+            name=name,
+            lastname=lastname,
+            email=cls._normalize_email(email),
+            password_hash=password_hash,
+            birthdate=birthdate,
+        )
+
+    @classmethod
+    def create_from_google(
+        cls,
+        *,
+        google_id: str,
+        email: Email | str,
+        name: str,
+        lastname: str,
+        google_email_verified: bool = False,
+    ) -> "User":
+        """Factory de creación de una cuenta social.
+
+        Una cuenta de Google nace sin `password_hash` (no hay contraseña que hashear)
+        y sin `birthdate` (Google no lo provee).
+        """
+        return cls(
+            id=None,
+            name=name,
+            lastname=lastname,
+            email=cls._normalize_email(email),
+            password_hash=None,
+            birthdate=None,
+            google_id=google_id,
+            google_email_verified=google_email_verified,
+        )
+
     def change_name(self, new_name: str) -> None:
         """Change user name applying domain validation."""
         self.name = self._require_text(new_name, "name")

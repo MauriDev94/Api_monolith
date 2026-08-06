@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.features.todos.application.dto.create_todo_params import CreateTodoParams
 from app.features.todos.infrastructure.repositories.todo_repository import TodoRepository
+from app.features.users.domain.entities.user import User
 from app.features.users.infrastructure.repositories.user_provider_repository import (
     UserProviderRepository,
 )
@@ -12,11 +13,13 @@ from app.features.users.infrastructure.repositories.user_provider_repository imp
 def _seed_user(session: Session, email: str = "mauri@mail.com") -> str:
     provider = UserProviderRepository(session=session)
     user = provider.create_user(
-        name="Mauri",
-        lastname="Salinas",
-        email=email,
-        password_hash="hashed-password",
-        birthdate=date(2000, 1, 1),
+        User.create_new(
+            name="Mauri",
+            lastname="Salinas",
+            email=email,
+            password_hash="hashed-password",
+            birthdate=date(2000, 1, 1),
+        )
     )
     return user.id or ""
 

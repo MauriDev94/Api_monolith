@@ -8,6 +8,7 @@ from app.features.auth.domain.entities.otp_code import OtpCode
 from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.auth.infrastructure.models.otp_model import OtpModel
 from app.features.auth.infrastructure.repositories.otp_repository import OtpRepository
+from app.features.users.domain.entities.user import User
 from app.features.users.infrastructure.repositories.user_provider_repository import (
     UserProviderRepository,
 )
@@ -18,11 +19,13 @@ _TEST_SECRET = "test-secret-key"
 def _seed_user_id(session: Session) -> str:
     provider = UserProviderRepository(session=session)
     user = provider.create_user(
-        name="Mauri",
-        lastname="Salinas",
-        email="mauri@mail.com",
-        password_hash="hashed-password",
-        birthdate=date(2000, 1, 1),
+        User.create_new(
+            name="Mauri",
+            lastname="Salinas",
+            email="mauri@mail.com",
+            password_hash="hashed-password",
+            birthdate=date(2000, 1, 1),
+        )
     )
     return user.id or ""
 
