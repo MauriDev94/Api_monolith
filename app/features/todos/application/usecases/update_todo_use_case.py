@@ -18,6 +18,7 @@ class UpdateTodo(UseCase[UpdateTodoParams, Todo]):
 
         todo.rename(params.title)
         todo.change_description(params.description)
+        todo.set_due_date(params.due_date)
         if params.is_completed:
             todo.mark_completed()
         else:
