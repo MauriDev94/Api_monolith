@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions.exceptions import DatabaseError, NotFoundError
 from app.features.todos.application.contracts.todo_datasource import TodoDatasource
-from app.features.todos.application.dto.create_todo_params import CreateTodoParams
 from app.features.todos.domain.entities.todo import Todo
 from app.features.todos.infrastructure.mappers.todo_mapper import (
+    map_new_todo_entity_to_model,
     map_todo_entity_to_model,
     map_todo_model_to_entity,
 )
@@ -20,15 +20,8 @@ class TodoRepository(TodoDatasource):
     def __init__(self, session: Session):
         self.session = session
 
-    def create_todo(self, params: CreateTodoParams) -> Todo:
-        todo_model = TodoModel(
-            id=str(uuid4()),
-            user_id=params.user_id,
-            title=params.title,
-            description=params.description,
-            is_completed=False,
-            due_date=params.due_date,
-        )
+    def create_todo(self, todo: Todo) -> Todo:
+        todo_model = map_new_todo_entity_to_model(todo, todo_id=str(uuid4()))
 
         try:
             self.session.add(todo_model)

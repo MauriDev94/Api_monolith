@@ -203,6 +203,16 @@ def test_should_enforce_auth_and_ownership_error_scenarios(db_session: Session) 
         assert todo_response.status_code == 201
         todo_id = todo_response.json()["todo"]["id"]
 
+        # La regla "no se puede agendar en el pasado" ahora la aplica el dominio
+        # (Todo.create_new), no el schema: por eso responde 400 y no 422.
+        past_due_date = (datetime.now(UTC) - timedelta(days=1)).isoformat()
+        past_due_response = client.post(
+            "/v1/todos",
+            headers=_auth_headers(token_user_one),
+            json={"title": "Vencida al nacer", "due_date": past_due_date},
+        )
+        assert past_due_response.status_code == 400
+
         _register_user(
             client,
             name="Ana",

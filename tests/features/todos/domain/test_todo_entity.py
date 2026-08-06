@@ -6,6 +6,47 @@ from app.features.todos.domain.entities.todo import Todo
 
 
 # Tipo de test: Unit
+def test_should_create_new_todo_with_creation_defaults() -> None:
+    """create_new construye una tarea nueva: sin id, pendiente y con los textos normalizados."""
+    todo = Todo.create_new(
+        user_id="user-1",
+        title="  Buy milk  ",
+        description="  at supermarket  ",
+    )
+
+    assert todo.id is None
+    assert todo.is_completed is False
+    assert todo.title == "Buy milk"
+    assert todo.description == "at supermarket"
+
+
+# Tipo de test: Unit
+def test_should_reject_past_due_date_on_create_new() -> None:
+    """La regla 'no en el pasado' es de CREACION y vive en el factory del dominio, no en el schema."""
+    past_date = datetime.now(UTC) - timedelta(days=1)
+
+    with pytest.raises(ValueError, match="due_date cannot be in the past"):
+        Todo.create_new(user_id="user-1", title="Buy milk", due_date=past_date)
+
+
+# Tipo de test: Unit
+def test_should_accept_future_due_date_on_create_new() -> None:
+    """create_new acepta una fecha futura y la normaliza a timezone-aware."""
+    future_date = datetime.now(UTC) + timedelta(days=7)
+
+    todo = Todo.create_new(user_id="user-1", title="Buy milk", due_date=future_date)
+
+    assert todo.due_date == future_date
+
+
+# Tipo de test: Unit
+def test_should_reject_empty_title_on_create_new() -> None:
+    """create_new aplica los invariantes de la entidad: titulo obligatorio."""
+    with pytest.raises(ValueError, match="title cannot be empty"):
+        Todo.create_new(user_id="user-1", title="   ")
+
+
+# Tipo de test: Unit
 def test_should_normalize_todo_text_fields() -> None:
     """Valida que normaliza los campos de texto al crear una tarea."""
     todo = Todo(

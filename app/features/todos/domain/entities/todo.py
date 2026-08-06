@@ -23,6 +23,34 @@ class Todo:
         self.description = self._normalize_description(self.description)
         self.due_date = self._normalize_due_date(self.due_date)
 
+    @classmethod
+    def create_new(
+        cls,
+        *,
+        user_id: str,
+        title: str,
+        description: str | None = None,
+        due_date: datetime | None = None,
+    ) -> "Todo":
+        """Factory de creación: única puerta de entrada para una tarea nueva.
+
+        Aplica los invariantes permanentes (vía `__post_init__`) MÁS las reglas que
+        solo valen al crear: una tarea nace pendiente y no puede agendarse en el
+        pasado. Esa regla no puede vivir en `__post_init__` porque una tarea
+        rehidratada desde la base puede estar legítimamente vencida.
+        """
+        todo = cls(
+            id=None,
+            user_id=user_id,
+            title=title,
+            description=description,
+            is_completed=False,
+            due_date=due_date,
+        )
+        if todo.due_date is not None and todo.due_date < datetime.now(UTC):
+            raise DomainError("due_date cannot be in the past")
+        return todo
+
     @staticmethod
     def _normalize_due_date(due_date: datetime | None) -> datetime | None:
         """Garantiza que due_date sea timezone-aware.
