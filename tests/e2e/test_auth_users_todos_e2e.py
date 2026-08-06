@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -117,6 +118,7 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
         assert list_todos_response.status_code == 200
         assert len(list_todos_response.json()["todos"]) == 1
 
+        new_due_date = (datetime.now(UTC) + timedelta(days=10)).isoformat()
         update_todo_response = client.put(
             f"/v1/todos/{todo_id}",
             headers=_auth_headers(access_token),
@@ -124,10 +126,19 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
                 "title": "Study DDD",
                 "description": "Study clean architecture and DDD",
                 "is_completed": True,
+                "due_date": new_due_date,
             },
         )
         assert update_todo_response.status_code == 200
         assert update_todo_response.json()["todo"]["is_completed"] is True
+        # El due_date enviado debe persistir: antes se descartaba silenciosamente.
+        assert update_todo_response.json()["todo"]["due_date"] is not None
+
+        reread_todo_response = client.get(
+            f"/v1/todos/{todo_id}", headers=_auth_headers(access_token)
+        )
+        assert reread_todo_response.status_code == 200
+        assert reread_todo_response.json()["todo"]["due_date"] is not None
 
         refresh_response = client.post("/auth/v1/refresh", json={"refresh_token": refresh_token})
         assert refresh_response.status_code == 200

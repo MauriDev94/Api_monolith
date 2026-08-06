@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
@@ -158,6 +159,79 @@ def test_should_mutate_and_persist_todo_when_update_marks_completed() -> None:
     assert persisted_todo.description == "New desc"
     assert persisted_todo.is_completed is True
     assert result == expected
+
+
+# Tipo de test: Unit
+def test_should_apply_due_date_when_update_provides_a_new_one() -> None:
+    """Valida que update aplica el due_date recibido a la entidad persistida."""
+    datasource = Mock(spec=TodoDatasource)
+    datasource.get_todo_by_id.return_value = make_todo(user_id="user-1")
+    use_case = UpdateTodo(todo_datasource=datasource)
+    new_due_date = datetime.now(UTC) + timedelta(days=5)
+
+    use_case.execute(
+        UpdateTodoParams(
+            todo_id="todo-1",
+            user_id="user-1",
+            title="Buy milk",
+            description=None,
+            is_completed=False,
+            due_date=new_due_date,
+        )
+    )
+
+    persisted_todo = datasource.update_todo.call_args.args[0]
+    assert persisted_todo.due_date == new_due_date
+
+
+# Tipo de test: Unit
+def test_should_clear_due_date_when_update_sends_none() -> None:
+    """Valida que update con due_date None limpia la fecha (PUT = reemplazo total)."""
+    datasource = Mock(spec=TodoDatasource)
+    existing = make_todo(user_id="user-1")
+    existing.due_date = datetime.now(UTC) + timedelta(days=5)
+    datasource.get_todo_by_id.return_value = existing
+    use_case = UpdateTodo(todo_datasource=datasource)
+
+    use_case.execute(
+        UpdateTodoParams(
+            todo_id="todo-1",
+            user_id="user-1",
+            title="Buy milk",
+            description=None,
+            is_completed=False,
+            due_date=None,
+        )
+    )
+
+    persisted_todo = datasource.update_todo.call_args.args[0]
+    assert persisted_todo.due_date is None
+
+
+# Tipo de test: Unit
+def test_should_allow_updating_an_overdue_todo_when_due_date_does_not_change() -> None:
+    """Valida que editar una tarea vencida sin cambiar la fecha no dispara la regla de fecha pasada."""
+    datasource = Mock(spec=TodoDatasource)
+    past_due_date = datetime.now(UTC) - timedelta(days=2)
+    existing = make_todo(user_id="user-1")
+    existing.due_date = past_due_date
+    datasource.get_todo_by_id.return_value = existing
+    use_case = UpdateTodo(todo_datasource=datasource)
+
+    use_case.execute(
+        UpdateTodoParams(
+            todo_id="todo-1",
+            user_id="user-1",
+            title="Titulo corregido",
+            description=None,
+            is_completed=False,
+            due_date=past_due_date,
+        )
+    )
+
+    persisted_todo = datasource.update_todo.call_args.args[0]
+    assert persisted_todo.title == "Titulo corregido"
+    assert persisted_todo.due_date == past_due_date
 
 
 # Tipo de test: Unit

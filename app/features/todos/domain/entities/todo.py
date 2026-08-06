@@ -39,8 +39,16 @@ class Todo:
         return due_date
 
     def set_due_date(self, due_date: datetime | None) -> None:
-        """Cambia el due_date rechazando fechas en el pasado (acción explícita)."""
+        """Cambia el due_date rechazando fechas en el pasado (acción explícita).
+
+        Si el valor normalizado coincide con el actual es un no-op: la regla "no en
+        el pasado" aplica a fechas NUEVAS, no al reenvío de la fecha vigente. Sin
+        esto, editar el título de una tarea ya vencida fallaría solo por reenviar
+        su propia fecha.
+        """
         normalized = self._normalize_due_date(due_date)
+        if normalized == self.due_date:
+            return
         if normalized is not None and normalized < datetime.now(UTC):
             raise DomainError("due_date cannot be in the past")
         self.due_date = normalized

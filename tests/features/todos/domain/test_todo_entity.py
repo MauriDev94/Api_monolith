@@ -195,6 +195,67 @@ def test_should_raise_when_setting_past_due_date() -> None:
 
 
 # Tipo de test: Unit
+def test_should_not_revalidate_due_date_when_value_does_not_change() -> None:
+    """set_due_date es no-op si el valor no cambia: la regla 'no en el pasado' aplica a fechas NUEVAS.
+
+    Sin esto, editar el titulo de una tarea ya vencida reenviando su misma fecha
+    fallaria con DomainError.
+    """
+    past_date = datetime.now(UTC) - timedelta(days=3)
+    todo = Todo(
+        id="todo-1",
+        user_id="user-1",
+        title="Buy milk",
+        description=None,
+        is_completed=False,
+        due_date=past_date,
+    )
+
+    todo.set_due_date(past_date)
+
+    assert todo.due_date == past_date
+    assert todo.updated_at is None
+
+
+# Tipo de test: Unit
+def test_should_treat_naive_due_date_as_unchanged_when_equal_to_current() -> None:
+    """set_due_date normaliza antes de comparar: una fecha naive igual a la actual no cambia nada."""
+    past_date = datetime.now(UTC) - timedelta(days=3)
+    todo = Todo(
+        id="todo-1",
+        user_id="user-1",
+        title="Buy milk",
+        description=None,
+        is_completed=False,
+        due_date=past_date,
+    )
+
+    todo.set_due_date(past_date.replace(tzinfo=None))
+
+    assert todo.due_date == past_date
+    assert todo.updated_at is None
+
+
+# Tipo de test: Unit
+def test_should_clear_due_date_when_setting_none() -> None:
+    """set_due_date(None) limpia la fecha: semantica de reemplazo total en PUT."""
+    future_date = datetime.now(UTC) + timedelta(days=7)
+    todo = Todo(
+        id="todo-1",
+        user_id="user-1",
+        title="Buy milk",
+        description=None,
+        is_completed=False,
+        due_date=future_date,
+    )
+
+    todo.set_due_date(None)
+
+    assert todo.due_date is None
+    assert todo.updated_at is not None
+
+
+# Tipo de test: Unit
 def test_should_remove_due_date() -> None:
     """Valida que remove_due_date funciona."""
     future_date = datetime.now(UTC) + timedelta(days=7)
