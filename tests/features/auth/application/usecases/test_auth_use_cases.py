@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import ANY, Mock
 
 import pytest
@@ -75,9 +75,35 @@ def test_should_hash_password_and_register_new_user() -> None:
     password_manager.hash_password.assert_called_once_with("plain1234")
     datasource.get_user_by_email.assert_called_once_with("mauri@mail.com")
     datasource.register_user.assert_called_once()
-    persisted_params = datasource.register_user.call_args.kwargs["params"]
-    assert persisted_params.email == "mauri@mail.com"
+    persisted_user = datasource.register_user.call_args.args[0]
+    assert isinstance(persisted_user, User)
+    assert persisted_user.id is None
+    assert persisted_user.email == Email("mauri@mail.com")
+    assert persisted_user.password_hash == "hashed-password"
     assert result.id == "user-1"
+
+
+# Tipo de test: Unit
+def test_should_reject_invalid_user_data_before_persisting_on_register() -> None:
+    """Valida que un dato invalido se rechaza en el dominio, sin llegar a la base."""
+    datasource = Mock(spec=AuthDatasource)
+    password_manager = Mock(spec=PasswordManager)
+    datasource.get_user_by_email.return_value = None
+    password_manager.hash_password.return_value = "hashed-password"
+    use_case = RegisterUser(auth_datasource=datasource, password_manager=password_manager)
+
+    with pytest.raises(ValueError, match="birthdate cannot be in the future"):
+        use_case.execute(
+            RegisterUserParams(
+                name="Mauri",
+                lastname="Salinas",
+                email="mauri@mail.com",
+                password="plain1234",
+                birthdate=date.today() + timedelta(days=1),
+            )
+        )
+
+    datasource.register_user.assert_not_called()
 
 
 # Tipo de test: Unit

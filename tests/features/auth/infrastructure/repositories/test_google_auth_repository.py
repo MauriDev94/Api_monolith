@@ -6,10 +6,10 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.core.exceptions.exceptions import ConflictError
-from app.features.auth.application.dto.create_google_user_params import CreateGoogleUserParams
 from app.features.auth.infrastructure.repositories.google_auth_repository import (
     GoogleAuthRepository,
 )
+from app.features.users.domain.entities.user import User
 from app.features.users.infrastructure.repositories.user_provider_repository import (
     UserProviderRepository,
 )
@@ -19,7 +19,7 @@ from app.features.users.infrastructure.repositories.user_provider_repository imp
 def test_should_create_google_user_and_fetch_by_google_id(db_session: Session) -> None:
     """Valida que crear usuario Google y recuperarlo por google_id."""
     repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
-    params = CreateGoogleUserParams(
+    google_account = User.create_from_google(
         google_id="google-123",
         email="googleuser@gmail.com",
         name="Google",
@@ -27,7 +27,7 @@ def test_should_create_google_user_and_fetch_by_google_id(db_session: Session) -
         google_email_verified=True,
     )
 
-    created_user = repository.create_google_user(params=params)
+    created_user = repository.create_google_user(google_account)
     found_by_google_id = repository.get_user_by_google_id("google-123")
     found_by_email = repository.get_user_by_email("googleuser@gmail.com")
 
@@ -45,7 +45,7 @@ def test_should_create_google_user_and_fetch_by_google_id(db_session: Session) -
 def test_should_create_google_user_with_google_email_verified_flag(db_session: Session) -> None:
     """Valida que se persiste el flag google_email_verified."""
     repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
-    params = CreateGoogleUserParams(
+    google_account = User.create_from_google(
         google_id="google-456",
         email="verified@gmail.com",
         name="Test",
@@ -53,7 +53,7 @@ def test_should_create_google_user_with_google_email_verified_flag(db_session: S
         google_email_verified=True,
     )
 
-    repository.create_google_user(params=params)
+    repository.create_google_user(google_account)
     found_user = repository.get_user_by_google_id("google-456")
 
     assert found_user is not None
@@ -64,13 +64,13 @@ def test_should_create_google_user_with_google_email_verified_flag(db_session: S
 def test_should_link_google_id_to_existing_user(db_session: Session) -> None:
     """Valida que link_google_id asocia google_id a un usuario existente."""
     repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
-    params = CreateGoogleUserParams(
+    google_account = User.create_from_google(
         google_id="google-temp",
         email="temp@gmail.com",
         name="Temp",
         lastname="User",
     )
-    created_user = repository.create_google_user(params=params)
+    created_user = repository.create_google_user(google_account)
 
     # Clear google_id (simulating user created without it)
     repository.link_google_id(user_id=created_user.id or "", google_id="google-final")
@@ -94,15 +94,15 @@ def test_should_return_none_when_user_not_found_by_google_id(db_session: Session
 def test_should_raise_conflict_when_google_id_already_registered(db_session: Session) -> None:
     """Valida que lanza ConflictError cuando google_id ya está registrado."""
     repository = GoogleAuthRepository(user_provider=UserProviderRepository(session=db_session))
-    params = CreateGoogleUserParams(
+    google_account = User.create_from_google(
         google_id="duplicate-google-id",
         email="first@gmail.com",
         name="First",
         lastname="User",
     )
-    repository.create_google_user(params=params)
+    repository.create_google_user(google_account)
 
-    duplicate_params = CreateGoogleUserParams(
+    duplicate_account = User.create_from_google(
         google_id="duplicate-google-id",
         email="second@gmail.com",
         name="Second",
@@ -110,7 +110,7 @@ def test_should_raise_conflict_when_google_id_already_registered(db_session: Ses
     )
 
     with pytest.raises(ConflictError):
-        repository.create_google_user(params=duplicate_params)
+        repository.create_google_user(duplicate_account)
 
 
 # Tipo de test: Integration

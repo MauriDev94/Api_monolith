@@ -22,13 +22,11 @@ class RegisterUser(UseCase[RegisterUserParams, User]):
             raise ConflictError("email already registered")
 
         password_hash = self.password_manager.hash_password(params.password)
-        normalized_params = RegisterUserParams(
+        user = User.create_new(
             name=params.name,
             lastname=params.lastname,
             email=normalized_email,
-            password=params.password,
+            password_hash=password_hash,
             birthdate=params.birthdate,
         )
-        return self.auth_datasource.register_user(
-            params=normalized_params, password_hash=password_hash
-        )
+        return self.auth_datasource.register_user(user)

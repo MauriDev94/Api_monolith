@@ -1,12 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from app.features.users.domain.entities.user import User
-
-if TYPE_CHECKING:
-    from app.features.auth.application.dto.register_user_params import RegisterUserParams
 
 
 class AuthDatasource(ABC):
@@ -21,7 +17,8 @@ class AuthDatasource(ABC):
         pass
 
     @abstractmethod
-    def register_user(self, params: RegisterUserParams, password_hash: str) -> User:
+    def register_user(self, user: User) -> User:
+        """Persist a user entity already built and validated by the domain."""
         pass
 
     @abstractmethod

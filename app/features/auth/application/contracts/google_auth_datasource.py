@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from app.features.users.domain.entities.user import User
-
-if TYPE_CHECKING:
-    from app.features.auth.application.dto.create_google_user_params import CreateGoogleUserParams
 
 
 class GoogleAuthDatasource(ABC):
@@ -27,8 +23,8 @@ class GoogleAuthDatasource(ABC):
         """Find user by email address."""
 
     @abstractmethod
-    def create_google_user(self, params: CreateGoogleUserParams) -> User:
-        """Create a new user from Google OAuth data."""
+    def create_google_user(self, user: User) -> User:
+        """Persist a social account already built by `User.create_from_google`."""
 
     @abstractmethod
     def link_google_id(self, user_id: str, google_id: str) -> None:

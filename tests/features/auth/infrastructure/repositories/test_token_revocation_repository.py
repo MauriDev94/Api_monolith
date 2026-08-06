@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.features.auth.infrastructure.repositories.token_revocation_repository import (
     TokenRevocationRepository,
 )
+from app.features.users.domain.entities.user import User
 from app.features.users.infrastructure.repositories.user_provider_repository import (
     UserProviderRepository,
 )
@@ -14,11 +15,13 @@ def _seed_user(session: Session, email: str = "mauri@mail.com") -> str:
     """Crea un usuario real: auth_refresh_tokens.user_id tiene FK a users.id en Postgres."""
     provider = UserProviderRepository(session=session)
     user = provider.create_user(
-        name="Mauri",
-        lastname="Salinas",
-        email=email,
-        password_hash="hashed-password",
-        birthdate=date(2000, 1, 1),
+        User.create_new(
+            name="Mauri",
+            lastname="Salinas",
+            email=email,
+            password_hash="hashed-password",
+            birthdate=date(2000, 1, 1),
+        )
     )
     return user.id or ""
 

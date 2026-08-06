@@ -21,11 +21,13 @@ def _seed_user(
 ) -> str:
     provider = UserProviderRepository(session=session)
     user = provider.create_user(
-        name=name,
-        lastname=lastname,
-        email=email,
-        password_hash="hashed-password",
-        birthdate=date(2000, 1, 1),
+        User.create_new(
+            name=name,
+            lastname=lastname,
+            email=email,
+            password_hash="hashed-password",
+            birthdate=date(2000, 1, 1),
+        )
     )
     return user.id or ""
 
