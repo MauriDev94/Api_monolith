@@ -64,9 +64,6 @@ class CaptureEmailSender(EmailSender):
     def send_otp(self, to_email: str, code: str, purpose: str) -> None:
         self.last_otp_code = code
 
-    def send_reminder(self, to_email: str, todo_title: str, due_date: str) -> None:
-        pass  # no-op for E2E tests
-
 
 # E2E happy path: register -> login -> protected endpoints -> refresh -> continue with new token.
 # Tipo de test: E2E
