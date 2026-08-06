@@ -57,8 +57,8 @@ class Todo:
 
         NO rechaza fechas pasadas: una entidad reconstruida desde la BD (p.ej. un
         todo ya vencido) siempre debe poder existir. La regla "no en el pasado" es
-        de CREACIÓN, no un invariante permanente; se valida en el borde de entrada
-        (schema del request) y en `set_due_date`.
+        de CREACIÓN, no un invariante permanente; se valida en `create_new` y en
+        `set_due_date`.
         """
         if due_date is None:
             return None
