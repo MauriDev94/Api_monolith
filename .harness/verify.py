@@ -158,9 +158,7 @@ def project_env(root: Path) -> dict[str, str]:
 
     # Both reference projects run pytest with the root importable.
     existing = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = (
-        os.pathsep.join([str(root), existing]) if existing else str(root)
-    )
+    env["PYTHONPATH"] = os.pathsep.join([str(root), existing]) if existing else str(root)
     return env
 
 
@@ -249,8 +247,7 @@ def detect_python(root: Path, env: dict[str, str]) -> list[Gate]:
     )
     if mypy_configured and tool_available("mypy", env):
         mypy_targets = (
-            " ".join(name for name in SOURCE_DIR_CANDIDATES if (root / name).is_dir())
-            or "."
+            " ".join(name for name in SOURCE_DIR_CANDIDATES if (root / name).is_dir()) or "."
         )
         gates.append(
             Gate(
@@ -263,19 +260,13 @@ def detect_python(root: Path, env: dict[str, str]) -> list[Gate]:
             )
         )
     elif (root / "pyrightconfig.json").is_file() and tool_available("pyright", env):
-        gates.append(
-            Gate(id="types", cmd="pyright", fatal=True, description="tipos (pyright)")
-        )
+        gates.append(Gate(id="types", cmd="pyright", fatal=True, description="tipos (pyright)"))
 
     pytest_configured = (
-        (root / "pytest.ini").is_file()
-        or bool(tools.get("pytest"))
-        or (root / "tests").is_dir()
+        (root / "pytest.ini").is_file() or bool(tools.get("pytest")) or (root / "tests").is_dir()
     )
     if pytest_configured and tool_available("pytest", env):
-        gates.append(
-            Gate(id="tests", cmd="pytest -q", fatal=True, description="tests (pytest)")
-        )
+        gates.append(Gate(id="tests", cmd="pytest -q", fatal=True, description="tests (pytest)"))
 
     return gates
 
@@ -291,9 +282,7 @@ def detect_node(root: Path, env: dict[str, str]) -> list[Gate]:
 
     gates: list[Gate] = []
     if "lint" in scripts:
-        gates.append(
-            Gate(id="lint", cmd="npm run lint", fatal=True, description="lint (npm)")
-        )
+        gates.append(Gate(id="lint", cmd="npm run lint", fatal=True, description="lint (npm)"))
     if "typecheck" in scripts:
         gates.append(
             Gate(
@@ -313,9 +302,7 @@ def detect_node(root: Path, env: dict[str, str]) -> list[Gate]:
             )
         )
     if "test" in scripts:
-        gates.append(
-            Gate(id="tests", cmd="npm test", fatal=True, description="tests (npm)")
-        )
+        gates.append(Gate(id="tests", cmd="npm test", fatal=True, description="tests (npm)"))
     return gates
 
 
@@ -360,9 +347,7 @@ def load_manifest(root: Path) -> Config | None:
     if not path.is_file():
         return None
     if tomllib is None:
-        raise SystemExit(
-            "harness verify: se necesita Python 3.11+ para leer .harness/verify.toml"
-        )
+        raise SystemExit("harness verify: se necesita Python 3.11+ para leer .harness/verify.toml")
 
     data = read_toml(path)
     project = data.get("project", {})
@@ -372,9 +357,7 @@ def load_manifest(root: Path) -> Config | None:
         gate_id = raw.get("id") or f"gate-{index + 1}"
         cmd = raw.get("cmd")
         if not cmd:
-            raise SystemExit(
-                f"harness verify: el gate '{gate_id}' no tiene 'cmd' en {MANIFEST}"
-            )
+            raise SystemExit(f"harness verify: el gate '{gate_id}' no tiene 'cmd' en {MANIFEST}")
         gates.append(
             Gate(
                 id=gate_id,
@@ -428,9 +411,7 @@ def render_manifest(config: Config) -> str:
 # ----------------------------------------------------------------- execution
 
 
-def run_gate(
-    gate: Gate, root: Path, env: dict[str, str], file: str | None
-) -> GateResult:
+def run_gate(gate: Gate, root: Path, env: dict[str, str], file: str | None) -> GateResult:
     if file is not None:
         if not gate.file_cmd:
             return GateResult(
@@ -624,9 +605,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="con --init, regenerar aunque el manifiesto ya exista",
     )
-    parser.add_argument(
-        "--json", action="store_true", help="salida legible por máquina"
-    )
+    parser.add_argument("--json", action="store_true", help="salida legible por máquina")
     parser.add_argument(
         "--fail-fast",
         action="store_true",
@@ -720,9 +699,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.when:
         # Un gate sin `when` corre en todos los momentos: declarar la
         # restricción es opt-in, igual que el resto del harness.
-        config.gates = [
-            gate for gate in config.gates if not gate.when or args.when in gate.when
-        ]
+        config.gates = [gate for gate in config.gates if not gate.when or args.when in gate.when]
 
     if not config.gates:
         print(
