@@ -38,7 +38,21 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP"]
+# ─────────────────────────────────────────────
+# E    pycodestyle: errores de estilo
+# F    pyflakes: imports sin usar, variables no definidas
+# I    isort: orden de imports
+# UP   pyupgrade: sintaxis moderna de Python
+# B    flake8-bugbear: trampas comunes que no son errores de sintaxis
+# SIM  flake8-simplify: codigo que se puede escribir mas simple
+# RUF  reglas propias de ruff
+# ─────────────────────────────────────────────
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+# E501: line-length ya esta en [tool.ruff] = 100. E501 complementa pero
+# genera ruido en URLs/literales largos donde el wrap empeora la lectura.
+# UP046: generic en lugar de X | Y. Apropiado solo desde Python 3.12+,
+# pero el proyecto quiere compatibilidad con 3.12 explicito en type hints.
 ignore = ["E501", "UP046"]
 
 [tool.ruff.lint.per-file-ignores]
