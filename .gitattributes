@@ -1,0 +1,23 @@
+# Normaliza finales de línea en el repositorio.
+#
+# Sin esto, git avisa "LF will be replaced by CRLF" en cada archivo y, el día
+# que este repo se abra en una segunda máquina, aparecen diffs fantasma en
+# archivos que nadie tocó. Ver docs/adr/0001 ("revisit if": segunda máquina).
+
+* text=auto
+
+# Estos van SIEMPRE con LF, sin importar el sistema: se ejecutan en shells
+# POSIX (runners de CI, contenedores) donde un CRLF rompe el intérprete.
+*.sh        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+Makefile    text eol=lf
+Makefile.tmpl text eol=lf
+
+# Binarios: git no debe intentar convertirlos.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
