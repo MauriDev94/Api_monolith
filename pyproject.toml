@@ -61,8 +61,15 @@ ignore = ["E501", "UP046"]
 
 [tool.mypy]
 python_version = "3.12"
+# strict activa: warn_unused_configs, warn_return_any, no_implicit_optional,
+# check_untyped_defs, disallow_untyped_defs, disallow_incomplete_defs,
+# check_untyped_defs, disallow_untyped_decorators, no_implicit_reexport,
+# warn_redundant_casts, etc. El estandar dice: no negociable en proyecto
+# nuevo. Activarlo despues cuesta 10x — pero ya estamos aca.
+strict = true
 explicit_package_bases = true
 ignore_missing_imports = true
+warn_unreachable = true
 
 [[tool.mypy.overrides]]
 # Starlette's type stubs declare add_exception_handler with a narrow sync-only
