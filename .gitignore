@@ -5,7 +5,6 @@ __pycache__
 logs
 .pytest_cache
 .coverage
-AGENTS.md
 prd.md
 prdAuth.md
 *.pyc
