@@ -1,14 +1,58 @@
-[tool.black]
-line-length = 100
-target-version = ["py312"]
-include = '\.pyi?$'
+[project]
+name = "monolith"
+version = "0.1.0"
+description = "Production-ready REST API built with FastAPI, Clean Architecture, and Domain-Driven Design"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]==0.136.0",
+    "SQLAlchemy>=2.0.49",
+    "pydantic-settings==2.13.1",
+    "psycopg2-binary==2.9.11",
+    "argon2-cffi==25.1.0",
+    "PyJWT==2.12.1",
+    "alembic==1.18.4",
+    "loguru==0.7.3",
+    "httpx==0.28.1",
+]
+
+# PEP 735 — dev deps en [dependency-groups], NO en un archivo aparte.
+# uv sync las instala por defecto gracias a [tool.uv] default-groups.
+# testcontainers[postgres] va aca porque solo lo usan los tests de
+# integracion (ver .harness/verify.toml: tests-full tiene when = ["ci"]).
+[dependency-groups]
+dev = [
+    "pytest==9.0.3",
+    "pytest-cov==7.1.0",
+    "pytest-sugar==1.1.1",
+    "ruff==0.15.11",
+    "mypy==1.16.0",
+    "pre-commit==4.5.1",
+    "testcontainers[postgres]==4.14.2",
+]
+
+[tool.uv]
+default-groups = ["dev"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP"]
+# ─────────────────────────────────────────────
+# E    pycodestyle: errores de estilo
+# F    pyflakes: imports sin usar, variables no definidas
+# I    isort: orden de imports
+# UP   pyupgrade: sintaxis moderna de Python
+# B    flake8-bugbear: trampas comunes que no son errores de sintaxis
+# SIM  flake8-simplify: codigo que se puede escribir mas simple
+# RUF  reglas propias de ruff
+# ─────────────────────────────────────────────
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+# E501: line-length ya esta en [tool.ruff] = 100. E501 complementa pero
+# genera ruido en URLs/literales largos donde el wrap empeora la lectura.
+# UP046: generic en lugar de X | Y. Apropiado solo desde Python 3.12+,
+# pero el proyecto quiere compatibilidad con 3.12 explicito en type hints.
 ignore = ["E501", "UP046"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -31,3 +75,31 @@ disable_error_code = ["arg-type"]
 # a DB URL from env vars that mypy sees as str | None.
 module = "app.core.data.source.local.alembic.env"
 ignore_errors = true
+
+# ─────────────────────────────────────────────
+# coverage — rama, no línea.
+#
+# La cobertura de línea miente: un test que recorre un `if` sin probar la rama
+# falsa reporta 100% de línea y 50% de rama.
+#
+# El umbral de 85 es el del estándar del harness y NO está medido todavía en
+# este repo: la suite completa necesita Docker. El primer run del CI dirá el
+# número real. Si sale por debajo, se ajusta con el dato — no antes.
+# ─────────────────────────────────────────────
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--strict-markers"
+markers = [
+    "unit: fast unit tests with isolated logic and mocks.",
+    "integration: component/repository/api integration tests.",
+    "e2e: end-to-end workflow tests.",
+]

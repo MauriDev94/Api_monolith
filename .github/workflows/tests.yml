@@ -6,53 +6,54 @@ on:
   pull_request:
     branches: ["main"]
 
+# El gate se declara UNA vez en .harness/verify.toml.
+# Esta workflow lo invoca. Si el CI re-declara ruff, mypy o pytest,
+# tienes dos verdades y una miente.
+#
+# --when ci: corre la suite completa (format + lint + types + tests
+# unit + integration + e2e + cobertura de rama con --cov-fail-under
+# leido del pyproject.toml).
+#
+# El bloque 'quality' usa --when push: format + lint + types + tests
+# unit (sin integration/e2e que necesitan DB).
+
 jobs:
   quality:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
+        run: uv python install 3.12
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Sync dependencies
+        run: uv sync --frozen
 
-      - name: Run lint and format checks
-        run: |
-          ruff check .
-          black --check .
-          mypy app
+      - name: Run quality gate (lint + types + unit tests)
+        run: uv run python .harness/verify.py --root . --when push
 
   tests:
     runs-on: ubuntu-latest
     needs: quality
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
+        run: uv python install 3.12
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Sync dependencies
+        run: uv sync --frozen
 
-      - name: Run test suite
+      - name: Run full test suite
         env:
-          PYTHONPATH: .
           CI_DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
           CI_JWT_SECRET_KEY: ${{ secrets.CI_JWT_SECRET_KEY }}
         run: |
@@ -69,7 +70,8 @@ jobs:
           db_host=localhost
           jwt_secret_key=${CI_JWT_SECRET_KEY}
           EOF
-          pytest -q --cov=app --cov-branch --cov-report=term-missing --cov-report=xml --cov-fail-under=82
+
+          uv run python .harness/verify.py --root . --when ci
 
       - name: Upload coverage report
         if: always()

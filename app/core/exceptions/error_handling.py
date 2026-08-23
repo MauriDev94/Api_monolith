@@ -79,7 +79,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def generic_exception_handler(request: Request, exc: Exception):
     """Fallback handler for unexpected exceptions with stack trace logging."""
     _request_logger(request).error(
-        f"Unhandled exception: {type(exc).__name__}: {str(exc)} | "
+        f"Unhandled exception: {type(exc).__name__}: {exc!s} | "
         f"Path: {request.url.path} | Method: {request.method}\n"
         f"Stacktrace:\n{traceback.format_exc()}"
     )

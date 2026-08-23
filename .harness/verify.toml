@@ -1,0 +1,76 @@
+# La declaración de calidad de este proyecto.
+#
+# Un solo lugar declara los gates. Tres puertas los invocan:
+#   make check                    entrada humana
+#   python .harness/verify.py     entrada del agente (hooks)
+#   .github/workflows/ci.yml      entrada automatizada
+#
+# Los momentos (`when`) se eligieron con tiempos medidos sobre este repo, no
+# con supuestos. Un gate de 33s en cada turno se apaga a la tercera vez.
+#
+#   format   0.4s   ruff (antes black: 4.4-8.5s)
+#   lint     0.5s
+#   types     16s   caché caliente · 57s en frío · 120 archivos
+#   unit       6s   149 tests
+#   completa  42s   239 tests · NECESITA Docker
+
+[project]
+name = "monolith"
+stack = "python"
+
+# No bloquea y cuesta poco, pero informar en cada turno no aporta: es
+# mecánicamente arreglable con `make format`.
+[[gate]]
+id = "format"
+description = "formato (ruff)"
+cmd = "ruff format --check app tests"
+file_cmd = "ruff format --check {file}"
+file_ext = [".py", ".pyi"]
+when = ["push", "ci"]
+fatal = false
+
+# Sin `when`: corre siempre. Medio segundo no se siente en ningún momento.
+[[gate]]
+id = "lint"
+description = "lint (ruff)"
+cmd = "ruff check app tests"
+file_cmd = "ruff check {file}"
+file_ext = [".py", ".pyi"]
+fatal = true
+
+# Fuera de `turn` a propósito: 16s en cada cierre de turno es la clase de
+# fricción que hace que la gente apague el gate.
+#
+# En `edit` sí corre, pero sobre el archivo tocado (~2s). El hueco de eso es
+# que `mypy {file}` no ve si rompiste los tipos de OTRO módulo; eso lo caza el
+# `push`, que es un retraso de minutos y no de días.
+[[gate]]
+id = "types"
+description = "tipos (mypy)"
+cmd = "mypy app"
+file_cmd = "mypy {file}"
+file_ext = [".py", ".pyi"]
+when = ["edit", "push", "ci"]
+fatal = true
+
+# `-m unit` funciona porque tests/conftest.py marca CADA test por su ruta:
+# e2e, integration o unit. Nadie tiene que acordarse de poner el marker.
+# Además no lleva espacios, así que no hay problema de comillas en cmd.exe.
+[[gate]]
+id = "tests"
+description = "tests unitarios"
+cmd = "pytest -q -m unit"
+fatal = true
+
+# La suite completa con cobertura sólo donde hay Docker: los 90 tests de
+# integración y e2e levantan Postgres con testcontainers.
+#
+# La cobertura se mide acá y no en el gate anterior: los unitarios solos son
+# 149 de 239 tests, y medir una parte contra el umbral del todo miente en las
+# dos direcciones.
+[[gate]]
+id = "tests-full"
+description = "suite completa + cobertura de rama"
+cmd = "pytest -q --cov=app --cov-branch --cov-report=term-missing --cov-report=xml"
+when = ["ci"]
+fatal = true
