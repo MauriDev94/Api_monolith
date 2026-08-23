@@ -71,6 +71,6 @@ fatal = true
 [[gate]]
 id = "tests-full"
 description = "suite completa + cobertura de rama"
-cmd = "pytest -q --cov=app --cov-branch --cov-report=term-missing"
+cmd = "pytest -q --cov=app --cov-branch --cov-report=term-missing --cov-report=xml"
 when = ["ci"]
 fatal = true
