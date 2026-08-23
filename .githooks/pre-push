@@ -1,0 +1,37 @@
+#!/bin/sh
+# Gate de pre-push: no se sube código que no pasa su propia puerta de calidad.
+#
+# Sustituye a branch protection, que GitHub no ofrece en repos privados con
+# plan Free. Ver docs/adr/0006.
+#
+# Se activa una vez por clon:
+#     git config core.hooksPath .githooks
+#
+# Para saltarlo en una emergencia real:
+#     git push --no-verify
+
+set -e
+
+if [ -f .harness/verify.py ]; then
+    VERIFIER=.harness/verify.py
+elif [ -f verifier/harness_verify.py ]; then
+    VERIFIER=verifier/harness_verify.py
+else
+    exit 0
+fi
+
+python "$VERIFIER" --root . --when push
+code=$?
+
+# 1 es el único veredicto que bloquea. Un fallo de formato (2) o una
+# configuración incompleta (3) se reportan pero no impiden trabajar: un gate
+# que bloquea por nimiedades se aprende a saltar con --no-verify, y ahí deja
+# de servir para lo que importa.
+if [ "$code" -eq 1 ]; then
+    echo "" >&2
+    echo "pre-push: gate fatal en rojo. El push se cancela." >&2
+    echo "Corrige y vuelve a intentar, o usa --no-verify si de verdad es una emergencia." >&2
+    exit 1
+fi
+
+exit 0
