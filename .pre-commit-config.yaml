@@ -13,11 +13,23 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.0
-    hooks:
-      - id: mypy
-        args: [--ignore-missing-imports]
-        additional_dependencies:
-          - pydantic-settings>=2.0
-          - sqlalchemy>=2.0
+  # mypy removed from local pre-commit hooks.
+  #
+  # Reason: mirrors-mypy uses `language: python`, which spins up an isolated
+  # venv with only mypy + the listed `additional_dependencies`. That venv does
+  # NOT include the project's actual runtime deps (FastAPI, Starlette,
+  # loguru, pydantic, ...), so when mypy strict mode activates checks that
+  # reach into those libraries, it produces false positives (everything from
+  # those libs is `Any`).
+  #
+  # Listing every dep in `additional_dependencies` is brittle maintenance:
+  # any new dep in pyproject.toml has to be mirrored here, or the hook breaks
+  # again. `language: system` would require mypy to be on PATH in every
+  # contributor's environment.
+  #
+  # The CI workflow (.github/workflows/tests.yml) already runs `mypy app`
+  # via `harness verify --when ci` after `uv sync --frozen`, which installs
+  # the real pyproject.toml deps. That is the single source of truth for the
+  # `types` gate, declared in .harness/verify.toml — keeping the principle of
+  # "one place declares the gates". Local pre-commit keeps ruff (which works
+  # fine in isolation).

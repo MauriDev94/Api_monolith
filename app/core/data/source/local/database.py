@@ -5,7 +5,7 @@ from collections.abc import Generator
 from loguru import logger
 from sqlalchemy import event
 from sqlalchemy.engine import URL, create_engine
-from sqlalchemy.engine.events import DBAPIConnection
+from sqlalchemy.engine.interfaces import DBAPIConnection
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config.env_config import EnvConfig
@@ -62,18 +62,32 @@ class Database:
         # Attach slow query logging
         self._setup_slow_query_logging()
 
-    def _setup_slow_query_logging(self):
+    def _setup_slow_query_logging(self) -> None:
         """Register event listeners for slow query detection."""
 
         @event.listens_for(self.engine, "before_cursor_execute")
-        def before_execute(
-            conn: DBAPIConnection, cursor, statement, parameters, context, executemany
+        # SQLAlchemy event signatures are dynamic: parameters/context types
+        # depend on the dialect and driver, and mypy cannot infer them. We
+        # type only what we use (DBAPIConnection) and silence the rest.
+        def before_execute(  # type: ignore[no-untyped-def]
+            conn: DBAPIConnection,
+            cursor,
+            statement,
+            parameters,
+            context,
+            executemany,
         ):
             conn.info.setdefault("query_start_time", []).append(time.monotonic())
 
         @event.listens_for(self.engine, "after_cursor_execute")
-        def after_execute(
-            conn: DBAPIConnection, cursor, statement, parameters, context, executemany
+        # Same rationale as before_execute — see comment above.
+        def after_execute(  # type: ignore[no-untyped-def]
+            conn: DBAPIConnection,
+            cursor,
+            statement,
+            parameters,
+            context,
+            executemany,
         ):
             total_time = (
                 time.monotonic() - conn.info.pop("query_start_time", [time.monotonic()])[-1]

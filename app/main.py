@@ -1,11 +1,13 @@
 import asyncio
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from loguru import logger
 from pydantic_settings import BaseSettings
 from sqlalchemy import text
@@ -34,7 +36,7 @@ _MIGRATION_RETRY_DELAY_SECONDS = 2  # backoff lineal: 2, 4, 6, 8 s
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Apply Alembic migrations on startup when running in production."""
     app_env = os.getenv("APP_ENV", "dev")
     if app_env == "production":
@@ -120,7 +122,7 @@ app.include_router(users_v1_router, tags=["v1 Users"])
 app.include_router(todos_v1_router, tags=["v1 Todos"])
 
 
-def custom_openapi():
+def custom_openapi() -> dict[str, Any]:
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
@@ -176,13 +178,13 @@ app.openapi = custom_openapi  # type: ignore[method-assign]
 
 
 @app.get("/")
-def read_root():
+def read_root() -> dict[str, str]:
     """Basic liveness endpoint for local smoke checks."""
     return {"status": "success", "message": "API is running"}
 
 
 @app.get("/health")
-def health_check():
+def health_check() -> Response:
     """Readiness check: responde 503 si la DB no responde. Liveness puro es `/`."""
     from app.core.providers.db import get_db_session
 
@@ -203,4 +205,4 @@ def health_check():
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"status": "unhealthy", "database": "unhealthy"},
         )
-    return {"status": "healthy", "database": "healthy"}
+    return JSONResponse(content={"status": "healthy", "database": "healthy"})

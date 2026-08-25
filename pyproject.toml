@@ -63,6 +63,8 @@ ignore = ["E501", "UP046"]
 python_version = "3.12"
 explicit_package_bases = true
 ignore_missing_imports = true
+strict = true
+warn_unreachable = true
 
 [[tool.mypy.overrides]]
 # Starlette's type stubs declare add_exception_handler with a narrow sync-only

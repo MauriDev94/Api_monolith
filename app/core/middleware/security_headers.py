@@ -1,4 +1,6 @@
 from fastapi import Request
+from fastapi.responses import Response
+from starlette.middleware.base import RequestResponseEndpoint
 
 # Headers aplicados a TODAS las respuestas. X-XSS-Protection se omite a propósito:
 # está deprecado y puede introducir vulnerabilidades en navegadores antiguos.
@@ -15,7 +17,7 @@ _API_CONTENT_SECURITY_POLICY = "default-src 'none'; frame-ancestors 'none'; base
 _DOCS_PATHS = {"/docs", "/redoc", "/openapi.json"}
 
 
-async def attach_security_headers(request: Request, call_next):
+async def attach_security_headers(request: Request, call_next: RequestResponseEndpoint) -> Response:
     """Middleware que inyecta headers de seguridad en todas las respuestas."""
     response = await call_next(request)
     for header_name, header_value in SECURITY_HEADERS.items():
