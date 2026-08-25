@@ -1,6 +1,7 @@
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
 from app.core.http_utils import get_client_ip
 from app.features.auth.infrastructure.security.in_memory_rate_limiter import InMemoryRateLimiter
@@ -21,7 +22,7 @@ class GlobalRateLimitMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: ASGIApp,
         rate_limit: int = DEFAULT_RATE_LIMIT,
         window_seconds: int = DEFAULT_WINDOW_SECONDS,
     ) -> None:
@@ -30,7 +31,7 @@ class GlobalRateLimitMiddleware(BaseHTTPMiddleware):
         self.rate_limit = rate_limit
         self.window_seconds = window_seconds
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Skip rate limiting for health checks and docs
         path = request.url.path
         if path in ["/", "/docs", "/openapi.json", "/health"]:

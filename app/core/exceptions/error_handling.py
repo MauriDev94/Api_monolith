@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import traceback
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -17,14 +20,21 @@ from app.core.exceptions.exceptions import (
     ValidationError,
 )
 
+if TYPE_CHECKING:
+    # loguru's type stubs declare Logger at the top-level, but the runtime
+    # module (Cython) does not re-export it. Importing here is type-check only.
+    from loguru import Logger
 
-def _request_logger(request: Request):
+
+def _request_logger(request: Request) -> Logger:
     """Return logger bound with current request id for consistent correlation."""
     request_id = getattr(request.state, "request_id", "-")
     return logger.bind(request_id=request_id)
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """Normalize validation errors into a predictable API response."""
     errors = [
         {
@@ -44,7 +54,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def domain_error_exception_handler(request: Request, exc: DomainError):
+async def domain_error_exception_handler(request: Request, exc: DomainError) -> JSONResponse:
     """Map domain invariant violations to 400.
 
     Solo DomainError (que el dominio lanza explícitamente) se trata como error del
@@ -58,7 +68,7 @@ async def domain_error_exception_handler(request: Request, exc: DomainError):
     )
 
 
-async def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Map HTTP exceptions while hiding details for 5xx responses."""
     request_logger = _request_logger(request)
     if exc.status_code >= 500:
@@ -76,7 +86,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})
 
 
-async def generic_exception_handler(request: Request, exc: Exception):
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Fallback handler for unexpected exceptions with stack trace logging."""
     _request_logger(request).error(
         f"Unhandled exception: {type(exc).__name__}: {exc!s} | "
@@ -93,7 +103,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
-async def database_exception_handler(request: Request, exc: DatabaseError):
+async def database_exception_handler(request: Request, exc: DatabaseError) -> JSONResponse:
     """Handle persistence failures using a dedicated response envelope."""
     _request_logger(request).error(f"DatabaseError: {exc}")
     return JSONResponse(
@@ -108,7 +118,7 @@ async def database_exception_handler(request: Request, exc: DatabaseError):
 async def internal_server_error_exception_handler(
     request: Request,
     exc: InternalServerError,
-):
+) -> JSONResponse:
     """Handle known internal failures raised by the application layer."""
     _request_logger(request).error(f"InternalServerError: {exc}")
     return JSONResponse(
@@ -120,7 +130,7 @@ async def internal_server_error_exception_handler(
     )
 
 
-async def unauthorized_exception_handler(request: Request, exc: UnauthorizedError):
+async def unauthorized_exception_handler(request: Request, exc: UnauthorizedError) -> JSONResponse:
     """Return a stable unauthorized response for invalid credentials."""
     _request_logger(request).warning(f"UnauthorizedError: {exc}")
     return JSONResponse(
@@ -129,7 +139,7 @@ async def unauthorized_exception_handler(request: Request, exc: UnauthorizedErro
     )
 
 
-async def forbidden_exception_handler(request: Request, exc: ForbiddenError):
+async def forbidden_exception_handler(request: Request, exc: ForbiddenError) -> JSONResponse:
     """Return a forbidden response for access control violations."""
     _request_logger(request).warning(f"ForbiddenError: {exc}")
     return JSONResponse(
@@ -138,7 +148,7 @@ async def forbidden_exception_handler(request: Request, exc: ForbiddenError):
     )
 
 
-async def resource_conflict_exception_handler(request: Request, exc: ConflictError):
+async def resource_conflict_exception_handler(request: Request, exc: ConflictError) -> JSONResponse:
     """Return a conflict response when resource uniqueness is violated."""
     _request_logger(request).warning(f"ConflictError: {exc}")
     return JSONResponse(
@@ -147,7 +157,9 @@ async def resource_conflict_exception_handler(request: Request, exc: ConflictErr
     )
 
 
-async def resource_not_found_exception_handler(request: Request, exc: NotFoundError):
+async def resource_not_found_exception_handler(
+    request: Request, exc: NotFoundError
+) -> JSONResponse:
     """Return a not-found response for missing resources."""
     _request_logger(request).warning(f"NotFoundError: {exc}")
     return JSONResponse(
@@ -156,7 +168,9 @@ async def resource_not_found_exception_handler(request: Request, exc: NotFoundEr
     )
 
 
-async def validation_error_exception_handler(request: Request, exc: ValidationError):
+async def validation_error_exception_handler(
+    request: Request, exc: ValidationError
+) -> JSONResponse:
     """Return a validation response for domain/application validation errors."""
     _request_logger(request).warning(f"ValidationError: {exc}")
     return JSONResponse(
@@ -168,7 +182,7 @@ async def validation_error_exception_handler(request: Request, exc: ValidationEr
 async def too_many_requests_exception_handler(
     request: Request,
     exc: TooManyRequestsError,
-):
+) -> JSONResponse:
     """Return a rate-limit response for excessive request bursts."""
     _request_logger(request).warning(f"TooManyRequestsError: {exc}")
     return JSONResponse(
@@ -177,7 +191,7 @@ async def too_many_requests_exception_handler(
     )
 
 
-def register_exception_handlers(app: FastAPI):
+def register_exception_handlers(app: FastAPI) -> None:
     """Register all global exception handlers in priority order."""
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(ValidationError, validation_error_exception_handler)

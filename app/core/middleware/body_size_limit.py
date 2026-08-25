@@ -1,6 +1,7 @@
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
 # 1 MB: suficiente para cualquier payload JSON legítimo de esta API.
 DEFAULT_MAX_BODY_BYTES = 1_000_000
@@ -14,11 +15,11 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
     barato, especialmente en el free tier de Render.
     """
 
-    def __init__(self, app, max_body_bytes: int = DEFAULT_MAX_BODY_BYTES) -> None:
+    def __init__(self, app: ASGIApp, max_body_bytes: int = DEFAULT_MAX_BODY_BYTES) -> None:
         super().__init__(app)
         self.max_body_bytes = max_body_bytes
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         content_length = request.headers.get("content-length")
         if content_length is not None:
             try:

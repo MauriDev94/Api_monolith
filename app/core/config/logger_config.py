@@ -1,10 +1,18 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
+if TYPE_CHECKING:
+    # loguru's type stubs declare Logger at the top-level, but the runtime
+    # module (Cython) does not re-export it. Importing here is type-check only.
+    from loguru import Logger
 
-def setup_logger():
+
+def setup_logger() -> Logger:
     """Configure application logging sinks for console, files, and structured JSON logs."""
     logs_dir = Path("logs")
     logs_dir.mkdir(parents=True, exist_ok=True)
