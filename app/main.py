@@ -13,6 +13,7 @@ from pydantic_settings import BaseSettings
 from sqlalchemy import text
 
 from app.core.config.logger_config import setup_logger
+from app.core.docs.scalar_setup import setup_scalar_docs
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.middleware.body_size_limit import BodySizeLimitMiddleware
 from app.core.middleware.rate_limit_global import GlobalRateLimitMiddleware
@@ -83,7 +84,7 @@ async def _apply_migrations_on_startup() -> None:
 
 settings = AppSettings()
 setup_logger()
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
 register_exception_handlers(app)
 
 
@@ -120,6 +121,12 @@ app.include_router(auth_v1_router, tags=["v1 Auth"], prefix="/auth")
 app.include_router(users_v1_router, tags=["v1 Users"])
 # Todo endpoints are protected and scoped by authenticated user ownership.
 app.include_router(todos_v1_router, tags=["v1 Todos"])
+
+# Scalar API Reference replaces Swagger UI at /docs. Gated by SCALAR_DOCS_ENABLED.
+setup_scalar_docs(
+    app,
+    title="MauriDev Portfolio API",
+)
 
 
 def custom_openapi() -> dict[str, Any]:
