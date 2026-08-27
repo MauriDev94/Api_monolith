@@ -24,7 +24,7 @@ Tres puertas invocan el mismo gate, declaradas una sola vez en
 
 - **`make check`** — entrada humana
 - **`.harness/verify.py`** — entrada del agente (hooks)
-- **`.github/workflows/ci.yml`** — entrada automatizada
+- **`.github/workflows/tests.yml`** — entrada automatizada
 
 El pre-push hook (`.githooks/pre-push`) bloquea con exit 1 si un gate
 fatal falla. Activar una vez por clon: `git config core.hooksPath .githooks`.
