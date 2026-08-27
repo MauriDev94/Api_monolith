@@ -5,6 +5,7 @@ description = "Production-ready REST API built with FastAPI, Clean Architecture,
 requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]==0.136.0",
+    "scalar-fastapi==1.8.2",
     "SQLAlchemy>=2.0.49",
     "pydantic-settings==2.13.1",
     "psycopg2-binary==2.9.11",

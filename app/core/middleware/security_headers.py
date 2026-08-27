@@ -12,9 +12,9 @@ SECURITY_HEADERS = {
 }
 
 # CSP estricta para respuestas de API (JSON). Se omite en las páginas de docs
-# (Swagger/ReDoc) porque cargan JS/CSS desde un CDN y una CSP 'none' las rompería.
+# (Scalar) porque cargan JS/CSS desde un CDN y una CSP 'none' las rompería.
 _API_CONTENT_SECURITY_POLICY = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
-_DOCS_PATHS = {"/docs", "/redoc", "/openapi.json"}
+_DOCS_PATHS = {"/docs", "/openapi.json"}
 
 
 async def attach_security_headers(request: Request, call_next: RequestResponseEndpoint) -> Response:
