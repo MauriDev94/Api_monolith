@@ -5,7 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN groupadd --system appgroup && useradd --system --gid appgroup appuser \
+# --create-home crea /home/appuser. Sin esto, `uv run` falla con
+# "Permission denied" al intentar inicializar /home/appuser/.cache/uv
+# porque appuser no tiene home directory (default de `useradd --system`).
+RUN groupadd --system appgroup && useradd --system --create-home --gid appgroup appuser \
     && pip install --no-cache-dir uv
 
 # Copy only dependency manifests first for better Docker layer caching.
