@@ -14,7 +14,7 @@ _Qué hace este PR, en 2-3 líneas._
 
 ## ✅ Checklist
 
-- [ ] Lint + format pasan: `ruff check . && black --check .`
+- [ ] Lint + format pasan: `ruff check . && ruff format --check .`
 - [ ] Type checking pasa: `mypy app`
 - [ ] Tests pasan: `pytest -q` → N passed, 0 failed
 - [ ] Sin lógica de negocio en endpoints (presentación delgada)
@@ -25,7 +25,7 @@ _Qué hace este PR, en 2-3 líneas._
 ## 🧪 Cómo probar
 
 ```bash
-ruff check . && black --check . && mypy app
+ruff check . && ruff format --check . && mypy app
 pytest -q
 ```
 

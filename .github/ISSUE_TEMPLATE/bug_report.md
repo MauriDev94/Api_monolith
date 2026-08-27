@@ -40,5 +40,5 @@ assignees: ""
 ## Criterios de aceptación
 - [ ] Test que reproduce el bug (falla antes del fix — TDD)
 - [ ] Fix aplicado en la capa correcta
-- [ ] `ruff check .` + `black --check .` + `mypy app` en verde
+- [ ] `ruff check .` + `ruff format --check .` + `mypy app` en verde
 - [ ] `pytest -q` en verde

@@ -15,7 +15,7 @@ assignees: ""
 ## Criterios de aceptación
 - [ ] TDD: tests primero
 - [ ] Cambio aislado en la(s) capa(s) correcta(s)
-- [ ] `ruff check .` + `black --check .` + `mypy app` en verde
+- [ ] `ruff check .` + `ruff format --check .` + `mypy app` en verde
 - [ ] `pytest -q` en verde
 - [ ] Sin migraciones huérfanas: `alembic check`
 - [ ] Commit con conventional commits

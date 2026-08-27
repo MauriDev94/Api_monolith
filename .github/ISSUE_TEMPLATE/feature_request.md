@@ -31,5 +31,5 @@ assignees: ""
 - [ ] Regla de dependencia respetada (la capa interna no conoce a la externa)
 - [ ] DIP: sin imports de SQLAlchemy en `application/` ni `presentation/`
 - [ ] Migración Alembic incluida si toca el esquema
-- [ ] `ruff check .` + `black --check .` + `mypy app` en verde
+- [ ] `ruff check .` + `ruff format --check .` + `mypy app` en verde
 - [ ] `pytest -q` en verde, coverage sin bajar del gate
