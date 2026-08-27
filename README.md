@@ -133,8 +133,8 @@ cp .env.example .env
 # Start DB
 docker compose -f docker-compose-dev.yaml up db -d
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (requires uv — https://docs.astral.sh/uv/)
+uv sync
 
 # Run migrations
 alembic upgrade head
