@@ -167,7 +167,7 @@ Hardening aplicado (resumen):
 - **Seguridad**: rate limiting global por IP registrado, derivando la IP real en `app/core/http_utils.py` desde el valor **más a la derecha** de `X-Forwarded-For`; CSRF de OAuth vía cookie httpOnly firmada + `secrets.compare_digest`; OTP con HMAC-SHA256; HSTS/CSP; sanitización de logs; `InvalidHash` → fallo de auth limpio.
 - **Operación**: migración en startup **resiliente** (reintentos con backoff ante DB inalcanzable, fail-fast ante errores de esquema, arranque degradado si la DB no vuelve); `/health` → 503 si la DB no responde; body-size limit middleware; connection pool (`pool_pre_ping`, `pool_recycle`); `DELETE` → 204; paginación en listados.
 - **Arquitectura**: puerto `UserProvider` (desacople auth↔users); excepciones de dominio (`DomainError`); eliminación de la feature `notifications`.
-- **Testing**: red de tests sobre **PostgreSQL real** (testcontainers) con migraciones Alembic; gate `--cov-branch --cov-fail-under=82`; gate de no-drift (`alembic check`).
+- **Testing**: red de tests sobre **PostgreSQL real** (testcontainers) con migraciones Alembic; gate `--cov-branch --cov-fail-under=85`; gate de no-drift (`alembic check`).
 
 ## 8) Features (orden lógico por dependencia)
 
@@ -180,7 +180,6 @@ Rol arquitectónico:
 Estructura interna de `app/features/auth`:
 
 1. **`application/`**
-   - `constants.py`: constantes de negocio de auth (propósitos/flags y valores compartidos).
    - `contracts/auth_datasource.py`: puerto para operaciones de usuario/auth persistidas.
    - `contracts/token_manager.py`: contrato para emisión/validación de tokens.
    - `contracts/token_revocation_store.py`: contrato para revocación/rotación de refresh token.
@@ -277,7 +276,7 @@ Estructura interna de `app/features/users`:
    - `models/user_model.py`: modelo ORM de usuario con `password_hash` nullable y columna `google_id`.
    - `mappers/user_mapper.py`: mapeo ORM ↔ entidad de dominio.
    - `repositories/user_repository.py`: implementación SQLAlchemy del `user_datasource`.
-   - `repositories/user_provider_repository.py`: implementación del `user_provider` que consume `auth`.
+   - `repositories/user_provider_repository.py`: implementación del `user_provider` que `users` expone y `auth` consume — desacople entre features (A1, PR #84).
 
 4. **`presentation/`**
    - `api.py`: endpoints `/v1/users` (detalle propio, actualizar, eliminar → `204`). El listado `GET /v1/users` fue **eliminado** (exponía PII de todos los usuarios a cualquier autenticado — O4, PR #90).
@@ -352,7 +351,7 @@ Decisiones de diseño de Todos:
 | Users | Alto | Medio | application, domain, infrastructure, presentation | Medio |
 | Todos | Alto | Medio | application, domain, infrastructure, presentation | Medio |
 
-> Todos los tests corren contra **PostgreSQL real** (testcontainers) con las migraciones Alembic aplicadas; gate `--cov-branch --cov-fail-under=82` + gate de no-drift (`alembic check`).
+> Todos los tests corren contra **PostgreSQL real** (testcontainers) con las migraciones Alembic aplicadas; gate `--cov-branch --cov-fail-under=85` + gate de no-drift (`alembic check`).
 
 ### 9.1 Evidencia rápida de tests por feature
 

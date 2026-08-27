@@ -67,6 +67,9 @@ git commit -m "tipo: descripción corta en minúscula"
 | `docs` | Documentación |
 | `chore` | Tareas de mantenimiento |
 | `perf` | Mejora de performance |
+| `style` | Cambios de formato sin afectar lógica |
+| `build` | Cambios en build o dependencias |
+| `ci` | Cambios en pipelines de CI |
 
 **Reglas del mensaje:**
 - Verbo en presente: `agrega`, `corrige`, `extrae` — no `agregué` ni `agregando`

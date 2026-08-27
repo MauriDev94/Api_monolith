@@ -31,6 +31,13 @@ el flujo existente.
 ### Nuevos endpoints
 GET /auth/v1/google
 → 302 redirect a Google OAuth consent screen
+
+> **Nota de desvío (shipping):** la implementación final (#106) retornó
+> `200 + { authorization_url }` (JSON), no `302 redirect`. La intención
+> original de delegar la navegación al frontend para mantener el backend
+> sin estado se materializó así. Ver `docs/ARCHITECTURE.md` §8.1 punto 6
+> y `app/features/auth/presentation/api.py` (`GET /auth/v1/google`).
+
 GET /auth/v1/google/callback?code=...&state=...
 → 200 { access_token, refresh_token, token_type }
 → 409 si el email ya existe con password (cuenta duplicada)

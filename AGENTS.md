@@ -24,7 +24,7 @@ Tres puertas invocan el mismo gate, declaradas una sola vez en
 
 - **`make check`** — entrada humana
 - **`.harness/verify.py`** — entrada del agente (hooks)
-- **`.github/workflows/ci.yml`** — entrada automatizada
+- **`.github/workflows/tests.yml`** — entrada automatizada
 
 El pre-push hook (`.githooks/pre-push`) bloquea con exit 1 si un gate
 fatal falla. Activar una vez por clon: `git config core.hooksPath .githooks`.
@@ -60,19 +60,23 @@ Fronteras de módulo y reglas de dependencia → `docs/architecture/`.
 ## Stack
 
 FastAPI + Clean Architecture + DDD + PostgreSQL (Neon en producción,
-testcontainers en integración), SQLAlchemy async, Pydantic v2, JWT auth.
+testcontainers en integración), SQLAlchemy 2.0 (sync, con `psycopg2-binary`),
+Pydantic v2, JWT auth.
 
 ## Estructura
 
 ```
 app/
 ├── main.py
+├── common/                   # Contratos base de casos de uso compartidos
 ├── core/
 │   ├── config/
 │   ├── data/source/local/
 │   ├── exceptions/
+│   ├── http_utils.py         # get_client_ip (right-most XFF, proxy-aware)
 │   ├── middleware/
-│   └── providers/
+│   ├── providers/
+│   └── router/               # Factory de routers versionados
 └── features/
     ├── auth/
     ├── todos/

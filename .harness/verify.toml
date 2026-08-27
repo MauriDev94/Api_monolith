@@ -3,7 +3,7 @@
 # Un solo lugar declara los gates. Tres puertas los invocan:
 #   make check                    entrada humana
 #   python .harness/verify.py     entrada del agente (hooks)
-#   .github/workflows/ci.yml      entrada automatizada
+#   .github/workflows/tests.yml    entrada automatizada
 #
 # Los momentos (`when`) se eligieron con tiempos medidos sobre este repo, no
 # con supuestos. Un gate de 33s en cada turno se apaga a la tercera vez.

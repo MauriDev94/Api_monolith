@@ -4,7 +4,7 @@ A production-ready REST API built with **FastAPI**, **Clean Architecture**, and 
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.136-green)](https://fastapi.tiangolo.com/)
-[![Coverage](https://img.shields.io/badge/Coverage-86%25-brightgreen)]()
+[![Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen)]()
 [![Deploy](https://img.shields.io/badge/Deploy-Render-purple)](https://api-monolith.onrender.com)
 
 **Live API:** https://api-monolith.onrender.com/docs
@@ -23,7 +23,7 @@ A production-ready REST API built with **FastAPI**, **Clean Architecture**, and 
 - Cross-feature ports (`UserProvider`) — auth decoupled from users infrastructure
 - Structured logging with request tracing (`X-Request-ID`)
 - Global exception handling with consistent HTTP responses
-- Test pyramid on **real PostgreSQL** (testcontainers) with Alembic migrations — ~87% branch coverage
+- Test pyramid on **real PostgreSQL** (testcontainers) with Alembic migrations — ~85% branch coverage
 
 ---
 
@@ -40,7 +40,7 @@ A production-ready REST API built with **FastAPI**, **Clean Architecture**, and 
 | Email | Resend API |
 | Logging | Loguru |
 | Testing | pytest + pytest-cov |
-| Linting | Ruff + Black |
+| Linting | Ruff |
 | Deploy | Render (Docker) |
 
 ---
@@ -152,7 +152,7 @@ API available at `http://localhost:8000/docs`
 > Tests run against an **ephemeral PostgreSQL** via `testcontainers` (real Alembic migrations, not SQLite). **Docker must be running.**
 
 ```bash
-# All tests (branch coverage gate: --cov-branch --cov-fail-under=82)
+# All tests (branch coverage gate: --cov-branch --cov-fail-under=85)
 pytest
 
 # With coverage report

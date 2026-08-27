@@ -2,7 +2,7 @@
 
 Estado del plan de remediación derivado de [AUDIT_PRODUCTION_READINESS.md](history/AUDIT_PRODUCTION_READINESS.md).
 Flujo: cada fase = 1 issue + 1 PR (`Closes #N`). Tests sobre Postgres real (testcontainers),
-gate `--cov-branch --cov-fail-under=82`, gate de no-drift (`alembic check`) activo.
+gate `--cov-branch --cov-fail-under=85`, gate de no-drift (`alembic check`) activo.
 
 ## ✅ Completado
 
@@ -24,7 +24,7 @@ gate `--cov-branch --cov-fail-under=82`, gate de no-drift (`alembic check`) acti
 | 5 | #92 | **O8**: `DELETE` devuelve `204 No Content` sin body (antes `200` + `{"message": ...}`) |
 | — | #94 | **Startup resiliente**: reintentos con backoff ante DB inalcanzable · fail-fast preservado ante errores de esquema · modo degradado (`/health` → 503) si la DB no vuelve, en vez de crash-loop · `docker-compose` sin auto-start |
 
-Cobertura ~87%. Los 4 bloques de la auditoría: remediados.
+Cobertura ~85% (gate `fail_under=85` en `pyproject.toml`). Los 4 bloques de la auditoría: remediados.
 
 ## ⏳ Pulido restante (bajo valor / opcional)
 
@@ -33,7 +33,7 @@ Pendiente para una ronda posterior (no bloquea producción):
 - **O7** — Versionado de API inconsistente (`/auth/v1` vs `/v1/users`). ⚠️ Cambiar URLs es disruptivo para el frontend desplegado; evaluar antes.
 - **TrustedHostMiddleware** — opcional, bajo impacto (la API no genera URLs basadas en Host).
 - **GZipMiddleware** — saltable (payloads chicos).
-- **`render.yaml` desalineado** — declara `runtime: python` y un bloque `databases: monolith-db` que ya no existe (la DB vive en Neon). El servicio real corre en **Docker**. Candidato a su propio PR.
+- **`render.yaml` desalineado** — ✅ Resuelto en PR #98 (`ops: alinear render.yaml con el deploy real`).
 
 ## ❌ Hallazgos invalidados
 
