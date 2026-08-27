@@ -60,19 +60,23 @@ Fronteras de módulo y reglas de dependencia → `docs/architecture/`.
 ## Stack
 
 FastAPI + Clean Architecture + DDD + PostgreSQL (Neon en producción,
-testcontainers en integración), SQLAlchemy async, Pydantic v2, JWT auth.
+testcontainers en integración), SQLAlchemy 2.0 (sync, con `psycopg2-binary`),
+Pydantic v2, JWT auth.
 
 ## Estructura
 
 ```
 app/
 ├── main.py
+├── common/                   # Contratos base de casos de uso compartidos
 ├── core/
 │   ├── config/
 │   ├── data/source/local/
 │   ├── exceptions/
+│   ├── http_utils.py         # get_client_ip (right-most XFF, proxy-aware)
 │   ├── middleware/
-│   └── providers/
+│   ├── providers/
+│   └── router/               # Factory de routers versionados
 └── features/
     ├── auth/
     ├── todos/
