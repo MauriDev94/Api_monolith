@@ -33,7 +33,7 @@ Pendiente para una ronda posterior (no bloquea producción):
 - **O7** — Versionado de API inconsistente (`/auth/v1` vs `/v1/users`). ⚠️ Cambiar URLs es disruptivo para el frontend desplegado; evaluar antes.
 - **TrustedHostMiddleware** — opcional, bajo impacto (la API no genera URLs basadas en Host).
 - **GZipMiddleware** — saltable (payloads chicos).
-- **`render.yaml` desalineado** — declara `runtime: python` y un bloque `databases: monolith-db` que ya no existe (la DB vive en Neon). El servicio real corre en **Docker**. Candidato a su propio PR.
+- **`render.yaml` desalineado** — ✅ Resuelto en PR #98 (`ops: alinear render.yaml con el deploy real`).
 
 ## ❌ Hallazgos invalidados
 

@@ -44,7 +44,7 @@
 - [x] Unificar a Python 3.12 (recomendado — LTS, mejor soporte libraries)
 - [x] Actualizar `.github/workflows/tests.yml` de 3.13 → 3.12
 - [x] Verificar Dockerfile ya usa 3.12-slim ✅
-- [ ] Actualizar `requirements.txt` si hay incompatibilidades
+- [x] ~~Actualizar `requirements.txt` si hay incompatibilidades~~ (deps ahora vía uv/pyproject.toml; no aplica)
 - [x] Correr tests en verde después del cambio (PR #3)
 
 **Archivos a modificar:**
@@ -357,7 +357,7 @@ SMTP_USE_TLS=true
 ### 6.3 — Cleanup técnico
 **Estado:** ✅ Completado (2026-04-27)
 
-- [x] Dependencias outdated en `requirements.txt` (actualizadas a versiones vigentes, 2026-04-27)
+- [x] Dependencias actualizadas en `pyproject.toml` vía uv (2026-04-27)
 - [x] Limpiar imports no usados
 - [x] Actualizar pre-commit hooks si es necesario (ruff-format + bumps de versiones)
 
@@ -411,15 +411,15 @@ SMTP_USE_TLS=true
 **Prioridad:** 🟡 Esta semana
 
 ### 9.1 — Configuración de entorno
-**Estado:** ✅ Completado (PR #35)
+**Estado:** ❌ N/A — feature `notifications` eliminada en PR #80 antes de mergear
 
-- [x] Agregar `internal_api_key` a `env_config.py`
-- [x] Agregar `INTERNAL_API_KEY` a `.env.example`
+- [x] ~~Agregar `internal_api_key` a `env_config.py`~~ (no aplicado)
+- [x] ~~Agregar `INTERNAL_API_KEY` a `.env.example`~~ (estuvo presente; removido al limpiar .env.example)
 
 ### 9.2 — Extender contrato EmailSender
-**Estado:** ✅ Completado (PR #36)
+**Estado:** ❌ N/A — `send_reminder` agregado en PR #36, eliminado en PR #100 junto con la feature
 
-- [x] Agregar método abstracto `send_reminder(to_email, todo_title, due_date)` a `EmailSender`
+- [x] ~~Agregar método abstracto `send_reminder(to_email, todo_title, due_date)` a `EmailSender`~~
 - [x] Actualizar `ResendEmailSender` con implementación
 - [x] Actualizar `ConsoleEmailSender` con implementación
 - [x] Actualizar `SmtpEmailSender` con implementación (backwards compat)
@@ -460,10 +460,7 @@ SMTP_USE_TLS=true
 - [x] 6 tests unitarios para ProcessRemindersUseCase
 
 ### 9.8 — Integración y validación
-**Estado:** ⏳ Pendiente
-
-- [ ] Suite completa pasa (sin regresiones)
-- [ ] Configurar cron-job.org con URL y header
+**Estado:** ❌ N/A — feature `notifications` eliminada en PR #80 antes de llegar acá
 
 ---
 
@@ -534,7 +531,7 @@ SMTP_USE_TLS=true
 ### 10.6 — Presentation + DI
 **Estado:** ✅ Completado
 
-- [x] `GET /auth/v1/google` → redirect
+- [x] `GET /auth/v1/google` → `200` con `{ authorization_url }` (JSON, no redirect — fix #58)
 - [x] `GET /auth/v1/google/callback` → tokens
 - [x] `POST /auth/v1/link-google` → vincular cuenta
 - [x] DI providers en `auth/di/dependencies.py`
