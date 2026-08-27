@@ -180,7 +180,6 @@ Rol arquitectónico:
 Estructura interna de `app/features/auth`:
 
 1. **`application/`**
-   - `constants.py`: constantes de negocio de auth (propósitos/flags y valores compartidos).
    - `contracts/auth_datasource.py`: puerto para operaciones de usuario/auth persistidas.
    - `contracts/token_manager.py`: contrato para emisión/validación de tokens.
    - `contracts/token_revocation_store.py`: contrato para revocación/rotación de refresh token.
@@ -277,7 +276,7 @@ Estructura interna de `app/features/users`:
    - `models/user_model.py`: modelo ORM de usuario con `password_hash` nullable y columna `google_id`.
    - `mappers/user_mapper.py`: mapeo ORM ↔ entidad de dominio.
    - `repositories/user_repository.py`: implementación SQLAlchemy del `user_datasource`.
-   - `repositories/user_provider_repository.py`: implementación del `user_provider` que consume `auth`.
+   - `repositories/user_provider_repository.py`: implementación del `user_provider` que `users` expone y `auth` consume — desacople entre features (A1, PR #84).
 
 4. **`presentation/`**
    - `api.py`: endpoints `/v1/users` (detalle propio, actualizar, eliminar → `204`). El listado `GET /v1/users` fue **eliminado** (exponía PII de todos los usuarios a cualquier autenticado — O4, PR #90).
