@@ -11,7 +11,7 @@
 |------|-----------|--------|
 | 1. Correcciones Críticas | 🟢 | ✅ Completado |
 | 2. SDD + Observabilidad | 🟢 | ✅ Completado |
-| 3. Testing + Coverage | 🟢 | ✅ Completado (92% line en su momento; hoy gate 82% branch) |
+| 3. Testing + Coverage | 🟢 | ✅ Completado (92% line en su momento; hoy gate 85% branch) |
 | 4. Recordatorios (TODOs) | 🟢 | ⏸️ Feature `notifications` **eliminada** en Fase 11 (#80) |
 | 5. Newsletter | 🟢 | ⏸️ Eliminado (no aporta al portafolio) |
 | 6. Deploy | 🟢 | ✅ Completado (Render + PostgreSQL en Neon) |
@@ -574,7 +574,7 @@ Auditoría formal de 4 bloques (arquitectura, seguridad, testing, operación) y 
 - **#92 (Fase 5)** — `DELETE` devuelve **204 No Content** sin body en vez de `200` + `{"message": ...}` (O8).
 - **#94** — **Startup resiliente**: reintentos con backoff ante DB inalcanzable, fail-fast preservado ante errores de esquema, arranque en **modo degradado** (`/health` → 503) si la DB no vuelve, en vez de crash-loop. Además `docker-compose` sin auto-start.
 
-**Resultado:** los 4 bloques de la auditoría remediados; ~87% branch coverage.
+**Resultado:** los 4 bloques de la auditoría remediados; branch coverage gate en 85% (`pyproject.toml`: `fail_under = 85`).
 
 ---
 
