@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC
+from datetime import UTC, datetime
 
 from app.common.use_case import UseCase
 from app.core.exceptions.exceptions import ConflictError, UnauthorizedError
@@ -93,8 +93,6 @@ class HandleGoogleCallbackUseCase(UseCase[HandleGoogleCallbackParams, TokenPairR
         )
 
         # Store refresh token for revocation tracking
-        from datetime import datetime
-
         payload = self._token_manager.decode_refresh_token(refresh_token)
         expires_at = datetime.fromtimestamp(payload["exp"], tz=UTC)
         self._token_revocation_store.store_active(
