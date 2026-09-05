@@ -28,7 +28,6 @@ from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
 from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
-from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.di.dependencies import (
     get_change_password_with_otp_use_case,
     get_handle_google_callback_use_case,
@@ -38,7 +37,6 @@ from app.features.auth.di.dependencies import (
     get_refresh_access_token_use_case,
     get_register_user_use_case,
     get_request_otp_use_case,
-    get_verify_otp_use_case,
 )
 from app.features.auth.presentation.mappers.auth_mapper import (
     map_change_password_request_to_params,
@@ -47,13 +45,11 @@ from app.features.auth.presentation.mappers.auth_mapper import (
     map_token_pair_result_to_login_response,
     map_token_pair_result_to_response,
     map_user_entity_to_auth_user_response,
-    map_verify_otp_to_params,
 )
 from app.features.auth.presentation.schemas.auth_requests import (
     ChangePasswordRequest,
     RefreshTokenRequest,
     RegisterRequest,
-    VerifyOtpRequest,
 )
 from app.features.auth.presentation.schemas.auth_responses import (
     CurrentUserResponse,
@@ -140,26 +136,6 @@ def request_otp(
     params = map_request_otp_to_params(current_user.id)
     request_otp_use_case.execute(params)
     return OtpResponse(message="OTP sent")
-
-
-@v1_router.post(
-    "/verify-otp",
-    response_model=OtpResponse,
-    deprecated=True,
-    summary="Deprecated: verify OTP (use /change-password)",
-)
-def verify_otp(
-    request: VerifyOtpRequest,
-    _: Annotated[None, Depends(enforce_verify_otp_rate_limit)],
-    current_user: Annotated[User, Depends(get_authenticated_user)],
-    verify_otp_use_case: Annotated[VerifyOtpUseCase, Depends(get_verify_otp_use_case)],
-) -> OtpResponse:
-    """Deprecated endpoint. Prefer /auth/v1/change-password for password-change flow."""
-    if current_user.id is None:
-        raise InternalServerError("user id is missing")
-    params = map_verify_otp_to_params(request, current_user.id)
-    verify_otp_use_case.execute(params)
-    return OtpResponse(message="OTP verified")
 
 
 @v1_router.post("/change-password", response_model=OtpResponse)

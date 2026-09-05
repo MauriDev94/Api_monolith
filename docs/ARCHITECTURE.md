@@ -196,7 +196,6 @@ Estructura interna de `app/features/auth`:
    - `usecases/get_current_user_use_case.py`: resuelve usuario autenticado actual.
    - `usecases/request_otp_use_case.py`: genera OTP para flujo seguro de cambio de password.
    - `usecases/change_password_with_otp_use_case.py`: valida OTP y rota contraseña.
-   - `usecases/verify_otp_use_case.py`: validación OTP (flujo legacy/deprecado).
    - `usecases/initiate_google_login.py`: inicia flujo OAuth de Google.
    - `usecases/handle_google_callback.py`: procesa callback OAuth y estado de autenticación.
    - `usecases/link_google_account.py`: vincula cuenta local con identidad Google. La validación de contraseña y la regla de negocio (no duplicar google_id, verificar contraseña antes de vincular) residen en el caso de uso, no en el endpoint (fix #59).

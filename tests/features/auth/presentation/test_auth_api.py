@@ -26,7 +26,6 @@ from app.features.auth.di.dependencies import (
     get_rate_limiter,
     get_register_user_use_case,
     get_request_otp_use_case,
-    get_verify_otp_use_case,
 )
 from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.auth.presentation.api import v1_router
@@ -172,43 +171,6 @@ def test_should_return_404_when_request_otp_user_not_found() -> None:
 
     assert response.status_code == 404
     assert response.json()["message"] == "user not found"
-
-
-# Tipo de test: Integration
-def test_should_return_200_when_verify_otp_is_valid() -> None:
-    client = create_test_client()
-    verify_otp_use_case = StubUseCase(result=None)
-    client.app.dependency_overrides[get_verify_otp_use_case] = lambda: verify_otp_use_case
-    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
-    client.app.dependency_overrides[get_authenticated_user] = make_user
-
-    response = client.post(
-        "/auth/v1/verify-otp",
-        json={"code": "123456"},
-    )
-
-    assert response.status_code == 200
-    assert response.json() == {"message": "OTP verified"}
-    assert verify_otp_use_case.received.user_id == "user-1"
-    assert verify_otp_use_case.received.code == "123456"
-    assert verify_otp_use_case.received.purpose == OtpPurpose.PASSWORD_CHANGE
-
-
-# Tipo de test: Integration
-def test_should_return_401_when_verify_otp_is_invalid() -> None:
-    client = create_test_client()
-    verify_otp_use_case = StubUseCase(error=UnauthorizedError("Invalid otp code"))
-    client.app.dependency_overrides[get_verify_otp_use_case] = lambda: verify_otp_use_case
-    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
-    client.app.dependency_overrides[get_authenticated_user] = make_user
-
-    response = client.post(
-        "/auth/v1/verify-otp",
-        json={"code": "123456"},
-    )
-
-    assert response.status_code == 401
-    assert response.json()["message"] == "Invalid otp code"
 
 
 # Tipo de test: Integration
