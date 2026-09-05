@@ -29,7 +29,6 @@ from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
 from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
-from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.infrastructure.managers.jwt_token_manager import JwtTokenManager
 from app.features.auth.infrastructure.managers.password_manager_impl import PasswordManagerImpl
 from app.features.auth.infrastructure.providers.console_email_sender import ConsoleEmailSender
@@ -164,13 +163,6 @@ def get_request_otp_use_case(
         otp_datasource=otp_datasource,
         email_sender=email_sender,
     )
-
-
-def get_verify_otp_use_case(
-    otp_datasource: Annotated[OtpDatasource, Depends(get_otp_repository)],
-) -> VerifyOtpUseCase:
-    """Provide VerifyOtpUseCase use case."""
-    return VerifyOtpUseCase(otp_datasource=otp_datasource)
 
 
 def get_change_password_with_otp_use_case(

@@ -3,14 +3,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.core.exceptions.exceptions import NotFoundError, UnauthorizedError
+from app.core.exceptions.exceptions import NotFoundError
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.email_sender import EmailSender
 from app.features.auth.application.contracts.otp_datasource import OtpDatasource
 from app.features.auth.application.dto.request_otp_params import RequestOtpParams
-from app.features.auth.application.dto.verify_otp_params import VerifyOtpParams
 from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
-from app.features.auth.application.usecases.verify_otp_use_case import VerifyOtpUseCase
 from app.features.auth.domain.entities.otp_code import OtpCode
 from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.users.domain.entities.user import User
@@ -68,32 +66,3 @@ def test_should_invalidate_previous_otps_and_send_new_one() -> None:
         code=otp.code,
         purpose=OtpPurpose.PASSWORD_CHANGE,
     )
-
-
-# Tipo de test: Unit
-def test_should_raise_unauthorized_when_otp_is_invalid() -> None:
-    otp_datasource = Mock(spec=OtpDatasource)
-    otp_datasource.find_valid.return_value = None
-    use_case = VerifyOtpUseCase(otp_datasource)
-
-    with pytest.raises(UnauthorizedError, match="Invalid otp code"):
-        use_case.execute(
-            VerifyOtpParams(user_id="user-1", code="123456", purpose=OtpPurpose.PASSWORD_CHANGE)
-        )
-
-    otp_datasource.save.assert_not_called()
-
-
-# Tipo de test: Unit
-def test_should_consume_and_persist_valid_otp() -> None:
-    otp_datasource = Mock(spec=OtpDatasource)
-    otp = make_otp()
-    otp_datasource.find_valid.return_value = otp
-    use_case = VerifyOtpUseCase(otp_datasource)
-
-    use_case.execute(
-        VerifyOtpParams(user_id="user-1", code=otp.code, purpose=OtpPurpose.PASSWORD_CHANGE)
-    )
-
-    assert otp.used_at is not None
-    otp_datasource.save.assert_called_once_with(otp)
