@@ -9,6 +9,8 @@ from app.core.providers.db import get_db_session
 from app.core.providers.env_config import get_env_config
 from app.features.auth.application.contracts.auth_datasource import AuthDatasource
 from app.features.auth.application.contracts.email_sender import EmailSender
+from app.features.auth.application.contracts.google_auth_datasource import GoogleAuthDatasource
+from app.features.auth.application.contracts.oauth_provider import OAuthProvider
 from app.features.auth.application.contracts.otp_datasource import OtpDatasource
 from app.features.auth.application.contracts.password_manager import PasswordManager
 from app.features.auth.application.contracts.rate_limiter import RateLimiter
@@ -191,28 +193,28 @@ def get_change_password_with_otp_use_case(
 
 def get_google_oauth_provider(
     env_config: Annotated[EnvConfig, Depends(get_env_config)],
-) -> GoogleOAuthProviderImpl:
+) -> OAuthProvider:
     """Provide Google OAuth provider implementation."""
     return GoogleOAuthProviderImpl(config=env_config)
 
 
 def get_google_auth_repository(
     user_provider: Annotated[UserProvider, Depends(get_user_provider)],
-) -> GoogleAuthRepository:
+) -> GoogleAuthDatasource:
     """Provide Google auth datasource backed by the users port."""
     return GoogleAuthRepository(user_provider=user_provider)
 
 
 def get_initiate_google_login_use_case(
-    oauth_provider: Annotated[GoogleOAuthProviderImpl, Depends(get_google_oauth_provider)],
+    oauth_provider: Annotated[OAuthProvider, Depends(get_google_oauth_provider)],
 ) -> InitiateGoogleLoginUseCase:
     """Provide InitiateGoogleLoginUseCase use case."""
     return InitiateGoogleLoginUseCase(oauth_provider=oauth_provider)
 
 
 def get_handle_google_callback_use_case(
-    oauth_provider: Annotated[GoogleOAuthProviderImpl, Depends(get_google_oauth_provider)],
-    google_auth_datasource: Annotated[GoogleAuthRepository, Depends(get_google_auth_repository)],
+    oauth_provider: Annotated[OAuthProvider, Depends(get_google_oauth_provider)],
+    google_auth_datasource: Annotated[GoogleAuthDatasource, Depends(get_google_auth_repository)],
     token_manager: Annotated[TokenManager, Depends(get_token_manager)],
     token_revocation_store: Annotated[TokenRevocationStore, Depends(get_token_revocation_store)],
 ) -> HandleGoogleCallbackUseCase:
@@ -226,7 +228,7 @@ def get_handle_google_callback_use_case(
 
 
 def get_link_google_account_use_case(
-    google_auth_datasource: Annotated[GoogleAuthRepository, Depends(get_google_auth_repository)],
+    google_auth_datasource: Annotated[GoogleAuthDatasource, Depends(get_google_auth_repository)],
     password_manager: Annotated[PasswordManager, Depends(get_password_manager)],
 ) -> LinkGoogleAccountUseCase:
     """Provide LinkGoogleAccountUseCase use case."""
