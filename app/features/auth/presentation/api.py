@@ -276,7 +276,8 @@ def logout_user(
             # Tampered/expired cookie — return 204 anyway (no leakage).
             pass
     _clear_refresh_cookie(response)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 # === Refresh cookie helpers ===
