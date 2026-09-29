@@ -43,9 +43,14 @@ class RegisterRequest(BaseModel):
 
 
 class RefreshTokenRequest(BaseModel):
-    """Request schema used to refresh an access token."""
+    """Request schema used to refresh an access token.
 
-    refresh_token: str = Field(min_length=1)
+    The refresh token is optional in the body because the frontend sends it via the
+    `refresh_token` HttpOnly cookie instead. Non-browser clients (mobile, CLI) can
+    still send it in the body; when both are present, the cookie wins.
+    """
+
+    refresh_token: str | None = Field(default=None, min_length=1)
 
 
 class ChangePasswordRequest(BaseModel):

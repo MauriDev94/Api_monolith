@@ -105,16 +105,26 @@ def login_user(
 @v1_router.post("/refresh", response_model=RefreshTokenResponse)
 def refresh_access_token(
     request: RefreshTokenRequest,
-    _rate_limit: Annotated[None, Depends(enforce_refresh_rate_limit)],
+    response: Response,
+    refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
+    _rate_limit: Annotated[None, Depends(enforce_refresh_rate_limit)] = None,
     refresh_access_token_use_case: Annotated[
         RefreshAccessToken,
         Depends(get_refresh_access_token_use_case),
-    ],
+    ] = None,  # type: ignore[assignment]
 ) -> RefreshTokenResponse:
-    """Issue a new access token from a valid refresh token."""
-    result = refresh_access_token_use_case.execute(
-        RefreshTokenParams(refresh_token=request.refresh_token)
-    )
+    """Issue a new access token from a valid refresh token.
+
+    Precedence: the `refresh_token` HttpOnly cookie wins; the body field is a legacy
+    fallback for non-browser clients. The new refresh cookie is always set so the
+    browser keeps an up-to-date cookie after every rotation.
+    """
+    token = refresh_token_cookie or request.refresh_token
+    if not token:
+        raise UnauthorizedError("refresh_token required")
+    assert refresh_access_token_use_case is not None  # injected by FastAPI
+    result = refresh_access_token_use_case.execute(RefreshTokenParams(refresh_token=token))
+    _set_refresh_cookie(response, result.refresh_token)
     return RefreshTokenResponse(tokens=map_token_pair_result_to_response(result))
 
 
