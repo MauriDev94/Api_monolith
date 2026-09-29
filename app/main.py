@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, Response
 from loguru import logger
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from sqlalchemy import text
 
@@ -29,6 +30,19 @@ class AppSettings(BaseSettings):
 
     cors_allowed_origins: list[str] = ["http://localhost:3000"]
     cors_allow_credentials: bool = True
+
+    @field_validator("cors_allowed_origins")
+    @classmethod
+    def _fail_fast_in_production(cls, value: list[str]) -> list[str]:
+        # Production must explicitly opt-in to the Vercel frontend origin; an empty
+        # list silently breaks the whole cross-origin flow. Local dev keeps the
+        # `["http://localhost:3000"]` default untouched.
+        if os.getenv("APP_ENV", "dev") == "production" and not value:
+            raise ValueError(
+                "CORS_ALLOWED_ORIGINS must be set in production "
+                "(set it to the Vercel origin, e.g. https://monolith-frontend.vercel.app)"
+            )
+        return value
 
 
 # Reintentos de migración al arranque, para tolerar una DB temporalmente inalcanzable.

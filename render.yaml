@@ -33,3 +33,8 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI
         sync: false
+      # Cross-origin allowlist consumed by CORS middleware. MUST be set in the
+      # Render dashboard after the first Vercel deploy lands (sync: false keeps it
+      # out of the public blueprint) — empty value triggers fail-fast at startup.
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
