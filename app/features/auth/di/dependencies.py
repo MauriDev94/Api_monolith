@@ -26,6 +26,7 @@ from app.features.auth.application.usecases.handle_google_callback import (
 from app.features.auth.application.usecases.initiate_google_login import InitiateGoogleLoginUseCase
 from app.features.auth.application.usecases.link_google_account import LinkGoogleAccountUseCase
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
+from app.features.auth.application.usecases.logout_use_case import LogoutUseCase
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
 from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
@@ -142,6 +143,13 @@ def get_refresh_access_token_use_case(
         token_manager=token_manager,
         token_revocation_store=token_revocation_store,
     )
+
+
+def get_logout_use_case(
+    token_revocation_store: Annotated[TokenRevocationStore, Depends(get_token_revocation_store)],
+) -> LogoutUseCase:
+    """Provide LogoutUseCase for bulk-revoking a user's refresh tokens."""
+    return LogoutUseCase(token_revocation_store=token_revocation_store)
 
 
 def get_current_user_use_case(
