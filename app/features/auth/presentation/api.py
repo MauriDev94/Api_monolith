@@ -234,3 +234,34 @@ def link_google_account(
     )
     result = link_google_account_use_case.execute(params)
     return GoogleLinkAccountResponse(success=result.success, message=result.message)
+
+
+# === Refresh cookie helpers ===
+# Inlined here (vs. a dedicated cookie_helpers module) to match the precedent set by
+# the OAuth state cookie above and by `initiate_google_login` (line 178). Three call
+# sites only — login, refresh, logout — does not justify a new module. The mapper maps
+# data; the endpoint owns transport headers.
+_REFRESH_COOKIE_KEY = "refresh_token"
+_REFRESH_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60  # 604800 — matches JwtTokenManager._REFRESH_DAYS
+
+
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=_REFRESH_COOKIE_KEY,
+        value=token,
+        max_age=_REFRESH_COOKIE_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=_OAUTH_COOKIE_SECURE,
+        samesite="none",
+        path="/",
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=_REFRESH_COOKIE_KEY,
+        path="/",
+        samesite="none",
+        secure=_OAUTH_COOKIE_SECURE,
+        httponly=True,
+    )
