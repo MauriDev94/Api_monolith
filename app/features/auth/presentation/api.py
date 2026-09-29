@@ -89,6 +89,7 @@ def register_user(
 
 @v1_router.post("/login", response_model=LoginResponse)
 def login_user(
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     _rate_limit: Annotated[None, Depends(enforce_login_rate_limit)],
     login_user_use_case: Annotated[LoginUser, Depends(get_login_user_use_case)],
@@ -97,6 +98,7 @@ def login_user(
     result = login_user_use_case.execute(
         LoginUserParams(email=form_data.username, password=form_data.password)
     )
+    _set_refresh_cookie(response, result.refresh_token)
     return map_token_pair_result_to_login_response(result)
 
 
@@ -211,6 +213,7 @@ def handle_google_callback(
         HandleGoogleCallbackParams(code=code, state=state)
     )
     response.delete_cookie(_OAUTH_STATE_COOKIE)
+    _set_refresh_cookie(response, result.refresh_token)
     return map_token_pair_result_to_login_response(result)
 
 
