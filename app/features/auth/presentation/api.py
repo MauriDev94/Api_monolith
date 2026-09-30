@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.exceptions.exceptions import InternalServerError, UnauthorizedError
 from app.core.router.router import get_versioned_router
-from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.dto.login_user_params import LoginUserParams
 from app.features.auth.application.dto.logout_params import LogoutParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
@@ -41,7 +40,6 @@ from app.features.auth.di.dependencies import (
     get_refresh_access_token_use_case,
     get_register_user_use_case,
     get_request_otp_use_case,
-    get_token_manager,
 )
 from app.features.auth.presentation.mappers.auth_mapper import (
     map_change_password_request_to_params,
@@ -257,24 +255,16 @@ def link_google_account(
 @v1_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout_user(
     response: Response,
-    token_manager: Annotated["TokenManager", Depends(get_token_manager)],
     logout_use_case: Annotated[LogoutUseCase, Depends(get_logout_use_case)],
     refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
 ) -> Response:
     """End the session: revoke every refresh token and clear the cookie.
 
-    Idempotent: missing or tampered cookies still return 204 — no information leak
-    about whether a valid session existed. CSRF is bounded: see docs/ARCHITECTURE.md §8.1.
+    Idempotent: missing, empty, tampered, or sub-less cookies still return 204 —
+    no information leak about whether a valid session existed. CSRF is bounded:
+    see docs/ARCHITECTURE.md §8.1.
     """
-    if refresh_token_cookie:
-        try:
-            payload = token_manager.decode_refresh_token(refresh_token_cookie)
-            subject = str(payload.get("sub", ""))
-            if subject:
-                logout_use_case.execute(LogoutParams(user_id=subject))
-        except UnauthorizedError:
-            # Tampered/expired cookie — return 204 anyway (no leakage).
-            pass
+    logout_use_case.execute(LogoutParams(refresh_token=refresh_token_cookie))
     _clear_refresh_cookie(response)
     response.status_code = status.HTTP_204_NO_CONTENT
     return response

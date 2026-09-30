@@ -146,10 +146,14 @@ def get_refresh_access_token_use_case(
 
 
 def get_logout_use_case(
+    token_manager: Annotated[TokenManager, Depends(get_token_manager)],
     token_revocation_store: Annotated[TokenRevocationStore, Depends(get_token_revocation_store)],
 ) -> LogoutUseCase:
     """Provide LogoutUseCase for bulk-revoking a user's refresh tokens."""
-    return LogoutUseCase(token_revocation_store=token_revocation_store)
+    return LogoutUseCase(
+        token_manager=token_manager,
+        token_revocation_store=token_revocation_store,
+    )
 
 
 def get_current_user_use_case(

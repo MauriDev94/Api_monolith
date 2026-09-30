@@ -37,7 +37,6 @@ from app.features.auth.di.dependencies import (
     get_refresh_access_token_use_case,
     get_register_user_use_case,
     get_request_otp_use_case,
-    get_token_manager,
 )
 from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
 from app.features.auth.presentation.api import v1_router
@@ -294,8 +293,10 @@ def test_should_return_409_when_link_google_is_already_linked() -> None:
 # - Login sets an HttpOnly refresh cookie with the expected attrs.
 # - /refresh prefers the cookie over the body (cookie-first); body still works for
 #   non-browser clients and always triggers a fresh Set-Cookie (rotation).
-# - /logout is idempotent: missing/tampered cookies still return 204; valid
-#   cookies trigger bulk revoke and clear the cookie with Max-Age=0.
+# - /logout is idempotent: the endpoint always invokes LogoutUseCase with the raw
+#   cookie (or None) and the use case owns the decode/revoke decision. The
+#   endpoint is responsible for emitting a Set-Cookie Max-Age=0 to wipe any
+#   residual browser state.
 
 _REFRESH_COOKIE_KEY = "refresh_token"
 
@@ -385,13 +386,14 @@ def test_refresh_returns_401_when_neither_cookie_nor_body_is_present() -> None:
 
 
 # Tipo de test: Integration
-def test_logout_returns_204_and_revokes_tokens_when_cookie_is_valid() -> None:
-    """A valid refresh cookie must trigger bulk revoke and clear the cookie."""
+def test_logout_returns_204_and_calls_use_case_when_cookie_is_valid() -> None:
+    """The endpoint forwards the raw cookie to LogoutUseCase and clears the cookie.
+
+    The endpoint is intentionally ignorant of JWT internals — decode/revoke
+    decisions live inside the use case.
+    """
     client = create_test_client()
-    token_manager = Mock(spec=TokenManager)
-    token_manager.decode_refresh_token.return_value = {"sub": "user-1"}
-    logout_use_case = Mock()
-    client.app.dependency_overrides[get_token_manager] = lambda: token_manager
+    logout_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
     client.cookies.set(_REFRESH_COOKIE_KEY, "valid-refresh")
 
@@ -399,9 +401,8 @@ def test_logout_returns_204_and_revokes_tokens_when_cookie_is_valid() -> None:
 
     assert response.status_code == 204
     assert response.content == b""
-    token_manager.decode_refresh_token.assert_called_once_with("valid-refresh")
     logout_use_case.execute.assert_called_once()
-    assert logout_use_case.execute.call_args[0][0].user_id == "user-1"
+    assert logout_use_case.received.refresh_token == "valid-refresh"
 
     set_cookie = response.headers.get("set-cookie", "")
     assert "Max-Age=0" in set_cookie
@@ -409,37 +410,20 @@ def test_logout_returns_204_and_revokes_tokens_when_cookie_is_valid() -> None:
 
 
 # Tipo de test: Integration
-def test_logout_returns_204_without_revoking_when_cookie_is_absent() -> None:
-    """Idempotency: no cookie → 204, no DB calls, no information leak."""
+def test_logout_returns_204_when_cookie_is_absent() -> None:
+    """Idempotency: no cookie → 204; the use case still runs with None and clears.
+
+    The endpoint always invokes the use case (the use case handles the no-op
+    internally) and still emits a Set-Cookie Max-Age=0 to wipe residual state.
+    """
     client = create_test_client()
-    token_manager = Mock(spec=TokenManager)
-    logout_use_case = Mock()
-    client.app.dependency_overrides[get_token_manager] = lambda: token_manager
+    logout_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
 
     response = client.post("/auth/v1/logout")
 
     assert response.status_code == 204
-    token_manager.decode_refresh_token.assert_not_called()
-    logout_use_case.execute.assert_not_called()
+    logout_use_case.execute.assert_called_once()
+    assert logout_use_case.received.refresh_token is None
     # Clear is still emitted so any residual browser state is wiped.
-    assert "Max-Age=0" in response.headers.get("set-cookie", "")
-
-
-# Tipo de test: Integration
-def test_logout_returns_204_without_revoking_when_cookie_is_tampered() -> None:
-    """Tampered/expired cookies must return 204 without triggering revocation."""
-    client = create_test_client()
-    token_manager = Mock(spec=TokenManager)
-    token_manager.decode_refresh_token.side_effect = UnauthorizedError("bad token")
-    logout_use_case = Mock()
-    client.app.dependency_overrides[get_token_manager] = lambda: token_manager
-    client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
-    client.cookies.set(_REFRESH_COOKIE_KEY, "tampered.value")
-
-    response = client.post("/auth/v1/logout")
-
-    assert response.status_code == 204
-    token_manager.decode_refresh_token.assert_called_once_with("tampered.value")
-    logout_use_case.execute.assert_not_called()
     assert "Max-Age=0" in response.headers.get("set-cookie", "")
