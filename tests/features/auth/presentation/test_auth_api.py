@@ -395,6 +395,7 @@ def test_logout_returns_204_and_calls_use_case_when_cookie_is_valid() -> None:
     client = create_test_client()
     logout_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
     client.cookies.set(_REFRESH_COOKIE_KEY, "valid-refresh")
 
     response = client.post("/auth/v1/logout")
@@ -419,6 +420,7 @@ def test_logout_returns_204_when_cookie_is_absent() -> None:
     client = create_test_client()
     logout_use_case = StubUseCase(result=None)
     client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
 
     response = client.post("/auth/v1/logout")
 
@@ -427,3 +429,20 @@ def test_logout_returns_204_when_cookie_is_absent() -> None:
     assert logout_use_case.received.refresh_token is None
     # Clear is still emitted so any residual browser state is wiped.
     assert "Max-Age=0" in response.headers.get("set-cookie", "")
+
+
+# Tipo de test: Integration
+def test_logout_returns_429_when_rate_limit_is_exceeded() -> None:
+    """Logging out faster than 30/min per IP must return 429."""
+    client = create_test_client()
+    logout_use_case = StubUseCase(result=None)
+    limiter = StubRateLimiter()
+    client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: limiter
+
+    for _ in range(30):
+        response = client.post("/auth/v1/logout")
+        assert response.status_code == 204
+
+    response = client.post("/auth/v1/logout")
+    assert response.status_code == 429

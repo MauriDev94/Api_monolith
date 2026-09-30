@@ -68,6 +68,7 @@ from app.features.auth.presentation.schemas.google_auth_requests import (
 )
 from app.features.auth.presentation.security_dependencies import (
     enforce_login_rate_limit,
+    enforce_logout_rate_limit,
     enforce_refresh_rate_limit,
     enforce_register_rate_limit,
     enforce_request_otp_rate_limit,
@@ -255,6 +256,7 @@ def link_google_account(
 @v1_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout_user(
     response: Response,
+    _rate_limit: Annotated[None, Depends(enforce_logout_rate_limit)],
     logout_use_case: Annotated[LogoutUseCase, Depends(get_logout_use_case)],
     refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
 ) -> Response:
