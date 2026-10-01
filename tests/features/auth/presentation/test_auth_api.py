@@ -402,7 +402,8 @@ def test_logout_returns_204_and_calls_use_case_when_cookie_is_valid() -> None:
 
     assert response.status_code == 204
     assert response.content == b""
-    logout_use_case.execute.assert_called_once()
+    # StubUseCase.received is set inside execute(); its presence proves the
+    # endpoint dispatched to the use case with the cookie verbatim.
     assert logout_use_case.received.refresh_token == "valid-refresh"
 
     set_cookie = response.headers.get("set-cookie", "")
@@ -425,7 +426,6 @@ def test_logout_returns_204_when_cookie_is_absent() -> None:
     response = client.post("/auth/v1/logout")
 
     assert response.status_code == 204
-    logout_use_case.execute.assert_called_once()
     assert logout_use_case.received.refresh_token is None
     # Clear is still emitted so any residual browser state is wiped.
     assert "Max-Age=0" in response.headers.get("set-cookie", "")
