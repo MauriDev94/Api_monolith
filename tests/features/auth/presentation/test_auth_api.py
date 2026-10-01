@@ -1,3 +1,11 @@
+# mypy: disable-error-code="attr-defined"
+# Reason: `fastapi.testclient.TestClient`'s class-as-callable signature trips
+# `mypy --follow-imports=silent` in per-file mode (it shows `client` as the
+# `__init__` Callable, not an instance). Project-scope `mypy app` is unaffected;
+# this directive scopes the suppression to this file only.
+
+from __future__ import annotations
+
 from datetime import date
 from unittest.mock import Mock
 
@@ -16,6 +24,7 @@ from app.features.auth.application.contracts.password_manager import PasswordMan
 from app.features.auth.application.contracts.rate_limiter import RateLimiter
 from app.features.auth.application.contracts.token_manager import TokenManager
 from app.features.auth.application.contracts.token_revocation_store import TokenRevocationStore
+from app.features.auth.application.dto.token_pair_result import TokenPairResult
 from app.features.auth.application.usecases.initiate_google_login import InitiateGoogleLoginResult
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
 from app.features.auth.di.dependencies import (
@@ -23,7 +32,9 @@ from app.features.auth.di.dependencies import (
     get_initiate_google_login_use_case,
     get_link_google_account_use_case,
     get_login_user_use_case,
+    get_logout_use_case,
     get_rate_limiter,
+    get_refresh_access_token_use_case,
     get_register_user_use_case,
     get_request_otp_use_case,
 )
@@ -35,12 +46,16 @@ from app.features.users.domain.value_objects.email import Email
 
 
 class StubUseCase:
-    def __init__(self, result=None, error: Exception | None = None):
+    def __init__(
+        self,
+        result: object = None,
+        error: Exception | None = None,
+    ) -> None:
         self.result = result
         self.error = error
-        self.received = None
+        self.received: object = None
 
-    def execute(self, params=None):
+    def execute(self, params: object = None) -> object:
         self.received = params
         if self.error is not None:
             raise self.error
@@ -270,3 +285,164 @@ def test_should_return_409_when_link_google_is_already_linked() -> None:
 
     assert response.status_code == 409
     assert response.json()["message"] == "Google account already linked to this user"
+
+
+# === Refresh cookie transport + /logout (BE-007) ===
+#
+# These tests pin the wire contract the frontend relies on:
+# - Login sets an HttpOnly refresh cookie with the expected attrs.
+# - /refresh prefers the cookie over the body (cookie-first); body still works for
+#   non-browser clients and always triggers a fresh Set-Cookie (rotation).
+# - /logout is idempotent: the endpoint always invokes LogoutUseCase with the raw
+#   cookie (or None) and the use case owns the decode/revoke decision. The
+#   endpoint is responsible for emitting a Set-Cookie Max-Age=0 to wipe any
+#   residual browser state.
+
+_REFRESH_COOKIE_KEY = "refresh_token"
+
+
+def _set_cookie_header(attrs: dict[str, str]) -> str:
+    """Render a Set-Cookie header value from a dict of attribute name → value."""
+    parts = [f"{_REFRESH_COOKIE_KEY}=stub"]
+    for key, value in attrs.items():
+        parts.append(f"{key}={value}")
+    return "; ".join(parts)
+
+
+# Tipo de test: Integration
+def test_login_sets_refresh_cookie_with_expected_attrs() -> None:
+    """Login must set refresh_token cookie with HttpOnly + SameSite=None + Max-Age=7d."""
+    client = create_test_client()
+    login_use_case = StubUseCase(
+        result=TokenPairResult(access_token="access-stub", refresh_token="refresh-stub")
+    )
+    client.app.dependency_overrides[get_login_user_use_case] = lambda: login_use_case
+
+    response = client.post(
+        "/auth/v1/login",
+        data={"username": "mauri@mail.com", "password": "plain1234"},
+    )
+
+    assert response.status_code == 200
+    # Body still carries the token pair for non-browser clients.
+    assert response.json()["refresh_token"] == "refresh-stub"
+
+    set_cookie = response.headers.get("set-cookie", "")
+    assert _REFRESH_COOKIE_KEY in set_cookie
+    assert "HttpOnly" in set_cookie
+    assert "samesite=none" in set_cookie.lower()
+    assert "Max-Age=604800" in set_cookie
+    assert "Path=/" in set_cookie
+
+    # Client-side cookie jar must reflect the new refresh cookie.
+    assert client.cookies.get(_REFRESH_COOKIE_KEY) == "refresh-stub"
+
+
+# Tipo de test: Integration
+def test_refresh_uses_cookie_value_when_cookie_and_body_are_both_present() -> None:
+    """When the cookie is present it MUST win over the body, regardless of body content."""
+    client = create_test_client()
+    refresh_use_case = StubUseCase(
+        result=TokenPairResult(access_token="new-access", refresh_token="new-refresh")
+    )
+    client.app.dependency_overrides[get_refresh_access_token_use_case] = lambda: refresh_use_case
+    client.cookies.set(_REFRESH_COOKIE_KEY, "cookie-value-wins")
+
+    response = client.post("/auth/v1/refresh", json={"refresh_token": "body-value-loses"})
+
+    assert response.status_code == 200
+    assert refresh_use_case.received.refresh_token == "cookie-value-wins"
+    # Rotation always emits a fresh Set-Cookie.
+    assert "refresh_token=new-refresh" in response.headers.get("set-cookie", "")
+
+
+# Tipo de test: Integration
+def test_refresh_falls_back_to_body_when_no_cookie_is_present() -> None:
+    """Non-browser clients (no cookie) must still work via the body field."""
+    client = create_test_client()
+    refresh_use_case = StubUseCase(
+        result=TokenPairResult(access_token="new-access", refresh_token="new-refresh")
+    )
+    client.app.dependency_overrides[get_refresh_access_token_use_case] = lambda: refresh_use_case
+
+    response = client.post("/auth/v1/refresh", json={"refresh_token": "body-value-wins"})
+
+    assert response.status_code == 200
+    assert refresh_use_case.received.refresh_token == "body-value-wins"
+    # Even on the body path, rotation sets a new cookie for forward compatibility.
+    assert "refresh_token=new-refresh" in response.headers.get("set-cookie", "")
+
+
+# Tipo de test: Integration
+def test_refresh_returns_401_when_neither_cookie_nor_body_is_present() -> None:
+    client = create_test_client()
+    refresh_use_case = Mock()
+    client.app.dependency_overrides[get_refresh_access_token_use_case] = lambda: refresh_use_case
+
+    response = client.post("/auth/v1/refresh", json={})
+
+    assert response.status_code == 401
+    refresh_use_case.execute.assert_not_called()
+
+
+# Tipo de test: Integration
+def test_logout_returns_204_and_calls_use_case_when_cookie_is_valid() -> None:
+    """The endpoint forwards the raw cookie to LogoutUseCase and clears the cookie.
+
+    The endpoint is intentionally ignorant of JWT internals — decode/revoke
+    decisions live inside the use case.
+    """
+    client = create_test_client()
+    logout_use_case = StubUseCase(result=None)
+    client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
+    client.cookies.set(_REFRESH_COOKIE_KEY, "valid-refresh")
+
+    response = client.post("/auth/v1/logout")
+
+    assert response.status_code == 204
+    assert response.content == b""
+    # StubUseCase.received is set inside execute(); its presence proves the
+    # endpoint dispatched to the use case with the cookie verbatim.
+    assert logout_use_case.received.refresh_token == "valid-refresh"
+
+    set_cookie = response.headers.get("set-cookie", "")
+    assert "Max-Age=0" in set_cookie
+    assert "Path=/" in set_cookie
+
+
+# Tipo de test: Integration
+def test_logout_returns_204_when_cookie_is_absent() -> None:
+    """Idempotency: no cookie → 204; the use case still runs with None and clears.
+
+    The endpoint always invokes the use case (the use case handles the no-op
+    internally) and still emits a Set-Cookie Max-Age=0 to wipe residual state.
+    """
+    client = create_test_client()
+    logout_use_case = StubUseCase(result=None)
+    client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
+
+    response = client.post("/auth/v1/logout")
+
+    assert response.status_code == 204
+    assert logout_use_case.received.refresh_token is None
+    # Clear is still emitted so any residual browser state is wiped.
+    assert "Max-Age=0" in response.headers.get("set-cookie", "")
+
+
+# Tipo de test: Integration
+def test_logout_returns_429_when_rate_limit_is_exceeded() -> None:
+    """Logging out faster than 30/min per IP must return 429."""
+    client = create_test_client()
+    logout_use_case = StubUseCase(result=None)
+    limiter = StubRateLimiter()
+    client.app.dependency_overrides[get_logout_use_case] = lambda: logout_use_case
+    client.app.dependency_overrides[get_rate_limiter] = lambda: limiter
+
+    for _ in range(30):
+        response = client.post("/auth/v1/logout")
+        assert response.status_code == 204
+
+    response = client.post("/auth/v1/logout")
+    assert response.status_code == 429

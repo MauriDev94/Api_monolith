@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.core.exceptions.exceptions import InternalServerError, UnauthorizedError
 from app.core.router.router import get_versioned_router
 from app.features.auth.application.dto.login_user_params import LoginUserParams
+from app.features.auth.application.dto.logout_params import LogoutParams
 from app.features.auth.application.dto.refresh_token_params import RefreshTokenParams
 from app.features.auth.application.usecases.change_password_with_otp_use_case import (
     ChangePasswordWithOtpUseCase,
@@ -25,6 +26,7 @@ from app.features.auth.application.usecases.link_google_account import (
     LinkGoogleAccountUseCase,
 )
 from app.features.auth.application.usecases.login_user_use_case import LoginUser
+from app.features.auth.application.usecases.logout_use_case import LogoutUseCase
 from app.features.auth.application.usecases.refresh_access_token_use_case import RefreshAccessToken
 from app.features.auth.application.usecases.register_user_use_case import RegisterUser
 from app.features.auth.application.usecases.request_otp_use_case import RequestOtpUseCase
@@ -34,6 +36,7 @@ from app.features.auth.di.dependencies import (
     get_initiate_google_login_use_case,
     get_link_google_account_use_case,
     get_login_user_use_case,
+    get_logout_use_case,
     get_refresh_access_token_use_case,
     get_register_user_use_case,
     get_request_otp_use_case,
@@ -65,6 +68,7 @@ from app.features.auth.presentation.schemas.google_auth_requests import (
 )
 from app.features.auth.presentation.security_dependencies import (
     enforce_login_rate_limit,
+    enforce_logout_rate_limit,
     enforce_refresh_rate_limit,
     enforce_register_rate_limit,
     enforce_request_otp_rate_limit,
@@ -89,6 +93,7 @@ def register_user(
 
 @v1_router.post("/login", response_model=LoginResponse)
 def login_user(
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     _rate_limit: Annotated[None, Depends(enforce_login_rate_limit)],
     login_user_use_case: Annotated[LoginUser, Depends(get_login_user_use_case)],
@@ -97,22 +102,33 @@ def login_user(
     result = login_user_use_case.execute(
         LoginUserParams(email=form_data.username, password=form_data.password)
     )
+    _set_refresh_cookie(response, result.refresh_token)
     return map_token_pair_result_to_login_response(result)
 
 
 @v1_router.post("/refresh", response_model=RefreshTokenResponse)
 def refresh_access_token(
     request: RefreshTokenRequest,
-    _rate_limit: Annotated[None, Depends(enforce_refresh_rate_limit)],
+    response: Response,
+    refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
+    _rate_limit: Annotated[None, Depends(enforce_refresh_rate_limit)] = None,
     refresh_access_token_use_case: Annotated[
         RefreshAccessToken,
         Depends(get_refresh_access_token_use_case),
-    ],
+    ] = None,  # type: ignore[assignment]
 ) -> RefreshTokenResponse:
-    """Issue a new access token from a valid refresh token."""
-    result = refresh_access_token_use_case.execute(
-        RefreshTokenParams(refresh_token=request.refresh_token)
-    )
+    """Issue a new access token from a valid refresh token.
+
+    Precedence: the `refresh_token` HttpOnly cookie wins; the body field is a legacy
+    fallback for non-browser clients. The new refresh cookie is always set so the
+    browser keeps an up-to-date cookie after every rotation.
+    """
+    token = refresh_token_cookie or request.refresh_token
+    if not token:
+        raise UnauthorizedError("refresh_token required")
+    assert refresh_access_token_use_case is not None  # injected by FastAPI
+    result = refresh_access_token_use_case.execute(RefreshTokenParams(refresh_token=token))
+    _set_refresh_cookie(response, result.refresh_token)
     return RefreshTokenResponse(tokens=map_token_pair_result_to_response(result))
 
 
@@ -211,6 +227,7 @@ def handle_google_callback(
         HandleGoogleCallbackParams(code=code, state=state)
     )
     response.delete_cookie(_OAUTH_STATE_COOKIE)
+    _set_refresh_cookie(response, result.refresh_token)
     return map_token_pair_result_to_login_response(result)
 
 
@@ -234,3 +251,53 @@ def link_google_account(
     )
     result = link_google_account_use_case.execute(params)
     return GoogleLinkAccountResponse(success=result.success, message=result.message)
+
+
+@v1_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout_user(
+    response: Response,
+    _rate_limit: Annotated[None, Depends(enforce_logout_rate_limit)],
+    logout_use_case: Annotated[LogoutUseCase, Depends(get_logout_use_case)],
+    refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
+) -> Response:
+    """End the session: revoke every refresh token and clear the cookie.
+
+    Idempotent: missing, empty, tampered, or sub-less cookies still return 204 —
+    no information leak about whether a valid session existed. CSRF is bounded:
+    see docs/ARCHITECTURE.md §8.1.
+    """
+    logout_use_case.execute(LogoutParams(refresh_token=refresh_token_cookie))
+    _clear_refresh_cookie(response)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
+
+
+# === Refresh cookie helpers ===
+# Inlined here (vs. a dedicated cookie_helpers module) to match the precedent set by
+# the OAuth state cookie above and by `initiate_google_login` (line 178). Three call
+# sites only — login, refresh, logout — does not justify a new module. The mapper maps
+# data; the endpoint owns transport headers.
+_REFRESH_COOKIE_KEY = "refresh_token"
+_REFRESH_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60  # 604800 — matches JwtTokenManager._REFRESH_DAYS
+
+
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=_REFRESH_COOKIE_KEY,
+        value=token,
+        max_age=_REFRESH_COOKIE_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=_OAUTH_COOKIE_SECURE,
+        samesite="none",
+        path="/",
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=_REFRESH_COOKIE_KEY,
+        path="/",
+        samesite="none",
+        secure=_OAUTH_COOKIE_SECURE,
+        httponly=True,
+    )

@@ -86,3 +86,16 @@ def enforce_refresh_rate_limit(
     rate_limiter.check_or_raise(
         key=f"refresh:{get_client_ip(request)}", limit=30, window_seconds=60
     )
+
+
+def enforce_logout_rate_limit(
+    request: Request,
+    rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+) -> None:
+    """Throttle logout por IP.
+
+    Logout is idempotent and cheap, but a spammer with a stolen cookie could
+    otherwise force repeated `revoke_all_for_user` DB writes. Mirrors the
+    refresh limit (30/min per IP) since both touch the auth path.
+    """
+    rate_limiter.check_or_raise(key=f"logout:{get_client_ip(request)}", limit=30, window_seconds=60)

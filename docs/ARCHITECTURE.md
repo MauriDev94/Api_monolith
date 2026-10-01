@@ -195,8 +195,9 @@ Estructura interna de `app/features/auth`:
    - `usecases/refresh_access_token_use_case.py`: refresh token rotation + nueva access token.
    - `usecases/get_current_user_use_case.py`: resuelve usuario autenticado actual.
    - `usecases/request_otp_use_case.py`: genera OTP para flujo seguro de cambio de password.
-   - `usecases/change_password_with_otp_use_case.py`: valida OTP y rota contraseña.
-   - `usecases/initiate_google_login.py`: inicia flujo OAuth de Google.
+    - `usecases/change_password_with_otp_use_case.py`: valida OTP y rota contraseña.
+    - `usecases/logout_use_case.py`: revoca todos los refresh tokens del usuario vía `token_revocation_store.revoke_all_for_user` (logout global, idempotente en el endpoint).
+    - `usecases/initiate_google_login.py`: inicia flujo OAuth de Google.
    - `usecases/handle_google_callback.py`: procesa callback OAuth y estado de autenticación.
    - `usecases/link_google_account.py`: vincula cuenta local con identidad Google. La validación de contraseña y la regla de negocio (no duplicar google_id, verificar contraseña antes de vincular) residen en el caso de uso, no en el endpoint (fix #59).
 
@@ -248,6 +249,7 @@ Decisiones de diseño de Auth:
 10. **CSRF de OAuth**: el `state` se ata al navegador vía cookie httpOnly firmada al iniciar y se compara con `secrets.compare_digest` en el callback (S2, PR #78).
 11. **OTP con HMAC-SHA256** (secreto de servidor) en vez de SHA-256 pelado — anula rainbow tables si se filtra la BD (S5, PR #78).
 12. **`verify_password` captura `InvalidHash`** → fallo de auth limpio en vez de 500 ante un hash malformado en BD (S8, PR #74).
+13. **Refresh token en HttpOnly cookie + logout explícito.** El refresh token viaja en una cookie `HttpOnly; Secure (en prod); SameSite=None; Path=/`; el access token va en `Authorization: Bearer` (memoria del cliente). `/auth/v1/logout` invalida todos los refresh tokens del usuario vía `token_revocation_store.revoke_all_for_user(user_id)` y limpia la cookie con `Max-Age=0`. CSRF mitigado porque ningún endpoint protegido usa solo la cookie: el refresh cookie solo sirve para `/refresh`, y `/refresh` es idempotente (rotation + reuse detection).
 
 ### 8.2 Users
 
