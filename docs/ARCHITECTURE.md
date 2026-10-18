@@ -249,7 +249,7 @@ Decisiones de diseño de Auth:
 10. **CSRF de OAuth**: el `state` se ata al navegador vía cookie httpOnly firmada al iniciar y se compara con `secrets.compare_digest` en el callback (S2, PR #78).
 11. **OTP con HMAC-SHA256** (secreto de servidor) en vez de SHA-256 pelado — anula rainbow tables si se filtra la BD (S5, PR #78).
 12. **`verify_password` captura `InvalidHash`** → fallo de auth limpio en vez de 500 ante un hash malformado en BD (S8, PR #74).
-13. **Refresh token en HttpOnly cookie + logout explícito.** El refresh token viaja en una cookie `HttpOnly; Secure (en prod); SameSite=None; Path=/`; el access token va en `Authorization: Bearer` (memoria del cliente). `/auth/v1/logout` invalida todos los refresh tokens del usuario vía `token_revocation_store.revoke_all_for_user(user_id)` y limpia la cookie con `Max-Age=0`. CSRF mitigado porque ningún endpoint protegido usa solo la cookie: el refresh cookie solo sirve para `/refresh`, y `/refresh` es idempotente (rotation + reuse detection).
+13. **Refresh token en HttpOnly cookie + logout explícito.** El refresh token viaja en una cookie `HttpOnly; Path=/`, con `Secure; SameSite=None` en producción (cross-site Vercel ↔ Render) y `SameSite=Lax` sin `Secure` en dev (los navegadores descartan `SameSite=None` sin `Secure`; en dev el proxy de Vite hace same-origin); el access token va en `Authorization: Bearer` (memoria del cliente). `/auth/v1/logout` invalida todos los refresh tokens del usuario vía `token_revocation_store.revoke_all_for_user(user_id)` y limpia la cookie con `Max-Age=0`. CSRF mitigado porque ningún endpoint protegido usa solo la cookie: el refresh cookie solo sirve para `/refresh`, y `/refresh` es idempotente (rotation + reuse detection).
 
 ### 8.2 Users
 

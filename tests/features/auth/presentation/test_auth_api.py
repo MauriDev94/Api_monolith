@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 from unittest.mock import Mock
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -39,6 +41,7 @@ from app.features.auth.di.dependencies import (
     get_request_otp_use_case,
 )
 from app.features.auth.domain.value_objects.otp_purpose import OtpPurpose
+from app.features.auth.presentation import api as auth_api
 from app.features.auth.presentation.api import v1_router
 from app.features.auth.presentation.security_dependencies import get_authenticated_user
 from app.features.users.domain.entities.user import User
@@ -311,7 +314,7 @@ def _set_cookie_header(attrs: dict[str, str]) -> str:
 
 # Tipo de test: Integration
 def test_login_sets_refresh_cookie_with_expected_attrs() -> None:
-    """Login must set refresh_token cookie with HttpOnly + SameSite=None + Max-Age=7d."""
+    """Login must set refresh_token cookie with HttpOnly + Max-Age=7d + Path=/."""
     client = create_test_client()
     login_use_case = StubUseCase(
         result=TokenPairResult(access_token="access-stub", refresh_token="refresh-stub")
@@ -330,12 +333,70 @@ def test_login_sets_refresh_cookie_with_expected_attrs() -> None:
     set_cookie = response.headers.get("set-cookie", "")
     assert _REFRESH_COOKIE_KEY in set_cookie
     assert "HttpOnly" in set_cookie
-    assert "samesite=none" in set_cookie.lower()
     assert "Max-Age=604800" in set_cookie
     assert "Path=/" in set_cookie
 
     # Client-side cookie jar must reflect the new refresh cookie.
     assert client.cookies.get(_REFRESH_COOKIE_KEY) == "refresh-stub"
+
+
+# SameSite/Secure depend on APP_ENV: browsers reject `SameSite=None` without
+# `Secure`, so dev (HTTP) uses Lax and production (HTTPS, cross-site) uses None+Secure.
+_COOKIE_ENV_CASES = [
+    pytest.param(False, "samesite=lax", id="dev"),
+    pytest.param(True, "samesite=none", id="production"),
+]
+
+
+def _post_login(client: TestClient) -> str:
+    login_use_case = StubUseCase(
+        result=TokenPairResult(access_token="access-stub", refresh_token="refresh-stub")
+    )
+    client.app.dependency_overrides[get_login_user_use_case] = lambda: login_use_case
+    response = client.post(
+        "/auth/v1/login",
+        data={"username": "mauri@mail.com", "password": "plain1234"},
+    )
+    assert response.status_code == 200
+    return response.headers.get("set-cookie", "")
+
+
+def _post_refresh(client: TestClient) -> str:
+    refresh_use_case = StubUseCase(
+        result=TokenPairResult(access_token="new-access", refresh_token="new-refresh")
+    )
+    client.app.dependency_overrides[get_refresh_access_token_use_case] = lambda: refresh_use_case
+    response = client.post("/auth/v1/refresh", json={"refresh_token": "body-token"})
+    assert response.status_code == 200
+    return response.headers.get("set-cookie", "")
+
+
+def _post_logout(client: TestClient) -> str:
+    client.app.dependency_overrides[get_logout_use_case] = lambda: StubUseCase(result=None)
+    client.app.dependency_overrides[get_rate_limiter] = lambda: StubRateLimiter()
+    response = client.post("/auth/v1/logout")
+    assert response.status_code == 204
+    return response.headers.get("set-cookie", "")
+
+
+# Tipo de test: Integration
+@pytest.mark.parametrize("send", [_post_login, _post_refresh, _post_logout])
+@pytest.mark.parametrize(("secure", "expected_samesite"), _COOKIE_ENV_CASES)
+def test_refresh_cookie_samesite_and_secure_follow_app_env(
+    monkeypatch: pytest.MonkeyPatch,
+    send: Callable[[TestClient], str],
+    secure: bool,
+    expected_samesite: str,
+) -> None:
+    """Dev → `SameSite=lax` without Secure; production → `SameSite=none; Secure`."""
+    monkeypatch.setattr(auth_api, "_OAUTH_COOKIE_SECURE", secure)
+    client = create_test_client()
+
+    set_cookie = send(client).lower()
+
+    assert _REFRESH_COOKIE_KEY in set_cookie
+    assert expected_samesite in set_cookie
+    assert ("; secure" in set_cookie) is secure
 
 
 # Tipo de test: Integration
