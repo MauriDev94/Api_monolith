@@ -1,6 +1,6 @@
 import os
 import secrets
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Cookie, Depends, Query, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -281,6 +281,13 @@ _REFRESH_COOKIE_KEY = "refresh_token"
 _REFRESH_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60  # 604800 — matches JwtTokenManager._REFRESH_DAYS
 
 
+def _refresh_cookie_samesite() -> Literal["none", "lax"]:
+    # Browsers drop `SameSite=None` cookies that are not `Secure`, so None is only
+    # usable over HTTPS (prod: Vercel ↔ Render, cross-site). In dev the frontend goes
+    # through the Vite proxy (same origin), where Lax is enough.
+    return "none" if _OAUTH_COOKIE_SECURE else "lax"
+
+
 def _set_refresh_cookie(response: Response, token: str) -> None:
     response.set_cookie(
         key=_REFRESH_COOKIE_KEY,
@@ -288,7 +295,7 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
         max_age=_REFRESH_COOKIE_MAX_AGE_SECONDS,
         httponly=True,
         secure=_OAUTH_COOKIE_SECURE,
-        samesite="none",
+        samesite=_refresh_cookie_samesite(),
         path="/",
     )
 
@@ -297,7 +304,7 @@ def _clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(
         key=_REFRESH_COOKIE_KEY,
         path="/",
-        samesite="none",
+        samesite=_refresh_cookie_samesite(),
         secure=_OAUTH_COOKIE_SECURE,
         httponly=True,
     )
