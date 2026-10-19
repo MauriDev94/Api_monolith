@@ -447,6 +447,36 @@ def test_refresh_returns_401_when_neither_cookie_nor_body_is_present() -> None:
 
 
 # Tipo de test: Integration
+def test_refresh_uses_cookie_when_request_has_no_body() -> None:
+    """Browser clients POST /refresh with no body at all; the cookie alone must work."""
+    client = create_test_client()
+    refresh_use_case = StubUseCase(
+        result=TokenPairResult(access_token="new-access", refresh_token="new-refresh")
+    )
+    client.app.dependency_overrides[get_refresh_access_token_use_case] = lambda: refresh_use_case
+    client.cookies.set(_REFRESH_COOKIE_KEY, "cookie-only")
+
+    response = client.post("/auth/v1/refresh")
+
+    assert response.status_code == 200
+    assert refresh_use_case.received.refresh_token == "cookie-only"
+    assert "refresh_token=new-refresh" in response.headers.get("set-cookie", "")
+
+
+# Tipo de test: Integration
+def test_refresh_returns_401_when_request_has_no_body_and_no_cookie() -> None:
+    """No body and no cookie is an auth failure (401), not a validation error (400)."""
+    client = create_test_client()
+    refresh_use_case = Mock()
+    client.app.dependency_overrides[get_refresh_access_token_use_case] = lambda: refresh_use_case
+
+    response = client.post("/auth/v1/refresh")
+
+    assert response.status_code == 401
+    refresh_use_case.execute.assert_not_called()
+
+
+# Tipo de test: Integration
 def test_logout_returns_204_and_calls_use_case_when_cookie_is_valid() -> None:
     """The endpoint forwards the raw cookie to LogoutUseCase and clears the cookie.
 

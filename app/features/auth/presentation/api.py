@@ -108,9 +108,10 @@ def login_user(
 
 @v1_router.post("/refresh", response_model=RefreshTokenResponse)
 def refresh_access_token(
-    request: RefreshTokenRequest,
     response: Response,
     refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
+    # Optional body: browser clients POST without one and rely on the cookie.
+    request: RefreshTokenRequest | None = None,
     _rate_limit: Annotated[None, Depends(enforce_refresh_rate_limit)] = None,
     refresh_access_token_use_case: Annotated[
         RefreshAccessToken,
@@ -123,7 +124,7 @@ def refresh_access_token(
     fallback for non-browser clients. The new refresh cookie is always set so the
     browser keeps an up-to-date cookie after every rotation.
     """
-    token = refresh_token_cookie or request.refresh_token
+    token = refresh_token_cookie or (request.refresh_token if request else None)
     if not token:
         raise UnauthorizedError("refresh_token required")
     assert refresh_access_token_use_case is not None  # injected by FastAPI
