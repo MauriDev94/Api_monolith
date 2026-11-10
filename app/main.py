@@ -17,6 +17,7 @@ from app.core.config.logger_config import setup_logger
 from app.core.docs.scalar_setup import setup_scalar_docs
 from app.core.exceptions.error_handling import register_exception_handlers
 from app.core.middleware.body_size_limit import BodySizeLimitMiddleware
+from app.core.middleware.origin_check import OriginCheckMiddleware
 from app.core.middleware.rate_limit_global import GlobalRateLimitMiddleware
 from app.core.middleware.request_context import attach_request_id_middleware
 from app.core.middleware.security_headers import attach_security_headers
@@ -114,6 +115,12 @@ app.add_middleware(
 # Body-size limit: rechaza payloads excesivos (413) antes de parsearlos. Inner a los
 # middlewares de headers/contexto para que el 413 igual salga con security headers.
 app.add_middleware(BodySizeLimitMiddleware)
+
+# Origin check (anti-CSRF): rechaza POST/PUT/PATCH/DELETE de orígenes no confiables antes
+# del ruteo, así ningún endpoint corre ni emite Set-Cookie. Necesario porque la cookie de
+# refresh es SameSite=None en producción. Inner a security headers/request id para que el
+# 403 igual salga con ambos. Corre en todos los entornos (no gateado por APP_ENV).
+app.add_middleware(OriginCheckMiddleware, allowed_origins=settings.cors_allowed_origins)
 
 # Global per-IP rate limiting. Se registra ANTES de los middlewares de headers/contexto
 # para que estos queden por FUERA: así un 429 del limiter igual sale con security headers
