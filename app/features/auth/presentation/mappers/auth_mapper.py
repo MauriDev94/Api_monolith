@@ -30,10 +30,9 @@ def map_register_request_to_params(request: RegisterRequest) -> RegisterUserPara
 
 
 def map_token_pair_result_to_response(result: TokenPairResult) -> TokenPairResponse:
-    """Map token result DTO to generic token response schema."""
+    """Map token result DTO to the access-token response (refresh token goes in the cookie)."""
     return TokenPairResponse(
         access_token=result.access_token,
-        refresh_token=result.refresh_token,
         token_type=result.token_type,
     )
 
@@ -43,7 +42,6 @@ def map_token_pair_result_to_login_response(result: TokenPairResult) -> LoginRes
     return LoginResponse(
         access_token=result.access_token,
         token_type=result.token_type,
-        refresh_token=result.refresh_token,
     )
 
 

@@ -225,7 +225,7 @@ Estructura interna de `app/features/auth`:
 4. **`presentation/`**
    - `api.py`: endpoints `/auth/v1/*` y wiring HTTP del módulo. Incluye:
      - `GET /auth/v1/google` → `200` con `{ authorization_url }` en body (JSON, no redirect — fix #58).
-     - `GET /auth/v1/google/callback` → `200` con token pair.
+     - `GET /auth/v1/google/callback` → `200` con el access token en el body y el refresh token en la cookie HttpOnly.
      - `POST /auth/v1/link-google` → vincula Google a usuario autenticado (regla de negocio en use case, no en endpoint — fix #59).
    - `security_dependencies.py`: dependencias de seguridad (Bearer/current user).
    - `schemas/auth_requests.py`: schemas de entrada auth.
@@ -250,6 +250,7 @@ Decisiones de diseño de Auth:
 11. **OTP con HMAC-SHA256** (secreto de servidor) en vez de SHA-256 pelado — anula rainbow tables si se filtra la BD (S5, PR #78).
 12. **`verify_password` captura `InvalidHash`** → fallo de auth limpio en vez de 500 ante un hash malformado en BD (S8, PR #74).
 13. **Refresh token en HttpOnly cookie + logout explícito.** El refresh token viaja en una cookie `HttpOnly; Path=/`, con `Secure; SameSite=None` en producción (cross-site Vercel ↔ Render) y `SameSite=Lax` sin `Secure` en dev (los navegadores descartan `SameSite=None` sin `Secure`; en dev el proxy de Vite hace same-origin); el access token va en `Authorization: Bearer` (memoria del cliente). `/auth/v1/logout` invalida todos los refresh tokens del usuario vía `token_revocation_store.revoke_all_for_user(user_id)` y limpia la cookie con `Max-Age=0`. CSRF mitigado porque ningún endpoint protegido usa solo la cookie: el refresh cookie solo sirve para `/refresh`, y `/refresh` es idempotente (rotation + reuse detection).
+14. **La cookie es el único transporte del refresh token.** Ni `/login`, `/refresh` ni el callback de Google devuelven `refresh_token` en el body (`LoginResponse` y `TokenPairResponse` solo llevan el access token), y `/refresh` lee el token únicamente de la cookie `HttpOnly`: no declara body, así que cualquier body que envíe el cliente (el frontend manda `{}`) se ignora, y un token solo en el body da `401`. Las respuestas que emiten tokens llevan `Cache-Control: no-store` y `Pragma: no-cache` (RFC 6749 §5.1) para que ninguna caché las almacene. Motivo: con el token en el body, un XSS en el SPA podía llamar a `/refresh` con credenciales, leerlo de la respuesta y reutilizarlo desde otra máquina, y la cookie `HttpOnly` no protegía nada; ahora el JavaScript de la página no puede exfiltrar el refresh token. `TokenPairResult` (DTO de aplicación) conserva `refresh_token` porque el endpoint lo necesita para fijar la cookie.
 
 ### 8.2 Users
 

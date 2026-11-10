@@ -68,8 +68,8 @@ Para detalles arquitectónicos completos, decisiones y diagramas → [`docs/ARCH
 
 ### Auth
 - `POST /auth/v1/register` — registrarse con email/contraseña
-- `POST /auth/v1/login` — iniciar sesión, retorna access + refresh tokens
-- `POST /auth/v1/refresh` — rotar refresh token
+- `POST /auth/v1/login` — iniciar sesión, retorna el access token en el body y fija el refresh token como cookie HttpOnly
+- `POST /auth/v1/refresh` — rotar el refresh token (se lee solo desde la cookie HttpOnly; el body del request se ignora)
 - `GET  /auth/v1/me` — usuario autenticado actual
 - `POST /auth/v1/request-otp` — solicitar OTP para restablecer contraseña
 - `POST /auth/v1/change-password` — cambiar contraseña con OTP
@@ -99,7 +99,7 @@ Para detalles arquitectónicos completos, decisiones y diagramas → [`docs/ARCH
 
 **Puertos y adaptadores por feature** — cada feature define sus propios contratos (`application/contracts/`) para que las implementaciones de infraestructura sean intercambiables sin tocar la lógica de negocio.
 
-**Rotación de refresh token con revocación** — cada refresh emite un nuevo par de tokens y revoca el JTI anterior. La reutilización de un token revocado invalida todos los tokens activos de ese usuario.
+**Rotación de refresh token con revocación** — cada refresh emite un nuevo access token y una nueva cookie de refresh, y revoca el JTI anterior. La reutilización de un token revocado invalida todos los tokens activos de ese usuario.
 
 **Value Object Email** — validación por regex compatible con RFC en el dominio, no en la capa de transporte. La normalización (minúsculas, trim) ocurre en la construcción.
 

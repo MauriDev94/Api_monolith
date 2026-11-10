@@ -68,8 +68,8 @@ For full architectural details, decisions, and diagrams → [`docs/ARCHITECTURE.
 
 ### Auth
 - `POST /auth/v1/register` — register with email/password
-- `POST /auth/v1/login` — login, returns access + refresh tokens
-- `POST /auth/v1/refresh` — rotate refresh token
+- `POST /auth/v1/login` — login, returns the access token in the body and sets the refresh token as an HttpOnly cookie
+- `POST /auth/v1/refresh` — rotate the refresh token (read only from the HttpOnly cookie; the request body is ignored)
 - `GET  /auth/v1/me` — current authenticated user
 - `POST /auth/v1/request-otp` — request OTP for password reset
 - `POST /auth/v1/change-password` — change password with OTP
@@ -99,7 +99,7 @@ For full architectural details, decisions, and diagrams → [`docs/ARCHITECTURE.
 
 **Ports and adapters per feature** — each feature defines its own contracts (`application/contracts/`) so infrastructure implementations are swappable without touching business logic.
 
-**Refresh token rotation with revocation** — every refresh issues a new token pair and revokes the previous JTI. Reuse of a revoked token revokes all active tokens for that user.
+**Refresh token rotation with revocation** — every refresh issues a new access token and a new refresh cookie, and revokes the previous JTI. Reuse of a revoked token revokes all active tokens for that user.
 
 **Email Value Object** — RFC-compliant regex validation in the domain, not in the transport layer. Normalization (lowercase, trim) happens at construction.
 

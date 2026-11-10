@@ -51,7 +51,6 @@ from app.features.auth.presentation.mappers.auth_mapper import (
 )
 from app.features.auth.presentation.schemas.auth_requests import (
     ChangePasswordRequest,
-    RefreshTokenRequest,
     RegisterRequest,
 )
 from app.features.auth.presentation.schemas.auth_responses import (
@@ -98,11 +97,12 @@ def login_user(
     _rate_limit: Annotated[None, Depends(enforce_login_rate_limit)],
     login_user_use_case: Annotated[LoginUser, Depends(get_login_user_use_case)],
 ) -> LoginResponse:
-    """Authenticate credentials and return access/refresh tokens."""
+    """Authenticate credentials, return the access token and set the refresh token as an HttpOnly cookie."""
     result = login_user_use_case.execute(
         LoginUserParams(email=form_data.username, password=form_data.password)
     )
     _set_refresh_cookie(response, result.refresh_token)
+    _set_no_store_headers(response)
     return map_token_pair_result_to_login_response(result)
 
 
@@ -110,26 +110,27 @@ def login_user(
 def refresh_access_token(
     response: Response,
     refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
-    # Optional body: browser clients POST without one and rely on the cookie.
-    request: RefreshTokenRequest | None = None,
     _rate_limit: Annotated[None, Depends(enforce_refresh_rate_limit)] = None,
     refresh_access_token_use_case: Annotated[
         RefreshAccessToken,
         Depends(get_refresh_access_token_use_case),
     ] = None,  # type: ignore[assignment]
 ) -> RefreshTokenResponse:
-    """Issue a new access token from a valid refresh token.
+    """Issue a new access token from the refresh token cookie.
 
-    Precedence: the `refresh_token` HttpOnly cookie wins; the body field is a legacy
-    fallback for non-browser clients. The new refresh cookie is always set so the
+    The `refresh_token` HttpOnly cookie is the only transport: any request body is
+    ignored (the endpoint declares none), so a token can never be replayed from a
+    body nor read back from a response. The new refresh cookie is always set so the
     browser keeps an up-to-date cookie after every rotation.
     """
-    token = refresh_token_cookie or (request.refresh_token if request else None)
-    if not token:
+    if not refresh_token_cookie:
         raise UnauthorizedError("refresh_token required")
     assert refresh_access_token_use_case is not None  # injected by FastAPI
-    result = refresh_access_token_use_case.execute(RefreshTokenParams(refresh_token=token))
+    result = refresh_access_token_use_case.execute(
+        RefreshTokenParams(refresh_token=refresh_token_cookie)
+    )
     _set_refresh_cookie(response, result.refresh_token)
+    _set_no_store_headers(response)
     return RefreshTokenResponse(tokens=map_token_pair_result_to_response(result))
 
 
@@ -200,6 +201,8 @@ def initiate_google_login(
         secure=_OAUTH_COOKIE_SECURE,
         samesite="lax",
     )
+    # The OAuth state is a secret (also embedded in authorization_url): never cacheable.
+    _set_no_store_headers(response)
     return GoogleInitResponse(authorization_url=result.authorization_url)
 
 
@@ -229,6 +232,7 @@ def handle_google_callback(
     )
     response.delete_cookie(_OAUTH_STATE_COOKIE)
     _set_refresh_cookie(response, result.refresh_token)
+    _set_no_store_headers(response)
     return map_token_pair_result_to_login_response(result)
 
 
@@ -275,9 +279,9 @@ def logout_user(
 
 # === Refresh cookie helpers ===
 # Inlined here (vs. a dedicated cookie_helpers module) to match the precedent set by
-# the OAuth state cookie above and by `initiate_google_login` (line 178). Three call
-# sites only — login, refresh, logout — does not justify a new module. The mapper maps
-# data; the endpoint owns transport headers.
+# the OAuth state cookie above and by `initiate_google_login`. Four call sites only
+# (login, refresh, Google callback, logout) do not justify a new module. The mapper
+# maps data; the endpoint owns transport headers.
 _REFRESH_COOKIE_KEY = "refresh_token"
 _REFRESH_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60  # 604800 — matches JwtTokenManager._REFRESH_DAYS
 
@@ -299,6 +303,12 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
         samesite=_refresh_cookie_samesite(),
         path="/",
     )
+
+
+def _set_no_store_headers(response: Response) -> None:
+    # RFC 6749 §5.1: responses carrying tokens must not be stored by any cache.
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
 
 
 def _clear_refresh_cookie(response: Response) -> None:

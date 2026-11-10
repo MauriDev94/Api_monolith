@@ -45,12 +45,19 @@ def _register_user(
     return response.json()
 
 
+def _assert_not_cacheable(response) -> None:
+    """Real app + middleware stack: nothing may override the RFC 6749 section 5.1 headers."""
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["pragma"] == "no-cache"
+
+
 def _login_user(client: TestClient, *, email: str, password: str) -> dict:
     response = client.post(
         "/auth/v1/login",
         data={"username": email, "password": password},
     )
     assert response.status_code == 200
+    _assert_not_cacheable(response)
     return response.json()
 
 
@@ -85,7 +92,9 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
 
         login_payload = _login_user(client, email="mauri@mail.com", password="pass1234")
         access_token = login_payload["access_token"]
-        refresh_token = login_payload["refresh_token"]
+        assert "refresh_token" not in login_payload
+        # TestClient keeps cookies: the refresh token travels only in the HttpOnly cookie.
+        assert client.cookies.get("refresh_token")
 
         update_user_response = client.put(
             f"/v1/users/{user_id}",
@@ -137,8 +146,9 @@ def test_should_complete_auth_users_todos_happy_path(db_session: Session) -> Non
         assert reread_todo_response.status_code == 200
         assert reread_todo_response.json()["todo"]["due_date"] is not None
 
-        refresh_response = client.post("/auth/v1/refresh", json={"refresh_token": refresh_token})
+        refresh_response = client.post("/auth/v1/refresh", json={})
         assert refresh_response.status_code == 200
+        _assert_not_cacheable(refresh_response)
         new_access_token = refresh_response.json()["tokens"]["access_token"]
 
         list_with_new_token_response = client.get(
@@ -372,9 +382,11 @@ def test_should_login_with_google_oauth_creates_new_user(db_session: Session) ->
             params={"code": "test-auth-code-123", "state": client.cookies["oauth_state"]},
         )
         assert callback_response.status_code == 200
+        _assert_not_cacheable(callback_response)
         callback_data = callback_response.json()
         assert "access_token" in callback_data
-        assert "refresh_token" in callback_data
+        assert "refresh_token" not in callback_data
+        assert client.cookies.get("refresh_token")
 
         # Step 3: Use the token to access protected endpoint
         access_token = callback_data["access_token"]
