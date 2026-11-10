@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app import main as main_module
+from app.core.docs.scalar_setup import setup_scalar_docs
 from app.core.middleware.body_size_limit import BodySizeLimitMiddleware
+from app.core.middleware.security_headers import attach_security_headers
 from app.main import app
 
 
@@ -96,3 +98,49 @@ def test_body_size_limit_rejects_oversized_request() -> None:
 
     assert response.status_code == 413
     assert response.json()["message"] == "Request body too large"
+
+
+# Tipo de test: Integration
+def test_openapi_json_carries_strict_api_csp() -> None:
+    """S5: /openapi.json recibe la CSP estricta de API; solo /docs define la suya."""
+    client = TestClient(app, raise_server_exceptions=False)
+
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+    assert (
+        response.headers["Content-Security-Policy"]
+        == "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+    )
+
+
+# Tipo de test: Integration
+def test_docs_keeps_its_own_csp_with_a_single_header(monkeypatch: pytest.MonkeyPatch) -> None:
+    """/docs conserva su CSP propia y el middleware no agrega una segunda."""
+    monkeypatch.setenv("SCALAR_DOCS_ENABLED", "true")
+    test_app = FastAPI(docs_url=None, redoc_url=None)
+    test_app.middleware("http")(attach_security_headers)
+    assert setup_scalar_docs(test_app, title="Test API") is True
+
+    response = TestClient(test_app).get("/docs")
+
+    assert response.status_code == 200
+    assert len(response.headers.get_list("content-security-policy")) == 1
+    assert "script-src" in response.headers["Content-Security-Policy"]
+
+
+# Tipo de test: Integration
+def test_docs_404_gets_strict_api_csp_when_docs_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Con docs deshabilitado, /docs (404) recibe la CSP estricta de API."""
+    monkeypatch.setenv("SCALAR_DOCS_ENABLED", "false")
+    test_app = FastAPI(docs_url=None, redoc_url=None)
+    test_app.middleware("http")(attach_security_headers)
+    setup_scalar_docs(test_app, title="Test API")
+
+    response = TestClient(test_app).get("/docs")
+
+    assert response.status_code == 404
+    assert (
+        response.headers["Content-Security-Policy"]
+        == "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+    )

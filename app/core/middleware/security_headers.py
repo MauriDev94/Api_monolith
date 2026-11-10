@@ -11,10 +11,11 @@ SECURITY_HEADERS = {
     "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
 }
 
-# CSP estricta para respuestas de API (JSON). Se omite en las páginas de docs
-# (Scalar) porque cargan JS/CSS desde un CDN y una CSP 'none' las rompería.
+# CSP estricta para respuestas de API (JSON), incluido /openapi.json. Se aplica a toda
+# respuesta que aún no traiga su propia CSP: /docs (Scalar) carga su bundle desde un CDN
+# y define la suya (con hash del script inline) en app/core/docs/scalar_setup.py. Decidir
+# por respuesta y no por ruta evita que un /docs deshabilitado (404) quede sin CSP.
 _API_CONTENT_SECURITY_POLICY = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
-_DOCS_PATHS = {"/docs", "/openapi.json"}
 
 
 async def attach_security_headers(request: Request, call_next: RequestResponseEndpoint) -> Response:
@@ -22,6 +23,6 @@ async def attach_security_headers(request: Request, call_next: RequestResponseEn
     response = await call_next(request)
     for header_name, header_value in SECURITY_HEADERS.items():
         response.headers[header_name] = header_value
-    if request.url.path not in _DOCS_PATHS:
+    if "Content-Security-Policy" not in response.headers:
         response.headers["Content-Security-Policy"] = _API_CONTENT_SECURITY_POLICY
     return response
