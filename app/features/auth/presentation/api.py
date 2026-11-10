@@ -268,8 +268,10 @@ def logout_user(
     """End the session: revoke every refresh token and clear the cookie.
 
     Idempotent: missing, empty, tampered, or sub-less cookies still return 204 —
-    no information leak about whether a valid session existed. CSRF is bounded:
-    see docs/ARCHITECTURE.md §8.1.
+    no information leak about whether a valid session existed. CSRF is blocked
+    app-wide by `OriginCheckMiddleware` (Origin / Sec-Fetch-Site check on unsafe
+    methods), which rejects cross-site requests before this handler runs; see
+    docs/ARCHITECTURE.md §8.1 (decision 13).
     """
     logout_use_case.execute(LogoutParams(refresh_token=refresh_token_cookie))
     _clear_refresh_cookie(response)
