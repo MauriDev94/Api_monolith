@@ -42,17 +42,6 @@ class RegisterRequest(BaseModel):
         return _validate_password_complexity(value)
 
 
-class RefreshTokenRequest(BaseModel):
-    """Request schema used to refresh an access token.
-
-    The refresh token is optional in the body because the frontend sends it via the
-    `refresh_token` HttpOnly cookie instead. Non-browser clients (mobile, CLI) can
-    still send it in the body; when both are present, the cookie wins.
-    """
-
-    refresh_token: str | None = Field(default=None, min_length=1)
-
-
 class ChangePasswordRequest(BaseModel):
     """Request schema used to change password with OTP."""
 

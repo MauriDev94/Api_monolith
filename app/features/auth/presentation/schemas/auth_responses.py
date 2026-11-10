@@ -16,10 +16,9 @@ class AuthUserResponse(BaseModel):
 
 
 class TokenPairResponse(BaseModel):
-    """Access/refresh token pair exposed in API responses."""
+    """Access token exposed in API responses (the refresh token travels only in the cookie)."""
 
     access_token: str
-    refresh_token: str
     token_type: str
 
 
@@ -34,7 +33,6 @@ class LoginResponse(BaseModel):
 
     access_token: str
     token_type: str
-    refresh_token: str
 
 
 class RefreshTokenResponse(BaseModel):
